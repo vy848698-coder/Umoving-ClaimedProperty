@@ -15,6 +15,7 @@
             </svg>
             Back
           </button>
+          <PassportNavButton />
           <ProfileMenu />
         </div>
       </div>
@@ -39,6 +40,7 @@
 
 <script setup>
 import ProfileMenu from '~/components/core/ProfileMenu.vue'
+import PassportNavButton from '~/components/core/PassportNavButton.vue'
 import { usePassportSteps } from '~/composables/usePassportSteps'
 const { steps } = usePassportSteps()
 const route = useRoute()

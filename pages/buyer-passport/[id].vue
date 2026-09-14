@@ -15,6 +15,7 @@
             </svg>
             Back
           </button>
+          <PassportNavButton />
           <ProfileMenu />
         </div>
       </div>
@@ -670,6 +671,7 @@
 <script setup lang="ts">
 import OPIcon from '~/components/ui/OPIcon.vue'
 import ProfileMenu from '~/components/core/ProfileMenu.vue'
+import PassportNavButton from '~/components/core/PassportNavButton.vue'
 import OnboardingTour from '~/components/ui/OnboardingTour.vue'
 import PassportCard from '~/components/passport-view/PassportCard.vue'
 

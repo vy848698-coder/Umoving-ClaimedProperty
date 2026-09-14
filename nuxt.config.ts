@@ -19,6 +19,16 @@ export default defineNuxtConfig({
       '/__backend/**': { proxy: `${proxyTarget}/**` },
     },
   },
+  nitro: {
+    // Certificate artwork and fonts live in server/assets/certificate, which
+    // Nuxt bundles automatically as the `assets:server` storage mount.
+    // Local dev keeps founder numbers in .data/founders. Production needs a
+    // persistent `founders` mount (see server/utils/founderNumber.ts).
+    devStorage: {
+      founders: { driver: 'fs', base: './.data/founders' },
+    },
+  },
+
   modules: ['@nuxt/ui', '@pinia/nuxt', '@vite-pwa/nuxt'],
   css: ['~/assets/css/main.css'],
 
@@ -158,6 +168,12 @@ export default defineNuxtConfig({
   runtimeConfig: {
     // Private keys (only available on server-side)
     apiSecret: process.env.API_SECRET || '123',
+    // Absolute backend URL for server routes (the certificate). The public
+    // apiBase is the relative '/__backend' proxy path in dev, which server code
+    // can't fetch.
+    backendBase: (process.env.NUXT_PUBLIC_API_BASE || '').startsWith('http')
+      ? process.env.NUXT_PUBLIC_API_BASE
+      : proxyTarget,
     // Public keys (exposed to client-side)
     public: {
       // In dev, default to the same-origin proxy path so browser calls avoid

@@ -15,6 +15,7 @@
             </svg>
             Back to Passport
           </button>
+          <PassportNavButton />
           <ProfileMenu />
         </div>
       </div>
@@ -266,6 +267,7 @@ import SectionProgressCard from '@/components/passport-view/SectionProgressCard.
 import HelpDrawer from '@/components/passport-view/HelpDrawer.vue'
 import VideoModal from '@/components/passport-view/VideoModal.vue'
 import ProfileMenu from '~/components/core/ProfileMenu.vue'
+import PassportNavButton from '~/components/core/PassportNavButton.vue'
 import { toSmartTitleCase } from '~/utils/titleCase'
 
 const route = useRoute()

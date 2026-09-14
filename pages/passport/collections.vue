@@ -3,18 +3,11 @@
     <!-- ── Web nav ──────────────────────────────────────────────────── -->
     <header class="ppn-nav">
       <div class="pp-shell ppn-nav-inner">
-        <button class="ppn-brand" type="button" @click="navigateTo('/')">
+        <button class="ppn-brand" type="button" @click="navigateTo(FLOW_HOME)">
           <img src="/op-icons/logo.png" alt="" class="ppn-brand-logo" />
           <span class="ppn-brand-name">umovingu</span>
           <span class="ppn-brand-beta">BETA</span>
         </button>
-        <nav class="ppn-links" aria-label="Primary navigation">
-          <button type="button" @click="navigateTo('/dashboard')">Explore</button>
-          <button type="button" @click="navigateTo('/homescore')">HomeScore</button>
-          <button type="button" class="active" @click="navigateTo('/passport')">Passport</button>
-          <button type="button" @click="navigateTo('/marketplace')">Marketplace</button>
-          <button type="button" @click="navigateTo('/profile/learn')">Learn</button>
-        </nav>
         <div class="ppn-actions">
           <button
             class="ppn-tour"
@@ -26,15 +19,9 @@
           >
             ?
           </button>
-          <button class="ppn-avatar" type="button" aria-label="Profile" @click="navigateTo('/profile')">
-            <UserAvatar
-              :src="profile?.avatarUrl"
-              :firstName="profile?.firstName"
-              :lastName="profile?.lastName"
-              :size="40"
-            />
-          </button>
-          <button class="ppn-cta" type="button" @click="navigateTo('/claim')">Claim Passport</button>
+          <button class="ppn-cta" type="button" @click="navigateTo(FLOW_HOME)">Claim Passport</button>
+          <PassportNavButton />
+          <ProfileMenu />
         </div>
       </div>
     </header>
@@ -315,10 +302,10 @@
                   <div class="coll-state-ic">📘</div>
                   <div class="coll-state-title">No Passports yet</div>
                   <div class="coll-state-sub">
-                    Start by claiming a property from Explore, then your Passports will appear here.
+                    Claim a property you own, and its Passport will appear here.
                   </div>
-                  <button class="coll-state-btn" @click="router.push('/dashboard')">
-                    Go to Explore
+                  <button class="coll-state-btn" @click="router.push(FLOW_HOME)">
+                    Claim a property
                   </button>
                 </div>
               </div>
@@ -418,7 +405,7 @@
                 </div>
 
                 <!-- Add New -->
-                <button class="prop-card prop-card--add" @click="router.push('/dashboard')">
+                <button class="prop-card prop-card--add" @click="router.push(FLOW_HOME)">
                   <span class="prop-add-plus">+</span>
                   <span class="prop-add-name">Add New</span>
                   <span class="prop-add-sub">Create a new Property Passport</span>
@@ -429,8 +416,6 @@
         </div>
       </section>
     </main>
-
-    <SiteFooter />
 
     <!-- Create collection modal -->
     <CreateCollectionModal
@@ -531,10 +516,11 @@
 import { ref, computed, onMounted } from 'vue'
 import CreateCollectionModal from '@/components/modals/CreateCollectionModal.vue'
 import CollectionDetailModal from '@/components/modals/CollectionDetailModal.vue'
-import UserAvatar from '~/components/ui/UserAvatar.vue'
 import PassportCard from '~/components/passport-view/PassportCard.vue'
 import OnboardingTour from '~/components/ui/OnboardingTour.vue'
-import SiteFooter from '~/components/homescore/SiteFooter.vue'
+import ProfileMenu from '~/components/core/ProfileMenu.vue'
+import PassportNavButton from '~/components/core/PassportNavButton.vue'
+import { FLOW_HOME } from '~/utils/appFlow'
 
 const { profile } = useProfile()
 

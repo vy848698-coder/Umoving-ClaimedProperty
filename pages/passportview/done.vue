@@ -15,6 +15,7 @@
             </svg>
             Back
           </button>
+          <PassportNavButton />
           <ProfileMenu />
         </div>
       </div>
@@ -122,6 +123,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ProfileMenu from '~/components/core/ProfileMenu.vue'
+import PassportNavButton from '~/components/core/PassportNavButton.vue'
 import Toast from '~/components/ui/Toast.vue'
 import { useAppToast } from '~/composables/useCustomToast'
 

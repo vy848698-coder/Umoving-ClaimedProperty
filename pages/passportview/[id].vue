@@ -18,6 +18,7 @@
           >
             ?
           </button>
+          <PassportNavButton />
           <ProfileMenu />
         </div>
       </div>
@@ -743,6 +744,7 @@
 // import { usePassportSteps } from '~/composables/usePassportSteps'
 import PassportMapView from '@/components/passport-view/PassportMapView.vue'
 import ProfileMenu from '~/components/core/ProfileMenu.vue'
+import PassportNavButton from '~/components/core/PassportNavButton.vue'
 import PassportCard from '@/components/passport-view/PassportCard.vue'
 import OPIcon from '~/components/ui/OPIcon.vue'
 import SegmentedSwitch from '@/components/core/SegmentedSwitch.vue'

@@ -19,6 +19,7 @@
             Back
           </button>
           <button class="hsw-cta" type="button" :disabled="!passport" @click="openTenantShare">Share</button>
+          <PassportNavButton />
           <ProfileMenu />
         </div>
       </div>
@@ -1998,6 +1999,7 @@ import PassportCard from '~/components/passport-view/PassportCard.vue'
 import LandlordPassportMapView from '~/components/passport-view/LandlordPassportMapView.vue'
 import SegmentedSwitch from '~/components/core/SegmentedSwitch.vue'
 import ProfileMenu from '~/components/core/ProfileMenu.vue'
+import PassportNavButton from '~/components/core/PassportNavButton.vue'
 import SignaturePad from '~/components/ui/SignaturePad.vue'
 import { landlordSectionIconUrl } from '~/utils/landlordSectionIcons'
 

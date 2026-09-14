@@ -9,6 +9,7 @@
           <span>umovingu</span><span class="hsw-brand-beta">BETA</span>
         </button>
         <div class="hsw-actions">
+          <PassportNavButton />
           <ProfileMenu />
         </div>
       </div>
@@ -104,6 +105,7 @@
 import { ref } from 'vue'
 import PropertySearchInput from '~/components/property/PropertySearchInput.vue'
 import ProfileMenu from '~/components/core/ProfileMenu.vue'
+import PassportNavButton from '~/components/core/PassportNavButton.vue'
 import ClaimStepTracker from '~/components/claim/ClaimStepTracker.vue'
 import SelectedAddressCard from '~/components/claim/SelectedAddressCard.vue'
 import AddressHelp from '~/components/claim/AddressHelp.vue'

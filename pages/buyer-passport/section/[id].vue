@@ -15,6 +15,7 @@
             </svg>
             Back to Passport
           </button>
+          <PassportNavButton />
           <ProfileMenu />
         </div>
       </div>
@@ -366,6 +367,7 @@ import OPIcon from '~/components/ui/OPIcon.vue'
 import HelpDrawer from '@/components/passport-view/HelpDrawer.vue'
 import VideoModal from '@/components/passport-view/VideoModal.vue'
 import ProfileMenu from '~/components/core/ProfileMenu.vue'
+import PassportNavButton from '~/components/core/PassportNavButton.vue'
 
 definePageMeta({ middleware: 'auth' })
 

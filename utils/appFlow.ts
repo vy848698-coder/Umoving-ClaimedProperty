@@ -15,11 +15,16 @@ export const SIGNIN_PATH = '/onboarding/signin'
 // Signed-in screens — also the only valid "return here after sign-in" targets.
 const APP_ROUTES: RegExp[] = [
   /^\/claim(\/[^/]+)?$/,
+  // Passport collection - every passport the user has claimed, opened from the
+  // navbar's Passport button. /passport itself only redirects there.
+  /^\/passport(\/collections)?$/,
   // Seller / landlord Passport and the pages that build it section by section.
   /^\/passportview\/(landlord\/[^/]+|steps\/tasks\/[^/]+|steps\/[^/]+|[^/]+)$/,
   // Buyer view of a Passport, reached from the Buyer/Seller switch.
   /^\/buyer-passport\/(section\/task\/[^/]+|section\/[^/]+|[^/]+)$/,
   /^\/profile\/(personal-information|settings)$/,
+  // Founding Homeowner certificate, from the Profile menu.
+  /^\/certificate$/,
 ]
 
 const PUBLIC_ROUTES: RegExp[] = [

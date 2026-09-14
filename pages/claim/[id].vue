@@ -18,6 +18,7 @@
             </svg>
             Exit
           </button>
+          <PassportNavButton />
           <ProfileMenu />
         </div>
       </div>
@@ -601,6 +602,7 @@ import { useRoute } from 'vue-router'
 import PropertySearchInput from '~/components/property/PropertySearchInput.vue'
 import PhoneInput from '~/components/form/PhoneInput.vue'
 import ProfileMenu from '~/components/core/ProfileMenu.vue'
+import PassportNavButton from '~/components/core/PassportNavButton.vue'
 import ClaimStepTracker from '~/components/claim/ClaimStepTracker.vue'
 import SelectedAddressCard from '~/components/claim/SelectedAddressCard.vue'
 import AddressHelp from '~/components/claim/AddressHelp.vue'

@@ -12,6 +12,7 @@
           </svg>
           Back
         </button>
+        <PassportNavButton />
         <ProfileMenu />
       </div>
     </div>
@@ -20,6 +21,7 @@
 
 <script setup lang="ts">
 import ProfileMenu from '~/components/core/ProfileMenu.vue'
+import PassportNavButton from '~/components/core/PassportNavButton.vue'
 import { FLOW_HOME } from '~/utils/appFlow'
 
 // Header for the profile pages: brand, Back, and the account menu — no app

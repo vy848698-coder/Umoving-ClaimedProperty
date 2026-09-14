@@ -6,17 +6,15 @@
       :class="{ open }"
       aria-haspopup="menu"
       :aria-expanded="open ? 'true' : 'false'"
-      aria-label="Account menu"
+      aria-label="Profile menu"
       :title="displayName || email || 'Account'"
       @click="open = !open"
     >
-      <span class="pm-initials">{{ initials }}</span>
-      <!-- Corner tab: the dropdown cue, in place of a label and arrow -->
-      <span class="pm-tab" aria-hidden="true">
-        <svg class="pm-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="6 9 12 15 18 9" />
-        </svg>
-      </span>
+      <span class="pm-chip">{{ initials }}</span>
+      <span class="pm-label">Profile</span>
+      <svg class="pm-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <polyline points="6 9 12 15 18 9" />
+      </svg>
     </button>
 
     <div v-if="open" class="pm-menu" role="menu">
@@ -70,6 +68,12 @@ const items = [
     description: 'Manage how we know and communicate with you.',
     path: '/profile/personal-information',
     image: '/profile%20new%20icon/personalInfomation.jpeg',
+  },
+  {
+    label: 'Founding Homeowner certificate',
+    description: 'View and download your certificate.',
+    path: '/certificate',
+    image: '/build/umu-passport-sm.png',
   },
   {
     label: 'Settings',
@@ -158,71 +162,64 @@ watch(
   font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
-/* A squared initials tile - same 10px corner as the nav's Back / Share
-   buttons, so it reads as part of that row rather than a round badge. */
+/* Solid teal block - the same #00857f and 42px / 10px-corner shape as the
+   nav's Share button - with the initials in a translucent square chip. */
 .pm-trigger {
-  position: relative;
-  width: 40px;
-  height: 40px;
-  padding: 0;
-  display: grid;
-  place-items: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 42px;
+  padding: 0 12px 0 5px;
   border: 0;
   border-radius: 10px;
-  background: linear-gradient(145deg, #00b3aa 0%, #00857f 100%);
+  background: #00857f;
   color: #fff;
   font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
   cursor: pointer;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.22),
-    0 4px 10px rgba(0, 110, 104, 0.22);
-  transition: box-shadow 0.18s, transform 0.18s;
-}
-.pm-trigger:hover {
-  transform: translateY(-1px);
+  transition: background 0.18s;
 }
 .pm-trigger:hover,
-.pm-trigger.open,
+.pm-trigger.open {
+  background: #00736e;
+}
 .pm-trigger:focus-visible {
-  outline: none;
-  /* Offset ring: a white gap, then teal, drawn outside the tile. */
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.22),
-    0 0 0 2px #fff,
-    0 0 0 4px rgba(0, 161, 154, 0.55);
+  outline: 2px solid #00a19a;
+  outline-offset: 2px;
 }
 
-.pm-initials {
-  font-size: 13.5px;
-  font-weight: 800;
-  letter-spacing: 0.6px;
-  line-height: 1;
-}
-
-/* Notched corner tab carrying the chevron. The white border cuts it out of
-   the tile so it looks tucked into the corner. */
-.pm-tab {
-  position: absolute;
-  right: -4px;
-  bottom: -4px;
-  width: 16px;
-  height: 16px;
+.pm-chip {
+  width: 32px;
+  height: 32px;
+  border-radius: 7px;
   display: grid;
   place-items: center;
-  border-radius: 5px;
-  background: #0c2342;
+  background: rgba(255, 255, 255, 0.18);
   color: #fff;
-  border: 2px solid #fff;
-  box-sizing: content-box;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
 }
 
 .pm-chev {
-  width: 10px;
-  height: 10px;
+  width: 14px;
+  height: 14px;
   transition: transform 0.18s;
 }
 .pm-trigger.open .pm-chev {
   transform: rotate(180deg);
+}
+
+/* Phones: keep just the chip and arrow so the nav row doesn't overflow. */
+@media (max-width: 520px) {
+  .pm-label {
+    display: none;
+  }
+  .pm-trigger {
+    gap: 6px;
+    padding-right: 8px;
+  }
 }
 
 .pm-menu {
