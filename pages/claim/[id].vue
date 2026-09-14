@@ -1,0 +1,2601 @@
+<template>
+  <div class="claim-root">
+    <div class="cl-ambient cl-ambient-a" />
+    <div class="cl-ambient cl-ambient-b" />
+    <div class="cl-mesh" />
+
+    <!-- ── Web nav ──────────────────────────────────────────────────── -->
+    <header class="hsw-nav">
+      <div class="hsw-shell hsw-nav-inner">
+        <button class="hsw-brand" type="button" @click="navigateTo(FLOW_HOME)">
+          <img src="/op-icons/logo.png" alt="" class="hsw-brand-logo" />
+          <span>umovingu</span><span class="hsw-brand-beta">BETA</span>
+        </button>
+        <div class="hsw-actions">
+          <button class="hsw-back" type="button" @click="navigateTo(FLOW_HOME)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+            Exit
+          </button>
+          <ProfileMenu />
+        </div>
+      </div>
+    </header>
+
+    <main class="hsw-shell claim-main" :class="{ 'claim-main--search': step === 'search' }">
+      <!-- ── Page header: back, step title and the journey tracker ── -->
+      <div class="claim-head">
+        <button class="cl-back" type="button" aria-label="Back" @click="onBack">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+        </button>
+        <div class="claim-head-text">
+          <div class="claim-head-title">{{ topbarTitle }}</div>
+          <div class="claim-head-sub">{{ topbarSub }}</div>
+        </div>
+      </div>
+      <ClaimStepTracker :current="claimStage" class="claim-tracker" />
+
+      <div class="claim-layout">
+        <section class="claim-panel">
+
+    <!-- ════════════════════════════ SEARCH ════════════════════════════ -->
+    <div v-if="step === 'search'" class="cl-screen">
+      <div class="cl-hero">
+        <div class="cl-hero-ic"><img src="/build/houseWithPin.png" alt="" /></div>
+        <h1 class="cl-h1">Which property are you claiming?</h1>
+        <p class="cl-body">
+          Enter your postcode and select your address. We'll verify ownership via
+          HM Land Registry.
+        </p>
+      </div>
+
+      <div class="cl-field-wrap">
+        <div class="cl-field-label">Postcode or address</div>
+        <SelectedAddressCard
+          v-if="selectedProperty"
+          :property="selectedProperty"
+          @change="clearSelection"
+        />
+        <template v-else>
+          <PropertySearchInput
+            placeholder="e.g. SK7 4BL"
+            variant="light"
+            @select="onPropertySelect"
+          />
+          <AddressHelp />
+        </template>
+      </div>
+
+      <div class="cl-lock-note">
+        <div class="cl-lock-ic"><img src="/build/padlock.png" alt="" /></div>
+        <div class="cl-lock-body">
+          We verify ownership via
+          <strong>HM Land Registry</strong> — encrypted and never sold.
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════ CONFIRM ════════════════════════════ -->
+    <div v-else-if="step === 'confirm'" class="cl-screen">
+      <div class="cl-hero">
+        <div class="cl-hero-ic"><img src="/build/lrTitleBank.png" alt="" /></div>
+        <h1 class="cl-h1">Is this your property?</h1>
+        <p class="cl-body">Check these details match the property you own.</p>
+      </div>
+
+      <div class="cl-navy-card">
+        <div class="cl-navy-glow" />
+        <img class="cl-navy-img" src="/dashboard-art/searchHouse.png" alt="" />
+        <div class="cl-navy-eyebrow">Found on Land Registry</div>
+        <div class="cl-navy-addr1">{{ toTitleCase(selectedProperty?.addressLine1) || '—' }}</div>
+        <div class="cl-navy-addr2">
+          {{ [toTitleCase(selectedProperty?.city), selectedProperty?.postcode?.toUpperCase()].filter(Boolean).join(', ') || '—' }}
+        </div>
+        <div class="cl-tile-grid">
+          <div class="cl-tile">
+            <div class="cl-tile-l">Tenure</div>
+            <div class="cl-tile-v">{{ tenureDisplay }}</div>
+          </div>
+          <div class="cl-tile">
+            <div class="cl-tile-l">Title number</div>
+            <div class="cl-tile-v">{{ titleDisplay }}</div>
+          </div>
+          <div class="cl-tile">
+            <div class="cl-tile-l">Type</div>
+            <div class="cl-tile-v">{{ typeDisplay }}</div>
+          </div>
+          <div class="cl-tile">
+            <div class="cl-tile-l">Registered</div>
+            <div class="cl-tile-v">{{ registeredDisplay }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cl-info-pale">
+        <div class="cl-sec-ic" aria-hidden="true"><img src="/build/idCard.png" alt="" /></div>
+        <div class="cl-info-body">
+          Next we'll verify <strong>your identity</strong> to confirm you're
+          the registered owner. Takes about 2 minutes.
+        </div>
+      </div>
+
+      <div class="cl-link-center" @click="step = 'search'">
+        Not the right property? Search again
+      </div>
+
+      <div v-if="verificationError" class="cl-err-banner">
+        {{ verificationError }}
+        <button class="cl-err-retry" @click="confirmProperty">Retry</button>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════ KYC EXPLAINER ════════════════════════════ -->
+    <div v-else-if="step === 'kyc-explainer'" class="cl-screen cl-center-col">
+      <div class="cl-hero">
+        <div class="cl-hero-ic"><img src="/build/idBadge.png" alt="" /></div>
+        <h1 class="cl-h1">Verify your identity</h1>
+        <p class="cl-body">
+          We need to confirm who you are before we check ownership. Takes around
+          2 minutes — done once only.
+        </p>
+      </div>
+
+      <div class="cl-card cl-text-l cl-mb-sm">
+        <div class="cl-eyebrow">What's involved</div>
+        <div class="cl-row-list">
+          <div class="cl-step-row">
+            <div class="cl-step-ic"><img src="/build/idCard.png" alt="" /></div>
+            <div>
+              <div class="cl-step-t">Photo ID</div>
+              <div class="cl-step-s">Passport or driving licence</div>
+            </div>
+          </div>
+          <div class="cl-step-row">
+            <div class="cl-step-ic"><img src="/build/cameraFront.png" alt="" /></div>
+            <div>
+              <div class="cl-step-t">Liveness check</div>
+              <div class="cl-step-s">Quick selfie to confirm it's you</div>
+            </div>
+          </div>
+          <div class="cl-step-row">
+            <div class="cl-step-ic"><img src="/build/shield.png" alt="" /></div>
+            <div>
+              <div class="cl-step-t">AML screening</div>
+              <div class="cl-step-s">Automatic check — takes seconds</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cl-card-pale cl-text-l">
+        <div class="cl-pale-row">
+          <div class="cl-pale-ic"><img src="/buyer-profile-icon/stopwatch.png" alt="" /></div>
+          <div>
+            <div class="cl-pale-t">Usually under 2 minutes</div>
+            <div class="cl-pale-s">
+              Powered by Persona — used by major UK fintechs.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Polling state — shown after the user opens the Persona hosted flow -->
+      <div v-if="personaPolling || personaInquiryId" class="cl-info-pale" style="margin-top: 14px;">
+        <div class="cl-info-ic">
+          <img :src="personaPolling ? '/buyer-profile-icon/stopwatch.png' : '/build/idCard.png'" alt="" />
+        </div>
+        <div class="cl-info-body">
+          <template v-if="personaPolling">
+            Verification is open in a new tab. We'll continue automatically as
+            soon as Persona finishes.
+          </template>
+          <template v-else>
+            Finished in the verification tab? Tap <strong>Check now</strong>.
+          </template>
+          <div style="margin-top: 8px; display: flex; gap: 8px; flex-wrap: wrap;">
+            <button
+              type="button"
+              class="cl-err-retry"
+              :disabled="personaCheckingNow"
+              @click="checkPersonaNow"
+            >
+              {{ personaCheckingNow ? 'Checking…' : 'Check now' }}
+            </button>
+            <button
+              v-if="!personaPolling"
+              type="button"
+              class="cl-err-retry"
+              style="background: transparent; color: #1f7a66;"
+              @click="runPolling"
+            >
+              Resume auto-check
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Persona error banner -->
+      <div v-if="personaError" class="cl-err-banner" style="margin-top: 12px;">
+        {{ personaError }}
+        <button class="cl-err-retry" @click="startPersonaKyc">Retry</button>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════ KYC ID UPLOAD ════════════════════════════ -->
+    <div v-else-if="step === 'kyc-id'" class="cl-screen">
+      <div class="cl-hero">
+        <div class="cl-hero-ic"><img src="/build/idCard.png" alt="" /></div>
+        <h1 class="cl-h1">Upload your photo ID</h1>
+        <p class="cl-body">
+          Passport or UK driving licence. All four corners visible, image clear.
+        </p>
+      </div>
+
+      <div class="cl-slot-label">Front</div>
+      <div
+        class="cl-slot cl-slot-front"
+        :class="{ 'cl-slot-filled': idFrontUrl }"
+        @click="triggerUpload('front')"
+      >
+        <img v-if="idFrontUrl" :src="idFrontUrl" class="cl-slot-thumb" />
+        <template v-else>
+          <div class="cl-slot-ic"><img src="/build/cameraFront.png" alt="" /></div>
+          <div class="cl-slot-text">Tap to photograph front</div>
+        </template>
+        <div v-if="idFrontUrl" class="cl-slot-check">✓</div>
+      </div>
+
+      <div class="cl-slot-label">Back</div>
+      <div
+        class="cl-slot cl-slot-back"
+        :class="{ 'cl-slot-filled': idBackUrl }"
+        @click="triggerUpload('back')"
+      >
+        <img v-if="idBackUrl" :src="idBackUrl" class="cl-slot-thumb" />
+        <template v-else>
+          <div class="cl-slot-ic cl-slot-ic-muted"><img src="/build/cameraBack.png" alt="" /></div>
+          <div class="cl-slot-text cl-slot-text-muted">
+            Tap to photograph back
+          </div>
+        </template>
+        <div v-if="idBackUrl" class="cl-slot-check">✓</div>
+      </div>
+
+      <input
+        ref="idInputEl"
+        type="file"
+        accept="image/*"
+        capture="environment"
+        style="display: none"
+        @change="onIdFile"
+      />
+
+      <div class="cl-card">
+        <div class="cl-eyebrow cl-mb-xs">Accepted documents</div>
+        <div class="cl-pills">
+          <span class="cl-pill"><img src="/build/passport.png" alt="" /> UK Passport</span>
+          <span class="cl-pill"><img src="/build/drivingLicence.png" alt="" /> Driving Licence</span>
+          <span class="cl-pill"><img src="/build/passport.png" alt="" /> EU Passport</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════ KYC LIVENESS ════════════════════════════ -->
+    <div v-else-if="step === 'kyc-liveness'" class="cl-screen cl-center-col">
+      <div class="cl-live-wrap">
+        <svg width="160" height="160" viewBox="0 0 160 160" class="cl-live-svg">
+          <circle cx="80" cy="80" r="74" fill="none" stroke="#cff4f2" stroke-width="4" />
+          <circle
+            cx="80"
+            cy="80"
+            r="74"
+            fill="none"
+            stroke="#00a19a"
+            stroke-width="4"
+            stroke-dasharray="464"
+            stroke-dashoffset="116"
+            class="cl-live-ring"
+          />
+        </svg>
+        <div class="cl-live-inner"><img src="/build/cameraFront.png" alt="" /></div>
+      </div>
+
+      <div class="cl-hero">
+        <h1 class="cl-h1">Quick selfie check</h1>
+        <p class="cl-body">
+          Look at the camera and follow the prompts. Takes about 20 seconds.
+        </p>
+      </div>
+
+      <div class="cl-card cl-text-l">
+        <div class="cl-row-list cl-gap-sm">
+          <div class="cl-num-row">
+            <div class="cl-num">1</div>
+            Face the camera straight on, in good light
+          </div>
+          <div class="cl-num-row">
+            <div class="cl-num">2</div>
+            Slowly turn your head left, then right
+          </div>
+          <div class="cl-num-row">
+            <div class="cl-num">3</div>
+            Hold still — we'll capture automatically
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════ KYC AML ════════════════════════════ -->
+    <div v-else-if="step === 'kyc-aml'" class="cl-screen cl-center-col">
+      <div class="cl-hero">
+        <div class="cl-hero-ic"><img src="/build/shield.png" alt="" /></div>
+        <h1 class="cl-h1">Almost there</h1>
+        <p class="cl-body">
+          Automatic check against sanctions lists and PEP registers. Happens
+          instantly.
+        </p>
+      </div>
+
+      <div class="cl-card cl-text-l cl-mb-sm">
+        <div class="cl-row-list cl-gap-sm">
+          <div class="cl-aml-row">
+            <div class="cl-aml-label">Sanctions list check</div>
+            <span class="cl-pill-good">✓ Clear</span>
+          </div>
+          <div class="cl-aml-row">
+            <div class="cl-aml-label">PEP screening</div>
+            <span class="cl-pill-good">✓ Clear</span>
+          </div>
+          <div class="cl-aml-row">
+            <div class="cl-aml-label">Adverse media</div>
+            <span class="cl-pill-good">✓ Clear</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="cl-card-pale cl-text-l">
+        <div class="cl-pale-row">
+          <div class="cl-pale-ic-sm"><img src="/build/padlock.png" alt="" /></div>
+          <div class="cl-pale-s">
+            AML checks are required by UK regulations. Data processed securely.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════ KYC VERIFIED ════════════════════════════ -->
+    <div v-else-if="step === 'kyc-verified'" class="cl-screen cl-center-col">
+      <div class="cl-hero cl-hero--celebrate">
+        <img src="/build/bigCheckHero.png" alt="" class="cl-hero-img" />
+        <h1 class="cl-h1">Identity verified!</h1>
+        <p class="cl-body">
+          You've passed identity and anti-money-laundering checks. Now let's
+          confirm you own the property with HM Land Registry.
+        </p>
+      </div>
+      <div class="cl-pill-row">
+        <span class="cl-pill-good">✓ ID validated</span>
+        <span class="cl-pill-good">✓ Liveness passed</span>
+        <span class="cl-pill-good">✓ AML clear</span>
+      </div>
+
+      <div class="cl-card-pale cl-text-l cl-w-full">
+        <div class="cl-pale-row">
+          <div class="cl-pale-ic"><img src="/build/dvsBank.png" alt="" /></div>
+          <div>
+            <div class="cl-pale-t">Next: Land Registry check</div>
+            <div class="cl-pale-s">
+              We confirm ownership matches your verified identity.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════ LR SEARCHING ════════════════════════════ -->
+    <div v-else-if="step === 'lr-searching'" class="cl-screen cl-center-col">
+      <div class="cl-lr-pulse-wrap">
+        <div class="cl-lr-pulse" />
+        <div class="cl-lr-pulse cl-lr-pulse--late" />
+        <div class="cl-lr-inner"><img src="/build/lrTitleBank.png" alt="" /></div>
+      </div>
+      <div class="cl-hero">
+        <h1 class="cl-h1">Searching HM Land Registry</h1>
+        <p class="cl-body">
+          Checking the official register for<br />
+          <strong>{{ lrAddressDisplay }}</strong>
+        </p>
+      </div>
+
+      <div class="cl-card cl-lr-card cl-w-full">
+        <div class="cl-lr-bar">
+          <span :style="{ width: `${(Math.min(lrStep, lrChecks.length) / lrChecks.length) * 100}%` }" />
+        </div>
+        <div class="cl-lr-steps">
+          <div
+            v-for="(label, i) in lrChecks"
+            :key="label"
+            class="cl-lr-step"
+            :class="{ 'cl-lr-step-done': lrStep > i, 'cl-lr-step-active': lrStep === i }"
+          >
+            <div class="cl-lr-dot">
+              <svg v-if="lrStep > i" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              <span v-else-if="lrStep === i" class="cl-lr-spin" />
+            </div>
+            {{ label }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════ LR FOUND ════════════════════════════ -->
+    <div v-else-if="step === 'lr-found'" class="cl-screen">
+      <div class="cl-hero">
+        <div class="cl-hero-ic cl-hero-ic--success"><img src="/build/ownershipCheck.png" alt="" /></div>
+        <h1 class="cl-h1">Ownership verified</h1>
+        <p class="cl-body">
+          Your verified name matches the HM Land Registry record for
+          <strong>{{ lrAddressDisplay }}</strong>.
+        </p>
+      </div>
+
+      <div class="cl-card cl-mb-sm">
+        <div class="cl-lrf-head">
+          <span class="cl-lrf-head-ic"><img src="/build/lrTitleBank.png" alt="" /></span>
+          <span class="cl-eyebrow" style="margin: 0;">Land Registry title data</span>
+        </div>
+        <div class="cl-lrf-rows">
+          <div class="cl-lrf-row">
+            <span class="cl-lrf-rowhead">
+              <span class="cl-lrf-row-ic">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="9" x2="20" y2="9" /><line x1="4" y1="15" x2="20" y2="15" /><line x1="10" y1="3" x2="8" y2="21" /><line x1="16" y1="3" x2="14" y2="21" /></svg>
+              </span>
+              <span class="cl-lrf-l">Title number</span>
+            </span>
+            <span class="cl-lrf-v">{{ titleDisplay }}</span>
+          </div>
+          <div class="cl-lrf-row">
+            <span class="cl-lrf-rowhead">
+              <span class="cl-lrf-row-ic">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /></svg>
+              </span>
+              <span class="cl-lrf-l">Tenure</span>
+            </span>
+            <span class="cl-lrf-v">{{ tenureDisplay }}</span>
+          </div>
+          <div class="cl-lrf-row">
+            <span class="cl-lrf-rowhead">
+              <span class="cl-lrf-row-ic">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+              </span>
+              <span class="cl-lrf-l">Proprietor</span>
+            </span>
+            <span class="cl-lrf-v cl-lrf-v-good">✓ {{ proprietorDisplay }}</span>
+          </div>
+          <div class="cl-lrf-row">
+            <span class="cl-lrf-rowhead">
+              <span class="cl-lrf-row-ic">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
+              </span>
+              <span class="cl-lrf-l">Registered</span>
+            </span>
+            <span class="cl-lrf-v">{{ registeredDisplay }}</span>
+          </div>
+          <div class="cl-lrf-row cl-lrf-row-last">
+            <span class="cl-lrf-rowhead">
+              <span class="cl-lrf-row-ic">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+              </span>
+              <span class="cl-lrf-l">Charges</span>
+            </span>
+            <span class="cl-lrf-v">Not available</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="cl-ready cl-mb-sm">
+        <img class="cl-ready-img" src="/build/umu-passport-sm.png" alt="Property Passport" />
+        <div>
+          <div class="cl-ready-t">Your Property Passport is ready</div>
+          <div class="cl-ready-s">
+            {{ proprietorDisplay }} is confirmed as the owner. Issue your Passport
+            to start building its record.
+          </div>
+        </div>
+      </div>
+
+      <div v-if="issueError" class="cl-err-banner">
+        <span>{{ issueError }}</span>
+        <button v-if="!needsPhone" class="cl-err-retry" @click="issuePassport">Retry</button>
+      </div>
+
+      <!-- The backend can refuse to issue until the account has a phone
+           number (it is optional at sign-up), so collect it right here. -->
+      <div v-if="needsPhone" class="cl-card cl-mb-sm">
+        <div class="cl-eyebrow cl-mb-xs">Add your mobile number</div>
+        <p class="cl-body cl-mb-md">
+          We need a mobile number on your account before we can issue your Passport.
+        </p>
+        <PhoneInput v-model="phoneInput" />
+        <div v-if="phoneError" class="cl-err-banner" style="margin-top: 12px;">{{ phoneError }}</div>
+        <button
+          class="cl-err-retry"
+          style="margin-top: 12px;"
+          :disabled="phoneSaving || issueLoading"
+          @click="savePhoneAndIssue"
+        >
+          {{ phoneSaving || issueLoading ? 'Saving…' : 'Save number and issue Passport' }}
+        </button>
+      </div>
+    </div>
+
+          <!-- Inline CTA (desktop — replaces the mobile fixed action bar) -->
+          <div v-if="showCta" class="cl-cta-inline">
+            <button
+              class="cl-btn-brand"
+              :disabled="ctaDisabled"
+              @click="onPrimary"
+            >
+              <span v-if="ctaLoading" class="cl-btn-spinner" />
+              {{ ctaLabel }}
+            </button>
+          </div>
+
+        </section>
+
+        <!-- Reassurance rail — the property being claimed, then why it's safe -->
+        <aside class="claim-aside">
+          <div v-if="selectedProperty && step !== 'search'" class="claim-aside-prop">
+            <SelectedAddressCard :property="selectedProperty" readonly />
+          </div>
+          <div class="claim-aside-card">
+            <div class="claim-aside-eyebrow">Why this is safe</div>
+            <ul class="claim-aside-list">
+              <li>
+                <span class="claim-aside-ic"><img src="/build/dvsBank.png" alt="" /></span>
+                <div>
+                  <div class="claim-aside-t">HM Land Registry</div>
+                  <p>Ownership verified against the official register.</p>
+                </div>
+              </li>
+              <li>
+                <span class="claim-aside-ic"><img src="/build/idCard.png" alt="" /></span>
+                <div>
+                  <div class="claim-aside-t">Identity by Persona</div>
+                  <p>Bank-grade ID &amp; liveness checks, used by major UK fintechs.</p>
+                </div>
+              </li>
+              <li>
+                <span class="claim-aside-ic"><img src="/build/shield.png" alt="" /></span>
+                <div>
+                  <div class="claim-aside-t">Encrypted &amp; private</div>
+                  <p>Your documents are encrypted and never sold.</p>
+                </div>
+              </li>
+            </ul>
+            <div class="claim-aside-trust">
+              <span><img src="/build/padlock.png" alt="" />Encrypted</span>
+              <span><img src="/build/lrTitleBank.png" alt="" />HM Land Registry</span>
+              <span><img src="/build/shield.png" alt="" />Never sold</span>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </main>
+
+    <ClaimPassportTypeDrawer
+      v-model="showTypeDrawer"
+      @confirm="onPassportTypeConfirmed"
+    />
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
+import { useRoute } from 'vue-router'
+import PropertySearchInput from '~/components/property/PropertySearchInput.vue'
+import PhoneInput from '~/components/form/PhoneInput.vue'
+import ProfileMenu from '~/components/core/ProfileMenu.vue'
+import ClaimStepTracker from '~/components/claim/ClaimStepTracker.vue'
+import SelectedAddressCard from '~/components/claim/SelectedAddressCard.vue'
+import AddressHelp from '~/components/claim/AddressHelp.vue'
+import { toTitleCase } from '~/utils/form-helpres'
+import { FLOW_HOME } from '~/utils/appFlow'
+import { CLAIM_STEPS } from '~/utils/claimSteps'
+
+definePageMeta({ middleware: 'auth' })
+
+type ClaimStep =
+  | 'search'
+  | 'confirm'
+  | 'kyc-explainer'
+  | 'kyc-id'
+  | 'kyc-liveness'
+  | 'kyc-aml'
+  | 'kyc-verified'
+  | 'lr-searching'
+  | 'lr-found'
+
+import ClaimPassportTypeDrawer from '~/components/property/ClaimPassportTypeDrawer.vue'
+
+const route = useRoute()
+const config = useRuntimeConfig()
+
+// Passport-type gate. Always shown before the actual claim happens, even if
+// the user's role preference suggests one or the other.
+const showTypeDrawer = ref(false)
+const chosenPassportType = ref<'seller' | 'landlord' | null>(null)
+const chosenIsHmo = ref(false)
+function onPassportTypeConfirmed(payload: { type: 'seller' | 'landlord'; isHmo: boolean }) {
+  chosenPassportType.value = payload.type
+  chosenIsHmo.value = payload.isHmo
+  showTypeDrawer.value = false
+  // Resume the claim only if the user is already at the final step. When the
+  // drawer is shown at mount-time (the common case), the user still needs to
+  // walk through search → confirm → KYC; their choice is just persisted.
+  if (step.value === 'lr-found') {
+    issuePassport()
+  }
+}
+const base = config.public.apiBase as string
+
+const propertyId = route.params.id as string
+const step = ref<ClaimStep>('search')
+const selectedProperty = ref<any>(null)
+
+// KYC state
+const idInputEl = ref<HTMLInputElement | null>(null)
+const idUploadSide = ref<'front' | 'back'>('front')
+const idFrontFile = ref<File | null>(null)
+const idBackFile = ref<File | null>(null)
+const idFrontUrl = ref<string>('')
+const idBackUrl = ref<string>('')
+
+// Liveness state
+const livenessAnalysing = ref(false)
+
+// LR state
+const lrStep = ref(0)
+const lrChecks = [
+  'Address matched to title number',
+  'Title register retrieved',
+  'Proprietor matched to your identity',
+]
+
+// Verification / issue errors
+const verificationError = ref('')
+const verifyLoading = ref(false)
+const issueError = ref('')
+const issueLoading = ref(false)
+
+// Phone fallback for an issue refused for want of a phone number.
+const needsPhone = computed(() => issueError.value.toLowerCase().includes('phone'))
+const phoneInput = ref('')
+const phoneSaving = ref(false)
+const phoneError = ref('')
+
+async function savePhoneAndIssue() {
+  phoneError.value = ''
+  if (phoneInput.value.replace(/\D/g, '').length < 7) {
+    phoneError.value = 'Please enter a valid mobile number.'
+    return
+  }
+  phoneSaving.value = true
+  try {
+    await $fetch(`${base}/profile/me`, {
+      method: 'PATCH',
+      headers: authHeaders(),
+      body: { phone: phoneInput.value },
+    })
+  } catch (e: any) {
+    phoneError.value =
+      e?.data?.message || 'Could not save your number. Please try again.'
+    return
+  } finally {
+    phoneSaving.value = false
+  }
+  await issuePassport()
+}
+
+// Profile (for proprietor name)
+const userFullName = ref<string>('')
+
+// ── Helpers ──────────────────────────────────────────────────
+function token() {
+  return typeof window !== 'undefined' ? localStorage.getItem('token') : null
+}
+function authHeaders() {
+  return {
+    Authorization: `Bearer ${token()}`,
+    'Content-Type': 'application/json',
+  }
+}
+
+async function loadProperty() {
+  if (!propertyId || propertyId === 'new') return
+  try {
+    const data = await $fetch<any>(`${base}/property/${propertyId}`)
+    if (data && data.id) {
+      selectedProperty.value = data
+      step.value = 'confirm'
+    }
+  } catch {
+    // Property not found — remain on search step
+  }
+}
+
+async function loadProfile() {
+  try {
+    const p = await $fetch<any>(`${base}/profile/me`, {
+      headers: { Authorization: `Bearer ${token()}` },
+    })
+    const n = [p?.firstName, p?.lastName].filter(Boolean).join(' ').trim()
+    userFullName.value = n || p?.email || 'Property owner'
+  } catch {
+    userFullName.value = 'Property owner'
+  }
+}
+
+onMounted(async () => {
+  // First thing: ask the user which type of passport they're claiming.
+  // Always shown — even if their profile role suggests one — so they can
+  // override per-property (a landlord might still claim a seller passport).
+  showTypeDrawer.value = true
+  await Promise.all([loadProperty(), loadProfile()])
+})
+
+// ── Topbar logic ──────────────────────────────────────────────
+const showCta = computed(() => step.value !== 'lr-searching')
+
+// `stage` is the step of the overall journey (utils/claimSteps.ts) each screen
+// belongs to, so the tracker keeps counting from the claim start page instead
+// of restarting per sub-flow. Stage 4 (the Passport) is the page we hand off to.
+const stepMeta: Record<ClaimStep, { title: string; stage: number }> = {
+  search: { title: 'Find your property', stage: 1 },
+  confirm: { title: 'Confirm property', stage: 1 },
+  'kyc-explainer': { title: 'Verify identity', stage: 2 },
+  'kyc-id': { title: 'Photo ID', stage: 2 },
+  'kyc-liveness': { title: 'Liveness check', stage: 2 },
+  'kyc-aml': { title: 'AML screening', stage: 2 },
+  'kyc-verified': { title: 'Identity verified', stage: 3 },
+  'lr-searching': { title: 'Searching Land Registry', stage: 3 },
+  'lr-found': { title: 'Ownership confirmed', stage: 3 },
+}
+const topbarTitle = computed(() => stepMeta[step.value].title)
+const claimStage = computed(() => stepMeta[step.value].stage)
+const topbarSub = computed(
+  () => `Step ${claimStage.value} of ${CLAIM_STEPS.length} · ${CLAIM_STEPS[claimStage.value - 1]?.short ?? ''}`,
+)
+
+// ── Display fields (from selectedProperty) ─────────────────────
+const tenureDisplay = computed(
+  () => selectedProperty.value?.tenure || '—',
+)
+const titleDisplay = computed(
+  () => selectedProperty.value?.titleNumber || '—',
+)
+const typeDisplay = computed(
+  () => selectedProperty.value?.propertyType || '—',
+)
+const registeredDisplay = computed(() => {
+  const d = selectedProperty.value?.createdAt
+  if (!d) return '—'
+  try {
+    const date = new Date(d)
+    return date.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })
+  } catch {
+    return '—'
+  }
+})
+const proprietorDisplay = computed(
+  () => userFullName.value || 'Property owner',
+)
+const lrAddressDisplay = computed(() => {
+  const a1 = selectedProperty.value?.addressLine1 || 'your property'
+  const pc = selectedProperty.value?.postcode || ''
+  return pc ? `${a1}, ${pc}` : a1
+})
+
+// ── Search step ───────────────────────────────────────────────
+function onPropertySelect(p: any) {
+  selectedProperty.value = p
+}
+function clearSelection() {
+  selectedProperty.value = null
+}
+
+// ── Back button ───────────────────────────────────────────────
+function onBack() {
+  switch (step.value) {
+    case 'search':
+      navigateTo(FLOW_HOME)
+      return
+    case 'confirm':
+      step.value = 'search'
+      return
+    case 'kyc-explainer':
+      step.value = 'confirm'
+      return
+    case 'kyc-id':
+      step.value = 'kyc-explainer'
+      return
+    case 'kyc-liveness':
+      step.value = 'kyc-id'
+      return
+    case 'kyc-aml':
+      step.value = 'kyc-liveness'
+      return
+    case 'kyc-verified':
+      step.value = 'kyc-aml'
+      return
+    case 'lr-found':
+      step.value = 'kyc-verified'
+      return
+    default:
+      navigateTo(FLOW_HOME)
+  }
+}
+
+// ── KYC: ID upload ────────────────────────────────────────────
+function triggerUpload(side: 'front' | 'back') {
+  idUploadSide.value = side
+  idInputEl.value?.click()
+}
+function onIdFile(ev: Event) {
+  const input = ev.target as HTMLInputElement
+  const f = input.files?.[0]
+  if (!f) return
+  const url = URL.createObjectURL(f)
+  if (idUploadSide.value === 'front') {
+    idFrontFile.value = f
+    idFrontUrl.value = url
+  } else {
+    idBackFile.value = f
+    idBackUrl.value = url
+  }
+  // Allow re-selecting the same file later
+  input.value = ''
+}
+
+// ── CTA label / action per step ───────────────────────────────
+const ctaLabel = computed(() => {
+  switch (step.value) {
+    case 'search':
+      return 'Confirm address →'
+    case 'confirm':
+      return verifyLoading.value ? 'Starting…' : 'Yes, this is my property →'
+    case 'kyc-explainer':
+      return personaPolling.value ? 'Verifying…' : 'Start identity check →'
+    case 'kyc-id':
+      return 'Continue →'
+    case 'kyc-liveness':
+      return livenessAnalysing.value ? 'Analysing…' : 'Open camera →'
+    case 'kyc-aml':
+      return 'Complete verification →'
+    case 'kyc-verified':
+      return 'Verify property ownership →'
+    case 'lr-found':
+      return issueLoading.value ? 'Issuing…' : 'Issue my Passport →'
+    default:
+      return 'Continue →'
+  }
+})
+const ctaDisabled = computed(() => {
+  if (
+    verifyLoading.value ||
+    livenessAnalysing.value ||
+    issueLoading.value ||
+    personaPolling.value
+  )
+    return true
+  switch (step.value) {
+    case 'search':
+      return !selectedProperty.value
+    case 'kyc-id':
+      return !idFrontFile.value
+    default:
+      return false
+  }
+})
+const ctaLoading = computed(
+  () =>
+    verifyLoading.value ||
+    livenessAnalysing.value ||
+    issueLoading.value ||
+    personaPolling.value,
+)
+
+function onPrimary() {
+  switch (step.value) {
+    case 'search':
+      step.value = 'confirm'
+      return
+    case 'confirm':
+      confirmProperty()
+      return
+    case 'kyc-explainer':
+      // Real Persona flow — opens hosted page in a new tab and polls for completion.
+      startPersonaKyc()
+      return
+    case 'kyc-id':       // Legacy simulated screens — unreachable when Persona is wired.
+    case 'kyc-liveness':
+    case 'kyc-aml':
+      step.value = 'kyc-verified'
+      return
+    case 'kyc-verified':
+      step.value = 'lr-searching'
+      return
+    case 'lr-found':
+      issuePassport()
+      return
+  }
+}
+
+// ── confirm → start-verification → kyc-explainer (or skip if already verified) ─────────────
+async function confirmProperty() {
+  verificationError.value = ''
+  if (!selectedProperty.value?.id) {
+    step.value = 'kyc-explainer'
+    return
+  }
+  verifyLoading.value = true
+  try {
+    await $fetch(
+      `${base}/property/${selectedProperty.value.id}/start-verification`,
+      { method: 'POST', headers: authHeaders() },
+    )
+
+    // Per-user KYC: if the user has already passed Persona on a previous
+    // claim, jump straight past identity verification.
+    try {
+      const { getKycStatus } = useKyc()
+      const r = await getKycStatus()
+      if (r.status === 'approved') {
+        step.value = 'kyc-verified'
+        return
+      }
+    } catch {
+      // If status lookup fails, fall through to the explainer screen.
+    }
+
+    step.value = 'kyc-explainer'
+  } catch (e: any) {
+    verificationError.value =
+      e?.data?.message || 'Could not start verification. Please try again.'
+  } finally {
+    verifyLoading.value = false
+  }
+}
+
+// ── Persona KYC: open hosted flow + poll until settled ──────────
+const personaError = ref('')
+const personaPolling = ref(false)
+const personaInquiryId = ref<string | null>(null)
+const personaCheckingNow = ref(false)
+let personaAbort: AbortController | null = null
+
+async function startPersonaKyc() {
+  personaError.value = ''
+  personaPolling.value = true
+  const { startKyc } = useKyc()
+  try {
+    const start = await startKyc()
+    if (start.alreadyVerified || start.status === 'approved') {
+      step.value = 'kyc-verified'
+      return
+    }
+    if (!start.hostedUrl) {
+      personaError.value = 'Could not open the verification page.'
+      personaPolling.value = false
+      return
+    }
+    personaInquiryId.value = start.inquiryId
+    // Open the hosted flow in a new tab. Persona handles ID upload,
+    // liveness + AML inside their UI; we just wait for the result.
+    const w = window.open(start.hostedUrl, '_blank', 'noopener')
+    if (!w) {
+      personaError.value =
+        'Pop-ups blocked — allow pop-ups for this site and try again.'
+      personaPolling.value = false
+      return
+    }
+    runPolling()
+  } catch (e: any) {
+    personaError.value =
+      e?.data?.message || e?.message || 'Verification could not start.'
+    personaPolling.value = false
+  }
+}
+
+async function runPolling() {
+  const { pollUntilSettled } = useKyc()
+  personaError.value = ''
+  personaPolling.value = true
+  personaAbort?.abort()
+  personaAbort = new AbortController()
+  try {
+    const finalStatus = await pollUntilSettled({
+      intervalMs: 3000,
+      maxAttempts: 100, // ≈ 5 minutes at 3s each
+      signal: personaAbort.signal,
+    })
+    if (finalStatus === 'approved') {
+      step.value = 'kyc-verified'
+      personaError.value = ''
+    } else if (finalStatus === 'declined' || finalStatus === 'failed') {
+      personaError.value =
+        'Identity verification failed. Please retry or contact support.'
+    } else if (finalStatus === 'needs_review') {
+      personaError.value =
+        "Your details need a manual review — we'll email you when it's done."
+    }
+  } catch (e: any) {
+    if (e?.message === 'timeout') {
+      personaError.value =
+        "We're still waiting for the verification result. If you've finished, tap \"Check now\"."
+    } else if (e?.message !== 'Polling aborted') {
+      personaError.value =
+        e?.data?.message || e?.message || 'Could not check status.'
+    }
+  } finally {
+    personaPolling.value = false
+  }
+}
+
+// Manual "I'm done — check now" button. Hits /kyc/status once and acts on it.
+async function checkPersonaNow() {
+  if (personaCheckingNow.value) return
+  personaCheckingNow.value = true
+  personaError.value = ''
+  try {
+    const { getKycStatus } = useKyc()
+    const r = await getKycStatus()
+    if (r.status === 'approved') {
+      personaAbort?.abort()
+      step.value = 'kyc-verified'
+    } else if (r.status === 'declined' || r.status === 'failed') {
+      personaError.value =
+        'Identity verification failed. Please retry or contact support.'
+    } else if (r.status === 'needs_review') {
+      personaError.value =
+        "Your details need a manual review — we'll email you when it's done."
+    } else if (r.status === 'pending') {
+      personaError.value =
+        "We can't see your result yet — Persona usually takes a few seconds. Try again in a moment."
+    } else {
+      personaError.value = "We haven't received a verification result yet."
+    }
+  } catch (e: any) {
+    personaError.value = e?.data?.message || e?.message || 'Could not check status.'
+  } finally {
+    personaCheckingNow.value = false
+  }
+}
+
+onBeforeUnmount(() => personaAbort?.abort())
+
+// ── Liveness simulated delay ──────────────────────────────────
+async function doLiveness() {
+  livenessAnalysing.value = true
+  await new Promise((r) => setTimeout(r, 1500))
+  livenessAnalysing.value = false
+  step.value = 'kyc-aml'
+}
+
+// ── LR searching animation → lr-found ─────────────────────────
+watch(
+  () => step.value,
+  (s) => {
+    if (s === 'lr-searching') runLrSearch()
+  },
+)
+async function runLrSearch() {
+  lrStep.value = 0
+  await new Promise((r) => setTimeout(r, 700))
+  lrStep.value = 1
+  await new Promise((r) => setTimeout(r, 800))
+  lrStep.value = 2
+  await new Promise((r) => setTimeout(r, 900))
+  lrStep.value = 3
+  await new Promise((r) => setTimeout(r, 600))
+  if (step.value === 'lr-searching') step.value = 'lr-found'
+}
+
+// ── Issue passport (complete-verification + claim) ────────────
+async function issuePassport() {
+  issueError.value = ''
+  const pId = selectedProperty.value?.id
+  if (!pId) {
+    issueError.value = 'No property selected.'
+    return
+  }
+  issueLoading.value = true
+  try {
+    // 1) complete-verification
+    try {
+      await $fetch(`${base}/property/${pId}/complete-verification`, {
+        method: 'POST',
+        headers: authHeaders(),
+      })
+    } catch {
+      // Non-fatal: still try to claim; backend may tolerate without
+    }
+
+    // 2) Gate the claim on the user's passport-type pick.
+    // We deliberately do NOT short-circuit on getPassportStatus() here:
+    // that endpoint only returns SELLER passports (it's buyer-facing), so
+    // reusing its id would land a landlord claim on a seller passport.
+    // The backend's createPassport dedupes per (owner, property, type)
+    // and returns the existing same-type passport if one already exists.
+    if (!chosenPassportType.value) {
+      issueLoading.value = false
+      showTypeDrawer.value = true
+      return
+    }
+    const { claimPassport } = usePassportClaim()
+    const res = await claimPassport(
+      pId,
+      selectedProperty.value?.addressLine1 ?? '',
+      selectedProperty.value?.postcode ?? '',
+      { type: chosenPassportType.value, isHmo: chosenIsHmo.value },
+    )
+    const passportId = res.passportId
+    if (!passportId) throw new Error('Passport could not be created')
+
+    // 3) Open the issued Passport — the seller view (with its Buyer/Seller
+    // switch) or the landlord view, per the type chosen. replace: true so the
+    // back button doesn't drop the user mid-KYC.
+    await navigateTo(
+      chosenPassportType.value === 'landlord'
+        ? `/passportview/landlord/${passportId}`
+        : `/passportview/${passportId}`,
+      { replace: true },
+    )
+  } catch (e: any) {
+    issueError.value =
+      e?.data?.message ||
+      e?.message ||
+      'Could not issue your Passport. Please try again.'
+  } finally {
+    issueLoading.value = false
+  }
+}
+</script>
+
+<style scoped>
+.claim-root {
+  min-height: 100dvh;
+  background: #f3f2ef;
+  padding-bottom: 0;
+  color: #231d45;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont,
+    'Segoe UI', Inter, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  /* Clip sideways only (the ambient blobs overhang) — clipping vertically
+     cut the address-search dropdown off at the bottom of the page. `clip`
+     rather than `hidden` keeps the sticky nav working. */
+  overflow-x: clip;
+  position: relative;
+}
+
+.cl-ambient,
+.cl-mesh {
+  display: none;
+  pointer-events: none;
+  position: fixed;
+}
+
+.cl-ambient {
+  border-radius: 999px;
+  filter: blur(48px);
+  opacity: 0.16;
+}
+
+.cl-ambient-a {
+  width: 300px;
+  height: 300px;
+  left: -100px;
+  top: 120px;
+  background: #00a19a;
+}
+
+.cl-ambient-b {
+  width: 320px;
+  height: 320px;
+  right: -120px;
+  top: 160px;
+  background: #5a4cf0;
+}
+
+.cl-mesh {
+  inset: 0;
+  opacity: 0.02;
+  background-image:
+    linear-gradient(rgba(18, 42, 72, 0.8) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(18, 42, 72, 0.8) 1px, transparent 1px);
+  background-size: 36px 36px;
+  mask-image: linear-gradient(180deg, #000, transparent 86%);
+}
+
+/* ── Web nav (shared HomeScore pattern) ───────────────────────────── */
+.hsw-shell {
+  width: min(1180px, calc(100% - 48px));
+  margin: 0 auto;
+  position: relative;
+  z-index: 2;
+}
+
+.hsw-nav {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: rgba(243, 242, 239, 0.88);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(35, 29, 69, 0.07);
+}
+
+.hsw-nav-inner {
+  min-height: 66px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.hsw-brand {
+  border: 0;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: #0d1835;
+  cursor: pointer;
+  font-size: 20px;
+  font-weight: 800;
+  flex-shrink: 0;
+  font-family: inherit;
+}
+
+.hsw-brand-logo {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
+.hsw-brand-beta {
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: #00857f;
+  background: rgba(0, 161, 154, 0.1);
+  border: 1px solid rgba(0, 161, 154, 0.3);
+  border-radius: 6px;
+  padding: 2px 7px;
+  margin-left: 2px;
+}
+
+.hsw-links {
+  display: flex;
+  gap: 6px;
+}
+
+.hsw-links button {
+  border: 0;
+  background: transparent;
+  color: #475a7b;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 10px 14px;
+  border-radius: 10px;
+  white-space: nowrap;
+  font-family: inherit;
+  transition: background 0.18s, color 0.18s;
+}
+
+.hsw-links button:hover {
+  color: #0c2342;
+  background: rgba(0, 161, 154, 0.08);
+}
+
+.hsw-links button.active {
+  color: #00857f;
+  background: rgba(0, 161, 154, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(0, 161, 154, 0.24);
+}
+
+.hsw-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.hsw-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 42px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid #d8e3ee;
+  background: #fff;
+  color: #0c2342;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.18s, background 0.18s;
+}
+
+.hsw-back:hover {
+  border-color: #bfd1e4;
+  background: #f8fbff;
+}
+
+.hsw-back svg {
+  width: 15px;
+  height: 15px;
+}
+
+/* ── Desktop wizard canvas ────────────────────────────────────────── */
+.claim-main {
+  padding-top: 40px;
+  padding-bottom: 56px;
+  display: flex;
+  flex-direction: column;
+}
+/* Room below the address search so its suggestions can scroll fully into
+   view instead of being squeezed against the bottom of the page. */
+.claim-main--search {
+  padding-bottom: 220px;
+}
+
+/* Page header — title + progress span the full canvas width */
+.claim-head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: min(100%, 1040px);
+  margin: 0 auto 26px;
+}
+.claim-head-text {
+  min-width: 160px;
+}
+.claim-head-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: #231d45;
+  letter-spacing: -0.01em;
+}
+.claim-head-sub {
+  font-size: 12.5px;
+  color: #6b6783;
+  font-weight: 700;
+  margin-top: 2px;
+}
+.claim-tracker {
+  width: min(100%, 1040px);
+  margin: -8px auto 28px;
+}
+
+/* Two-column layout: framed panel + reassurance rail */
+.claim-layout {
+  width: min(100%, 1040px);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 28px;
+  align-items: start;
+}
+.claim-panel {
+  position: relative;
+  background: #fff;
+  border: 1px solid rgba(174, 201, 231, 0.5);
+  border-radius: 22px;
+  padding: 38px 34px 28px;
+  box-shadow:
+    0 18px 44px rgba(17, 52, 88, 0.09),
+    inset 0 1px 0 rgba(255, 255, 255, 0.96);
+}
+/* Brand accent along the top edge (no overflow clipping — the address
+   search dropdown opens inside this panel). */
+.claim-panel::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  right: -1px;
+  height: 4px;
+  border-radius: 22px 22px 0 0;
+  background: linear-gradient(90deg, #00a19a 0%, #4dd4ce 55%, #8b7cf6 100%);
+}
+.claim-aside-prop {
+  margin-bottom: 16px;
+}
+
+/* Reassurance rail */
+.claim-aside {
+  position: sticky;
+  top: 90px;
+}
+.claim-aside-card {
+  padding: 24px 22px;
+  border: 1px solid rgba(231, 236, 242, 0.9);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 14px 34px rgba(17, 52, 88, 0.06);
+}
+.claim-aside-eyebrow {
+  font-size: 11px;
+  font-weight: 800;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 16px;
+}
+.claim-aside-list {
+  list-style: none;
+  margin: 0 0 18px;
+  padding: 0;
+  display: grid;
+  gap: 16px;
+}
+.claim-aside-list li {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.claim-aside-ic {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  background: #f2faf8;
+  border: 1px solid #e5f4f2;
+  display: grid;
+  place-items: center;
+  font-size: 17px;
+}
+.claim-aside-t {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #231d45;
+  margin-bottom: 2px;
+}
+.claim-aside-list p {
+  margin: 0;
+  font-size: 12.5px;
+  color: #6b6783;
+  line-height: 1.5;
+}
+.claim-aside-trust {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 16px;
+  border-top: 1px solid #eef2f6;
+}
+.claim-aside-trust span {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #4a5570;
+  background: #f6fafd;
+  border: 1px solid #e7ecf2;
+  padding: 6px 10px;
+  border-radius: 999px;
+}
+
+/* Inline CTA sits at the foot of the panel (no more mobile fixed bar) */
+.cl-cta-inline {
+  margin-top: 26px;
+  padding-top: 22px;
+  border-top: 1px solid #eef2f7;
+}
+.cl-cta-inline .cl-btn-brand {
+  width: 100%;
+}
+
+/* ── Topbar ─────────────────────────────────────────── */
+.cl-topbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: min(100%, 620px);
+  margin: 0 auto;
+  border: 1px solid rgba(187, 211, 235, 0.58);
+  border-radius: 20px;
+  background: rgba(249, 252, 255, 0.92);
+  box-shadow:
+    0 12px 28px rgba(17, 52, 88, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(8px);
+  padding: 14px 18px 8px;
+  padding-top: calc(14px + env(safe-area-inset-top));
+  gap: 8px;
+}
+.cl-back {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid #ececef;
+  background: #fff;
+  font-size: 22px;
+  line-height: 1;
+  color: #231d45;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.cl-back:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(35, 29, 69, 0.12);
+}
+.cl-back svg {
+  width: 18px;
+  height: 18px;
+}
+.cl-top-text { flex: 1; text-align: center; }
+.cl-top-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: #231d45;
+  letter-spacing: -0.01em;
+}
+.cl-top-sub {
+  font-size: 11px;
+  color: #6b6783;
+  font-weight: 700;
+  margin-top: 2px;
+}
+.cl-spacer { width: 32px; }
+
+.cl-prog-strip {
+  width: min(100%, 620px);
+  margin: 8px auto 0;
+  border-radius: 100px;
+  height: 4px;
+  background: #ececef;
+  overflow: hidden;
+}
+.cl-prog-strip span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #00a19a, #3dbda3);
+  transition: width 0.35s ease;
+}
+
+/* ── Screen ─────────────────────────────────────────── */
+.cl-screen {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  animation: cl-step-enter 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.cl-screen > * {
+  animation: cl-rise-in 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.cl-screen > *:nth-child(1) { animation-delay: 0.03s; }
+.cl-screen > *:nth-child(2) { animation-delay: 0.06s; }
+.cl-screen > *:nth-child(3) { animation-delay: 0.09s; }
+.cl-screen > *:nth-child(4) { animation-delay: 0.12s; }
+.cl-screen > *:nth-child(5) { animation-delay: 0.15s; }
+.cl-screen > *:nth-child(6) { animation-delay: 0.18s; }
+
+@keyframes cl-step-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes cl-rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.cl-center-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.cl-center-full {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 8px;
+  text-align: center;
+  min-height: 440px;
+}
+
+.cl-icon-square {
+  width: 64px;
+  height: 64px;
+  background: #f2faf8;
+  border: 1px solid #e5f4f2;
+  border-radius: 20px;
+  display: grid;
+  place-items: center;
+  margin: 0 auto 18px;
+  font-size: 30px;
+  box-shadow:
+    0 10px 24px rgba(17, 52, 88, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+.cl-icon-square.cl-icon-lg {
+  width: 72px;
+  height: 72px;
+  border-radius: 22px;
+  font-size: 34px;
+  margin-bottom: 20px;
+}
+
+.cl-h1 {
+  font-size: 26px;
+  font-weight: 800;
+  color: #231d45;
+  margin: 0 0 8px;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+/* Step hero — centred illustration, title and lede shared by every step */
+.cl-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 24px;
+}
+.cl-hero .cl-body {
+  max-width: 470px;
+  margin: 0;
+  font-size: 15px;
+}
+.cl-hero .cl-body strong {
+  color: #231d45;
+}
+.cl-hero-ic {
+  width: 88px;
+  height: 88px;
+  margin-bottom: 18px;
+  border-radius: 26px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(160deg, #ffffff 0%, #eefaf8 100%);
+  border: 1px solid rgba(0, 161, 154, 0.2);
+  box-shadow:
+    0 0 0 8px rgba(0, 161, 154, 0.06),
+    0 14px 30px rgba(0, 161, 154, 0.16);
+  animation: cl-hero-float 4s ease-in-out infinite;
+}
+.cl-hero-ic img {
+  width: 62px;
+  height: 62px;
+  object-fit: contain;
+}
+.cl-hero-ic--success {
+  box-shadow:
+    0 0 0 8px rgba(0, 161, 154, 0.12),
+    0 16px 34px rgba(0, 161, 154, 0.28);
+}
+.cl-hero--celebrate .cl-hero-img {
+  margin-bottom: 8px;
+}
+@keyframes cl-hero-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+.cl-h2 {
+  font-size: 21px;
+  font-weight: 800;
+  color: #231d45;
+  margin: 0 0 6px;
+  letter-spacing: -0.02em;
+}
+.cl-body {
+  font-size: 14px;
+  color: #6b6783;
+  line-height: 1.55;
+  margin: 0 0 14px;
+}
+.cl-center { text-align: center; }
+.cl-mb-xs { margin-bottom: 8px; }
+.cl-mb-sm { margin-bottom: 14px; }
+.cl-mb-md { margin-bottom: 18px; }
+.cl-mb-lg { margin-bottom: 24px; }
+.cl-w-full { width: 100%; }
+.cl-text-l { text-align: left; }
+
+/* ── Field ─────────────────────────────────────────── */
+.cl-field-wrap { margin-bottom: 14px; }
+
+/* Keep the open address suggestions above everything that follows the field.
+   The lock note (still transformed by its entrance animation) and the
+   disabled CTA (its opacity) each form their own stacking layer, which painted
+   over the dropdown. */
+.cl-screen { position: relative; z-index: 2; }
+.cl-field-wrap { position: relative; z-index: 5; }
+.cl-field-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 6px;
+}
+
+/* ── Selected address card ─────────────────────────── */
+.cl-sel-card {
+  background: linear-gradient(170deg, #fbfdff 0%, #f6f9ff 100%);
+  border: 1px solid rgba(174, 201, 231, 0.52);
+  border-radius: 16px;
+  padding: 12px 16px;
+  margin-bottom: 14px;
+  box-shadow:
+    0 10px 24px rgba(17, 52, 88, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+.cl-sel-card:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 14px 30px rgba(17, 52, 88, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+.cl-sel-eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  color: #1f7a66;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+.cl-sel-line1 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #231d45;
+}
+.cl-sel-line2 {
+  font-size: 13px;
+  color: #475569;
+}
+.cl-sel-change {
+  font-size: 12px;
+  color: #00a19a;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 8px;
+}
+
+/* ── Lock note ─────────────────────────────────────── */
+.cl-lock-note {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: #f2faf8;
+  border: 1px solid #e5f4f2;
+  border-radius: 14px;
+}
+.cl-lock-ic { font-size: 18px; }
+.cl-lock-body {
+  font-size: 12px;
+  color: #475569;
+  line-height: 1.5;
+}
+.cl-lock-body strong { color: #231d45; }
+
+/* ── Confirm navy card ─────────────────────────────── */
+.cl-navy-card {
+  background: linear-gradient(135deg, #231d45, #2d2560);
+  border-radius: 20px;
+  padding: 20px;
+  margin-bottom: 16px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 14px 32px rgba(35, 29, 69, 0.28);
+}
+.cl-navy-glow {
+  position: absolute;
+  right: -20px;
+  top: -20px;
+  width: 100px;
+  height: 100px;
+  background: radial-gradient(circle, rgba(0, 161, 154, 0.25), transparent 70%);
+  border-radius: 50%;
+}
+.cl-navy-img {
+  position: absolute;
+  right: 14px;
+  top: 10px;
+  width: 86px;
+  height: 86px;
+  object-fit: contain;
+  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.35));
+}
+.cl-navy-eyebrow,
+.cl-navy-addr1,
+.cl-navy-addr2 {
+  padding-right: 100px;
+}
+.cl-navy-eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 6px;
+  position: relative;
+}
+.cl-navy-addr1 {
+  font-size: 18px;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 4px;
+  position: relative;
+}
+.cl-navy-addr2 {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.65);
+  margin-bottom: 16px;
+  position: relative;
+}
+.cl-tile-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  position: relative;
+}
+.cl-tile {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+.cl-tile-l {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 3px;
+}
+.cl-tile-v {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+}
+
+/* ── Info pale ─────────────────────────────────────── */
+.cl-info-pale {
+  background: #f2faf8;
+  border: 1px solid #e5f4f2;
+  border-radius: 14px;
+  padding: 13px 16px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.cl-info-ic { font-size: 20px; flex-shrink: 0; }
+.cl-sec-ic {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  flex-shrink: 0;
+  background: #e3f5f1;
+  border: 1px solid #c7ebe5;
+  color: #00857f;
+  display: grid;
+  place-items: center;
+}
+.cl-sec-ic svg { width: 20px; height: 20px; }
+.cl-sec-ic { background: #fff; }
+.cl-sec-ic img { width: 30px; height: 30px; object-fit: contain; }
+.cl-info-body {
+  font-size: 13.5px;
+  color: #3f5063;
+  line-height: 1.55;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+}
+.cl-info-body strong { color: #16233f; font-weight: 700; }
+
+.cl-link-center {
+  text-align: center;
+  font-size: 12px;
+  color: #00a19a;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 10px;
+  transition: color 0.15s ease, transform 0.15s ease;
+}
+.cl-link-center:hover {
+  color: #0f8f88;
+  transform: translateY(-1px);
+}
+
+/* ── Card ──────────────────────────────────────────── */
+.cl-card {
+  background: #fff;
+  border: 1px solid rgba(174, 201, 231, 0.52);
+  border-radius: 18px;
+  padding: 16px;
+  box-shadow:
+    0 10px 24px rgba(17, 52, 88, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+.cl-card-pale {
+  background: linear-gradient(140deg, #f2faf8 0%, #edf8ff 100%);
+  border: 1px solid #e5f4f2;
+  border-radius: 14px;
+  padding: 14px;
+}
+.cl-eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 10px;
+}
+
+.cl-row-list {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+.cl-gap-sm { gap: 11px; }
+
+.cl-step-row {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+.cl-step-ic {
+  width: 48px;
+  height: 48px;
+  background: #fff;
+  border: 1px solid #e7ecf2;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(17, 52, 88, 0.06);
+}
+.cl-step-t {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #231d45;
+}
+.cl-step-s {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-top: 1px;
+}
+
+.cl-pale-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.cl-pale-ic { font-size: 28px; flex-shrink: 0; }
+.cl-pale-ic-sm { font-size: 18px; flex-shrink: 0; }
+.cl-pale-t {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #231d45;
+  margin-bottom: 3px;
+}
+.cl-pale-s {
+  font-size: 12px;
+  color: #475569;
+  line-height: 1.5;
+}
+
+/* ── KYC ID upload slots ───────────────────────────── */
+.cl-slot-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin-bottom: 8px;
+}
+.cl-slot {
+  height: 120px;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  margin-bottom: 14px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.2s, background 0.2s;
+}
+.cl-slot-front {
+  border: 2px dashed #cff4f2;
+  background: #f1f9f4;
+}
+.cl-slot-back {
+  border: 2px dashed #e5e7eb;
+  background: #f8fafc;
+}
+.cl-slot-filled {
+  border: 2px solid #00a19a !important;
+  background: #fff !important;
+}
+.cl-slot-ic { font-size: 32px; }
+.cl-slot-ic-muted { opacity: 0.4; }
+.cl-slot-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1f7a66;
+}
+.cl-slot-text-muted { color: #94a3b8; }
+.cl-slot-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.cl-slot-check {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 26px;
+  height: 26px;
+  background: #00a19a;
+  color: #fff;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 14px;
+  font-weight: 800;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.4);
+}
+
+.cl-pills {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.cl-pill {
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.cl-pill-good {
+  background: rgba(0, 161, 154, 0.1);
+  color: #00766f;
+  border: 1px solid rgba(0, 161, 154, 0.24);
+  font-size: 12px;
+  font-weight: 800;
+  padding: 5px 11px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+/* ── Liveness ─────────────────────────────────────── */
+.cl-live-wrap {
+  position: relative;
+  width: 160px;
+  height: 160px;
+  margin: 0 auto 24px;
+}
+.cl-live-svg {
+  position: absolute;
+  inset: 0;
+}
+.cl-live-ring {
+  transform: rotate(-90deg);
+  transform-origin: 80px 80px;
+  animation: clLiveRing 2s ease-in-out infinite alternate;
+}
+@keyframes clLiveRing {
+  from { stroke-dashoffset: 464; }
+  to { stroke-dashoffset: 116; }
+}
+.cl-live-inner {
+  position: absolute;
+  inset: 12px;
+  background: #f1f9f4;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 60px;
+}
+
+.cl-num-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: #231d45;
+}
+.cl-num {
+  width: 26px;
+  height: 26px;
+  background: #00a19a;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* ── AML ─────────────────────────────────────────── */
+.cl-aml-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.cl-aml-label {
+  font-size: 13px;
+  color: #231d45;
+  font-weight: 600;
+}
+
+/* ── KYC Verified ─────────────────────────────────── */
+.cl-big-check {
+  width: 90px;
+  height: 90px;
+  background: linear-gradient(135deg, #1f7a66, #00a19a);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  margin-bottom: 24px;
+  box-shadow: 0 12px 36px rgba(0, 161, 154, 0.35);
+}
+.cl-pill-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 28px;
+}
+
+/* ── LR searching ─────────────────────────────────── */
+.cl-lr-pulse-wrap {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  margin: 6px auto 26px;
+}
+.cl-lr-pulse {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 161, 154, 0.18);
+  border-radius: 50%;
+  animation: clLrPulse 1.8s ease-out infinite;
+}
+.cl-lr-pulse--late {
+  animation-delay: 0.9s;
+}
+@keyframes clLrPulse {
+  0% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+.cl-lr-inner {
+  position: absolute;
+  inset: 16px;
+  background: #fff;
+  border: 3px solid #00a19a;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+.cl-lr-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: left;
+}
+.cl-lr-card {
+  text-align: left;
+  padding: 18px;
+}
+.cl-lr-bar {
+  height: 6px;
+  margin-bottom: 16px;
+  border-radius: 99px;
+  background: #e8eef5;
+  overflow: hidden;
+}
+.cl-lr-bar span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #00a19a, #4dd4ce);
+  transition: width 0.5s ease;
+}
+.cl-lr-step-active {
+  color: #231d45;
+  font-weight: 700;
+}
+.cl-lr-step-active .cl-lr-dot {
+  background: rgba(0, 161, 154, 0.14);
+}
+.cl-lr-spin {
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(0, 161, 154, 0.3);
+  border-top-color: #00a19a;
+  border-radius: 50%;
+  animation: cl-spin 0.7s linear infinite;
+}
+.cl-lr-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13.5px;
+  color: #94a3b8;
+  transition: color 0.3s;
+}
+.cl-lr-step-done {
+  color: #231d45;
+  font-weight: 600;
+}
+.cl-lr-dot {
+  width: 22px;
+  height: 22px;
+  background: #e5e7eb;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  transition: background 0.3s;
+}
+.cl-lr-step-done .cl-lr-dot {
+  background: #00a19a;
+}
+
+/* ── LR Found ─────────────────────────────────────── */
+.cl-lrf-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: linear-gradient(135deg, #1f7a66, #00a19a);
+  border-radius: 16px;
+  margin-bottom: 18px;
+  color: #fff;
+  box-shadow: 0 12px 28px rgba(0, 161, 154, 0.28);
+}
+.cl-lrf-banner-ic {
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+.cl-lrf-banner-t {
+  font-size: 14px;
+  font-weight: 700;
+}
+.cl-lrf-banner-s {
+  font-size: 12px;
+  opacity: 0.85;
+  margin-top: 2px;
+}
+.cl-lrf-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.cl-lrf-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13.5px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eef2f7;
+}
+.cl-lrf-row-last { border-bottom: none; padding-bottom: 0; }
+.cl-lrf-l { color: #94a3b8; }
+.cl-lrf-v { font-weight: 700; color: #231d45; }
+.cl-lrf-v-good { color: #00857f; }
+
+/* "Your Passport is ready" — the payoff card above the Issue button */
+.cl-ready {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  border-radius: 18px;
+  background: linear-gradient(140deg, #effaf8 0%, #eef5ff 100%);
+  border: 1px solid rgba(0, 161, 154, 0.28);
+  box-shadow: 0 12px 28px rgba(0, 161, 154, 0.12);
+  text-align: left;
+}
+/* Portrait book artwork (umu-passport.png is ~5:7), so size it as one rather
+   than squashing it into a square. */
+.cl-ready-img {
+  width: 46px;
+  height: 64px;
+  flex-shrink: 0;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 10px rgba(0, 110, 104, 0.25));
+}
+.cl-ready-t {
+  font-size: 15px;
+  font-weight: 800;
+  color: #231d45;
+  margin-bottom: 3px;
+}
+.cl-ready-s {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #4a5570;
+}
+.cl-big-tick {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.cl-big-tick img { width: 46px; height: 46px; object-fit: contain; }
+
+/* ── Errors ──────────────────────────────────────── */
+.cl-err-banner {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-size: 13px;
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.cl-err-retry {
+  background: #b91c1c;
+  color: #fff;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+.cl-err-retry:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.06);
+}
+.cl-err-link {
+  background: #00a19a;
+  color: #fff;
+  text-decoration: none;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.cl-err-link:hover {
+  background: #00a19a;
+}
+
+/* ── Bottom CTA bar ──────────────────────────────── */
+.cl-cta-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+  background: rgba(249, 252, 255, 0.92);
+  border-top: 1px solid rgba(174, 201, 231, 0.45);
+  backdrop-filter: blur(8px);
+  z-index: 30;
+}
+.cl-btn-brand {
+  width: min(100%, 620px);
+  padding: 14px 18px;
+  background: linear-gradient(135deg, #00a19a 0%, #00b6ae 60%, #0f8f88 100%);
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 8px 22px rgba(0, 161, 154, 0.3);
+  transition: opacity 0.15s, filter 0.15s, transform 0.15s;
+}
+.cl-btn-brand:hover:not(:disabled) {
+  filter: brightness(1.04);
+  transform: translateY(-1px);
+}
+.cl-btn-brand:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.cl-btn-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: cl-spin 0.7s linear infinite;
+}
+@keyframes cl-spin { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .cl-screen,
+  .cl-screen > *,
+  .cl-hero-ic,
+  .cl-lr-pulse,
+  .cl-card,
+  .cl-card-pale,
+  .cl-sel-card,
+  .cl-link-center,
+  .cl-err-retry,
+  .cl-btn-brand {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
+}
+
+@media (max-width: 980px) {
+  .claim-layout {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+
+  .claim-aside {
+    position: static;
+    top: auto;
+  }
+}
+
+@media (max-width: 899px) {
+  .hsw-links {
+    display: none;
+  }
+
+  .hsw-shell {
+    width: calc(100% - 32px);
+  }
+
+  .hsw-nav-inner {
+    min-height: 58px;
+  }
+}
+
+@media (max-width: 700px) {
+  .claim-head {
+    flex-wrap: wrap;
+  }
+
+  .claim-head-prog {
+    flex-basis: 100%;
+  }
+
+  .claim-panel {
+    padding: 22px 16px 20px;
+    border-radius: 18px;
+  }
+
+  .cl-h1 {
+    font-size: 22px;
+  }
+
+  .cl-h2 {
+    font-size: 19px;
+  }
+
+  .cl-btn-brand {
+    width: 100%;
+  }
+}
+
+/* ── Build-folder illustrated icons (replace emoji placeholders) ──── */
+.cl-icon-square img { width: 40px; height: 40px; object-fit: contain; }
+.cl-icon-square.cl-icon-lg img { width: 46px; height: 46px; }
+.cl-step-ic img { width: 34px; height: 34px; object-fit: contain; }
+.cl-slot-ic img { width: 44px; height: 44px; object-fit: contain; }
+.cl-slot-ic-muted img { opacity: 0.5; }
+.cl-pill img { width: 15px; height: 15px; object-fit: contain; }
+.cl-pale-ic img { width: 36px; height: 36px; object-fit: contain; }
+
+/* 3D illustrations that replaced the old emoji glyphs */
+.cl-icon-square { background: #fff; overflow: hidden; }
+.cl-icon-square img { width: 52px; height: 52px; }
+.cl-icon-square.cl-icon-lg img { width: 52px; height: 52px; }
+.cl-lock-ic { width: 22px; height: 22px; flex-shrink: 0; }
+.cl-lock-ic img,
+.cl-pale-ic-sm img { width: 22px; height: 22px; object-fit: contain; display: block; }
+.cl-info-ic img { width: 28px; height: 28px; object-fit: contain; display: block; }
+.cl-live-inner img { width: 64%; height: 64%; object-fit: contain; }
+.cl-lr-inner img { width: 70%; height: 70%; object-fit: contain; }
+.claim-aside-trust span { display: inline-flex; align-items: center; gap: 6px; }
+.claim-aside-trust span img { width: 16px; height: 16px; object-fit: contain; }
+.claim-aside-ic img { width: 20px; height: 20px; object-fit: contain; }
+
+/* Identity-verified hero illustration (standalone, with its own sparkles) */
+.cl-hero-img {
+  width: 148px;
+  height: 148px;
+  object-fit: contain;
+  margin-bottom: 18px;
+}
+.cl-lrf-banner-ic img { width: 28px; height: 28px; object-fit: contain; }
+
+/* Land Registry title-data: header bank icon + per-row line icons */
+.cl-lrf-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.cl-lrf-head-ic {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  flex-shrink: 0;
+  background: #f1f9f4;
+  display: grid;
+  place-items: center;
+}
+.cl-lrf-head-ic img { width: 18px; height: 18px; object-fit: contain; }
+.cl-lrf-rowhead {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.cl-lrf-row-ic {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  background: #f4f7fb;
+  color: #64748b;
+  display: grid;
+  place-items: center;
+}
+.cl-lrf-row-ic svg { width: 15px; height: 15px; }
+</style>

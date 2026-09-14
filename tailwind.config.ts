@@ -1,0 +1,59 @@
+import type { Config } from 'tailwindcss'
+
+export default <Config>{
+  darkMode: 'class',
+  content: [
+    './components/**/*.{js,vue,ts}',
+    './layouts/**/*.vue',
+    './pages/**/*.vue',
+    './plugins/**/*.{js,ts}',
+    './app.vue',
+    './error.vue',
+  ],
+  theme: {
+    extend: {
+      colors: {
+        'brand-aqua': '#00a19a',
+        'purple-main': '#7C3AED',
+        'purple-light': 'var(--purple-main0)',
+        'gray-dark': 'var(--gray-900)',
+        'white-pure': 'var(--grays-white)',
+        purplemain50: 'var(--purple-main500)',
+        purplemain0: 'var(--purple-main0)',
+      },
+      fontFamily: {
+        jakarta: ['Plus Jakarta Sans', 'sans-serif'],
+        'sf-pro': [
+          'SF Pro Display',
+          '-apple-system',
+          'BlinkMacSystemFont',
+          'Segoe UI',
+          'sans-serif',
+        ],
+      },
+      defaultFontFamily: {
+        sans: [
+          'SF Pro Display',
+          '-apple-system',
+          'BlinkMacSystemFont',
+          'Segoe UI',
+          'sans-serif',
+        ],
+      },
+      fontSize: {
+        '12-regular': ['12px', { lineHeight: '15px', fontWeight: '400' }],
+        '16-medium': ['16px', { lineHeight: '23px', fontWeight: '500' }],
+        '17-medium': ['17px', { lineHeight: '23px', fontWeight: '500' }],
+        '22-emphasized': [
+          '22px',
+          { lineHeight: '28px', fontWeight: '700', letterSpacing: '-0.26px' },
+        ],
+        '28-emphasized': [
+          '28px',
+          { lineHeight: '34px', fontWeight: '700', letterSpacing: '0.38px' },
+        ],
+      },
+    },
+  },
+  plugins: [],
+}

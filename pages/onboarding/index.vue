@@ -1,0 +1,38 @@
+<template>
+  <div class="mobile-container backgound-image">
+    <ProgressBar :steps="slides.length" :currentStep="currentSlideIndex" />
+    <LogoAndSkip @onClick="onSkipClick" />
+    <TitleAndText
+      :title="currentSlide?.title"
+      :description="currentSlide?.description"
+    />
+    <CreateAccountOrLogin
+      @onCreateAccount="onCreateAccount"
+      @onLogin="onLogin"
+    />
+  </div>
+</template>
+
+<script setup>
+import ProgressBar from '@/components/ProgressBar.vue'
+import LogoAndSkip from '@/components/LogoAndSkip.vue'
+import TitleAndText from '@/components/TitleAndText.vue'
+import { useWelcomePageData } from '@/composables/useWelcomePageData'
+import CreateAccountOrLogin from '@/components/CreateAccountOrLogIn.vue'
+
+const { slides, currentSlideIndex, currentSlide } = useWelcomePageData()
+
+const onCreateAccount = async () => {
+  await navigateTo('/onboarding/signup')
+}
+
+const onLogin = async () => {
+  await navigateTo('/onboarding/signin')
+}
+
+const onSkipClick = async () => {
+  // Skip onboarding and land in the main app. The auth middleware on /explore
+  // will bounce unauthenticated users to /onboarding/signin if needed.
+  await navigateTo('/dashboard')
+}
+</script>

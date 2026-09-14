@@ -1,0 +1,40 @@
+{
+  "name": "umovingu-nuxt-app",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev --host --port 3000",
+    "dev:clean": "npx rimraf .nuxt/cache && nuxt dev --host --port 3000",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "mobile:assets": "capacitor-assets generate --ios",
+    "mobile:sync": "npm run generate && cap sync ios",
+    "mobile:open": "cap open ios"
+  },
+  "dependencies": {
+    "@capacitor-community/apple-sign-in": "^7.1.0",
+    "@capacitor/core": "^8.3.0",
+    "@capacitor/local-notifications": "^7.0.6",
+    "@capacitor/splash-screen": "^8.0.1",
+    "@codetrix-studio/capacitor-google-auth": "^3.4.0-rc.4",
+    "@nuxt/ui": "^2.18.7",
+    "@pinia/nuxt": "^0.5.5",
+    "@stripe/stripe-js": "^8.11.0",
+    "@vite-pwa/nuxt": "^1.1.1",
+    "mapbox-gl": "^3.20.0",
+    "nuxt": "^3.13.0",
+    "pinia": "^2.2.4",
+    "qrcode": "^1.5.4",
+    "vue": "latest"
+  },
+  "devDependencies": {
+    "@iconify-json/lucide": "^1.2.116",
+    "@nuxt/devtools": "^1.5.2",
+    "@nuxt/typescript-build": "^3.0.2",
+    "@tailwindcss/typography": "^0.5.15",
+    "tailwindcss": "^3.4.16",
+    "typescript": "^5.9.2"
+  }
+}

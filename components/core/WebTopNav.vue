@@ -1,0 +1,346 @@
+﻿<template>
+  <header class="webtop-nav">
+    <div class="webtop-shell webtop-inner">
+      <button class="webtop-brand" type="button" @click="navigateTo('/')">
+        <img src="/op-icons/logo.png" alt="" class="webtop-brand-logo" />
+        <span class="webtop-brand-name">umovingu</span>
+        <span class="webtop-brand-beta">BETA</span>
+      </button>
+
+      <nav class="webtop-links" aria-label="Primary navigation">
+        <button v-if="signedIn" type="button" :class="{ active: navIsActive('/dashboard') }" @click="navigateTo('/dashboard')">Dashboard</button>
+        <button v-if="!signedIn" type="button" :class="{ active: navIsActive('/explore') }" @click="navigateTo('/explore')">Explore</button>
+        <button type="button" :class="{ active: navIsActive('/homescore') }" @click="navigateTo('/homescore')">HomeScore</button>
+        <button type="button" :class="{ active: navIsActive('/passport') }" @click="navigateTo('/passport')">Passport</button>
+        <button type="button" :class="{ active: navIsActive('/marketplace') }" @click="navigateTo('/marketplace')">Marketplace</button>
+        <button type="button" :class="{ active: learnIsActive }" @click="navigateTo('/profile/learn')">Learn</button>
+      </nav>
+
+      <div class="webtop-actions">
+        <slot name="actions" />
+      </div>
+
+      <button
+        class="webtop-mobile-toggle"
+        type="button"
+        aria-label="Toggle navigation menu"
+        :aria-expanded="mobileOpen ? 'true' : 'false'"
+        @click="mobileOpen = !mobileOpen"
+      >
+        <span />
+        <span />
+        <span />
+      </button>
+    </div>
+
+    <div class="webtop-shell">
+      <div class="webtop-mobile-backdrop" :class="{ open: mobileOpen }" @click="mobileOpen = false" />
+      <div class="webtop-mobile-panel" :class="{ open: mobileOpen }">
+        <button v-if="signedIn" type="button" :class="{ active: navIsActive('/dashboard') }" @click="goMobile('/dashboard')">Dashboard</button>
+        <button v-if="!signedIn" type="button" :class="{ active: navIsActive('/explore') }" @click="goMobile('/explore')">Explore</button>
+        <button type="button" :class="{ active: navIsActive('/homescore') }" @click="goMobile('/homescore')">HomeScore</button>
+        <button type="button" :class="{ active: navIsActive('/passport') }" @click="goMobile('/passport')">Passport</button>
+        <button type="button" :class="{ active: navIsActive('/marketplace') }" @click="goMobile('/marketplace')">Marketplace</button>
+        <button type="button" :class="{ active: learnIsActive }" @click="goMobile('/profile/learn')">Learn</button>
+        <button v-if="showProfileMobile" type="button" :class="{ active: navIsActive('/profile') }" @click="goMobile('/profile')">Profile</button>
+        <slot name="mobile-extra" :close-menu="closeMobile" />
+      </div>
+    </div>
+  </header>
+</template>
+
+<script setup lang="ts">
+const props = withDefaults(defineProps<{
+  includeChatInLearn?: boolean
+  showProfileMobile?: boolean
+}>(), {
+  includeChatInLearn: false,
+  showProfileMobile: true,
+})
+
+const route = useRoute()
+const mobileOpen = ref(false)
+
+const navIsActive = (basePath: string) =>
+  route.path === basePath || route.path.startsWith(`${basePath}/`)
+
+// Dashboard and Explore are two different products, not two names for one:
+//   /dashboard - the signed-in, role-aware home (auth middleware)
+//   /explore   - the public browse page, no account needed
+// They are also mutually exclusive in this menu, matching the reference app:
+// there, /discover (our /explore) is a deliberate PRE-LOGIN entry point --
+// linked only from the logged-out landing page, and rendered without the
+// signed-in bottom nav. Nothing offers it once you have an account, because
+// a signed-in user searches from the dashboard instead. /explore carries no
+// auth middleware and no redirect (same as the reference's /discover), so a
+// bookmark or a direct link still works for anyone -- it just is not
+// advertised in this menu once you are signed in.
+//
+// Resolved after mount because localStorage doesn't exist during SSR. Until
+// then signedIn is false, which means the first paint shows the guest menu
+// (Explore visible, Dashboard hidden) and the two swap on hydration. That is
+// the safe default: better to briefly show a public link than to offer an
+// auth-gated one to someone who would only be bounced off it.
+const signedIn = ref(false)
+onMounted(() => {
+  signedIn.value =
+    typeof localStorage !== 'undefined' && !!localStorage.getItem('token')
+})
+
+const learnIsActive = computed(() =>
+  navIsActive('/profile/learn') || (props.includeChatInLearn && navIsActive('/profile/chat')),
+)
+
+const closeMobile = () => {
+  mobileOpen.value = false
+}
+
+const goMobile = (path: string) => {
+  mobileOpen.value = false
+  navigateTo(path)
+}
+
+watch(
+  () => route.path,
+  () => {
+    mobileOpen.value = false
+  },
+)
+</script>
+
+<style scoped>
+.webtop-nav {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: rgba(243, 242, 239, 0.88);
+  border-bottom: 1px solid rgba(35, 29, 69, 0.07);
+  backdrop-filter: blur(12px);
+}
+
+.webtop-shell {
+  width: min(1260px, calc(100% - 40px));
+  margin: 0 auto;
+  position: relative;
+  z-index: 2;
+}
+
+/* Three tracks rather than space-between: with flex, the links block sits
+   wherever the brand and actions widths leave it, so it drifts right when
+   there are no actions and shifts again as the actions change width. Equal
+   1fr side tracks pin the menu to the true centre of the bar on every page,
+   whatever is either side of it. */
+.webtop-inner {
+  min-height: 70px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 20px;
+}
+
+.webtop-brand {
+  border: 0;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  color: #231d45;
+  cursor: pointer;
+  flex-shrink: 0;
+  /* Start of the left track, so it never stretches across it. */
+  justify-self: start;
+}
+
+.webtop-brand-logo {
+  height: 32px;
+  width: auto;
+  object-fit: contain;
+}
+
+.webtop-brand-name {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.4px;
+  color: #231d45;
+}
+
+.webtop-brand-beta {
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: #00857f;
+  background: rgba(0, 161, 154, 0.1);
+  border: 1px solid rgba(0, 161, 154, 0.3);
+  border-radius: 6px;
+  padding: 2px 7px;
+}
+
+.webtop-links {
+  display: flex;
+  gap: 4px;
+  justify-self: center;
+}
+
+.webtop-links button {
+  border: 0;
+  background: transparent;
+  color: #5a5570;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 9px 13px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s;
+}
+
+.webtop-links button:hover {
+  background: rgba(35, 29, 69, 0.05);
+  color: #231d45;
+}
+
+.webtop-links button.active {
+  background: rgba(0, 161, 154, 0.1);
+  color: #00857f;
+  box-shadow: inset 0 0 0 1px rgba(0, 161, 154, 0.24);
+}
+
+.webtop-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  justify-self: end;
+}
+
+.webtop-mobile-toggle {
+  display: none;
+  justify-self: end;
+  grid-column: 3;
+  grid-row: 1;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid #d4dfeb;
+  background: #fff;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.webtop-mobile-toggle span {
+  width: 16px;
+  height: 2px;
+  border-radius: 999px;
+  background: #2b3c56;
+}
+
+.webtop-mobile-panel,
+.webtop-mobile-backdrop {
+  display: none;
+}
+
+@media (max-width: 980px) {
+  .webtop-shell {
+    width: calc(100% - 18px);
+  }
+
+  .webtop-inner {
+    grid-template-columns: 1fr auto;
+  }
+
+  .webtop-links,
+  .webtop-actions {
+    display: none;
+  }
+
+  .webtop-mobile-toggle {
+    display: inline-flex;
+    /* Only two tracks at this width. */
+    grid-column: 2;
+  }
+
+  .webtop-mobile-panel {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    border-radius: 14px;
+    border: 0;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: none;
+    transform-origin: top;
+    transform: scaleY(0.92);
+    opacity: 0;
+    pointer-events: none;
+    max-height: 0;
+    overflow: hidden;
+    transition: opacity 0.2s ease, transform 0.2s ease, max-height 0.2s ease;
+    position: relative;
+    z-index: 2;
+  }
+
+  .webtop-mobile-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(16, 27, 43, 0.26);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    z-index: 1;
+  }
+
+  .webtop-mobile-backdrop.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .webtop-mobile-panel.open {
+    transform: scaleY(1);
+    opacity: 1;
+    pointer-events: auto;
+    max-height: 440px;
+    margin: 8px 0 12px;
+    padding: 10px;
+    border: 1px solid #dbe7f3;
+    box-shadow: 0 14px 24px rgba(21, 58, 95, 0.1);
+  }
+
+  .webtop-mobile-panel button {
+    border: 1px solid #dde8f3;
+    background: #fff;
+    color: #22405f;
+    border-radius: 10px;
+    padding: 10px 12px;
+    text-align: left;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .webtop-mobile-panel button.active {
+    border-color: rgba(0, 161, 154, 0.34);
+    background: rgba(0, 161, 154, 0.1);
+    color: #00857f;
+  }
+}
+
+@media (max-width: 640px) {
+  .webtop-inner {
+    min-height: 58px;
+  }
+
+  .webtop-brand {
+    font-size: 15px;
+    gap: 8px;
+  }
+
+  .webtop-brand-logo {
+    width: 24px;
+    height: 24px;
+  }
+}
+</style>

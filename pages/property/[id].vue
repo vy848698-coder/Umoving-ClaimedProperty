@@ -1,0 +1,10960 @@
+﻿<template>
+  <div class="pps-page">
+    <!-- Loading -->
+    <div v-if="pageLoading" class="pps-loading-state">
+      <div class="pps-spinner" />
+      <p>Loading property…</p>
+    </div>
+
+    <!-- Error -->
+    <div v-else-if="loadError" class="pps-loading-state">
+      <p>{{ loadError }}</p>
+      <button class="pps-back-txt" @click="goBack">Go Back</button>
+    </div>
+
+    <template v-else-if="property">
+      <!-- ─── Web top nav ──────────────────────────────────────────── -->
+      <header class="pps-web-nav">
+        <div class="pps-web-nav-inner">
+          <button class="pps-nav-brand" type="button" @click="navigateTo('/')">
+            <img src="/op-icons/logo.png" alt="" class="pps-nav-logo" />
+            <span>umovingu</span><span class="pps-nav-beta">BETA</span>
+          </button>
+          <nav class="pps-nav-links" aria-label="Primary">
+            <button v-if="signedIn" type="button" @click="navigateTo('/dashboard')">Dashboard</button>
+            <button v-else type="button" @click="navigateTo('/explore')">Explore</button>
+            <button type="button" @click="navigateTo('/homescore')">HomeScore</button>
+            <button type="button" class="active" @click="navigateTo('/passport')">Passport</button>
+            <button type="button" @click="navigateTo('/marketplace')">Marketplace</button>
+            <button type="button" @click="navigateTo('/profile/learn')">Learn</button>
+          </nav>
+          <div class="pps-nav-actions">
+            <button class="pps-nav-help" type="button" aria-label="Help">?</button>
+            <button class="pps-nav-allpass" type="button" @click="goToAllPassports">All passports</button>
+          </div>
+        </div>
+      </header>
+
+      <div class="pps-shell">
+      <!-- ─── SECTION 1: Hero (web) ────────────────────────────────────
+           Desktop layout: identity + price + CTAs read first on the left,
+           a large photo panel anchors the right, and the Passport preview
+           spans the full card width as a horizontal strip underneath, so
+           the numbers get room instead of being squeezed into a phone-
+           width sidebar column. -->
+      <div class="pps-herocard" :class="`pps-herocard--${pageState}`">
+        <div class="pps-herocard-grid">
+          <!-- Left: identity ------------------------------------------->
+          <div class="pps-herocard-lead">
+            <div class="pps-herocard-staterow">
+              <span class="pps-herocard-state">
+                <span class="pps-herocard-state-dot" :style="{ background: heroStatePill.dot }" />
+                {{ heroStatePill.label }}
+              </span>
+              <button
+                type="button"
+                class="pps-herocard-explain"
+                aria-label="What does this mean?"
+                @click="onClaimExplain"
+              >
+                What does this mean?<span class="pps-herocard-explain-q">?</span>
+              </button>
+            </div>
+
+            <h1 class="pps-herocard-title">{{ property.addressLine1 }}</h1>
+            <p class="pps-herocard-sub">
+              <template v-if="property.city">{{ property.city }}</template
+              ><template v-if="property.city && property.postcode"> · </template
+              ><template v-if="property.postcode">{{ property.postcode }}</template>
+            </p>
+
+            <div class="pps-herocard-pricerow">
+              <div v-if="estimatedPrice" class="pps-herocard-price">
+                {{ formatPrice(estimatedPrice) }}
+              </div>
+              <p class="pps-herocard-price-src">
+                {{ priceSourceLabel }} · HM Land Registry connected
+                <button
+                  type="button"
+                  class="pps-herocard-price-info"
+                  aria-label="About this estimate"
+                  @click.stop="openSheet('price-info')"
+                >
+                  i
+                </button>
+              </p>
+            </div>
+
+            <div class="pps-herocard-pills">
+              <span v-if="property.propertyType" class="pps-herocard-pill">{{
+                property.propertyType
+              }}</span>
+              <span v-if="property.epcRating" class="pps-herocard-pill"
+                >EPC {{ property.epcRating
+                }}<template v-if="property.epcScore"> · {{ property.epcScore }}</template></span
+              >
+              <span v-if="property.sqft" class="pps-herocard-pill"
+                ><svg class="pps-herocard-pill-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8V3h5M21 8V3h-5M3 16v5h5M21 16v5h-5" /></svg>
+                {{ property.sqft.toLocaleString() }} sqft</span
+              >
+              <span v-if="property.yearBuilt" class="pps-herocard-pill"
+                ><svg class="pps-herocard-pill-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2.5" /><path d="M8 3v4M16 3v4M3 11h18" /></svg>
+                Built {{ property.yearBuilt }}</span
+              >
+              <span class="pps-herocard-pill"
+                >{{ exploreTiles.length }} live data sources</span
+              >
+              <span v-if="floodBadgeLabel" class="pps-herocard-pill"
+                ><img src="/op-icons/misc/waterDroplet.png" alt="" class="pps-herocard-pill-img" loading="lazy" />
+                {{ floodBadgeLabel }}</span
+              >
+            </div>
+
+            <div class="pps-herocard-ctas">
+              <button
+                class="pps-herocard-btn pps-herocard-btn--primary"
+                type="button"
+                @click="onHeroPrimaryClick"
+              >
+                {{ heroPrimaryCta }}
+              </button>
+              <button
+                class="pps-herocard-btn pps-herocard-btn--ghost"
+                type="button"
+                @click="onSampleClick"
+              >
+                See a sample Passport
+              </button>
+            </div>
+
+            <div class="pps-herocard-quick">
+              <button type="button" class="pps-herocard-quick-btn" @click="onWatchClick">
+                <img src="/op-icons/misc/exploreWatching.png" alt="" class="pps-herocard-quick-ic" loading="lazy" />
+                {{ wishlisted ? 'Watching' : 'Watch this' }}
+              </button>
+              <button type="button" class="pps-herocard-quick-btn" @click="onContactClick">
+                <img src="/property-cards/askAQuestion.jpeg" alt="" class="pps-herocard-quick-ic" loading="lazy" />
+                {{ pageState === 'published' ? 'Make contact' : 'Ask a question' }}
+              </button>
+              <span v-if="watcherCountLabel" class="pps-herocard-watchers">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z" /><circle cx="12" cy="12" r="3" /></svg>
+                {{ watcherCountLabel }}
+              </span>
+            </div>
+
+            <p class="pps-herocard-foot">
+              Build a verified Passport · TA6 · TA7 · TA10 · certificates ·
+              history — no card needed
+            </p>
+          </div>
+
+          <!-- Right: photo panel. heroImage already prefers an uploaded
+               picture, then the Street View still from /enrichment, then
+               null — PropertyImage handles that last case with its
+               labelled stand-in so a stock photo never passes as this
+               property. -->
+          <div class="pps-herocard-media">
+            <div class="pps-herocard-photo">
+              <PropertyImage
+                :src="heroImage"
+                :alt="property.addressLine1"
+                :seed="propertyId"
+                :show-caption="false"
+              />
+              <div class="pps-herocard-actions">
+                <button
+                  class="pps-herocard-icon"
+                  type="button"
+                  @click.stop="onWishlistToggle"
+                  aria-label="Favourite"
+                >
+                  <svg width="16" height="15" viewBox="0 0 16 15" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <path
+                      d="M8 13.5S1 9.5 1 4.5A3.5 3.5 0 0 1 8 2.9 3.5 3.5 0 0 1 15 4.5C15 9.5 8 13.5 8 13.5z"
+                      :fill="wishlisted ? 'currentColor' : 'none'"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </button>
+                <button
+                  class="pps-herocard-icon"
+                  type="button"
+                  @click.stop="showShare = true"
+                  aria-label="Share"
+                >
+                  <svg width="14" height="16" viewBox="0 0 14 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11.5" cy="2.5" r="1.8" />
+                    <circle cx="2.5" cy="8" r="1.8" />
+                    <circle cx="11.5" cy="13.5" r="1.8" />
+                    <line x1="4.2" y1="7" x2="9.8" y2="3.5" />
+                    <line x1="4.2" y1="9" x2="9.8" y2="12.5" />
+                  </svg>
+                </button>
+              </div>
+              <span v-if="propertyImages.length > 1" class="pps-herocard-photo-count">
+                <svg viewBox="0 0 24 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M8 3l1.5-2h5L16 3h3a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3z" />
+                  <circle cx="12" cy="11" r="3.5" />
+                </svg>
+                {{ propertyImages.length }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Passport preview — full-width strip across the hero foot -->
+          <aside class="pps-preview">
+            <div class="pps-preview-main">
+              <div class="pps-preview-ring">
+                <svg viewBox="0 0 100 100">
+                  <defs>
+                    <linearGradient id="ppsPreviewGrad" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stop-color="#2fd0c6" />
+                      <stop offset="100%" stop-color="#00857f" />
+                    </linearGradient>
+                  </defs>
+                  <circle class="pps-preview-ring-bg" cx="50" cy="50" r="42" />
+                  <circle
+                    class="pps-preview-ring-fill"
+                    cx="50"
+                    cy="50"
+                    r="42"
+                    :stroke-dashoffset="263.9 - (homescore / 100) * 263.9"
+                  />
+                </svg>
+                <span class="pps-preview-ring-num">{{ homescore }}</span>
+                <span class="pps-preview-ring-denom">/100</span>
+              </div>
+
+              <div class="pps-preview-id">
+                <span class="pps-preview-eyebrow">Property Passport · Preview</span>
+                <div class="pps-preview-addr">{{ property.addressLine1 }}</div>
+                <div class="pps-preview-sub">
+                  <template v-if="property.city">{{ property.city }}</template
+                  ><template v-if="property.city && property.postcode"> · </template
+                  ><template v-if="property.postcode">{{ property.postcode }}</template>
+                </div>
+              </div>
+
+              <!-- Metrics from real data only: section progress, the score
+                   verdict, and the live source count. The old "— documents
+                   on file" line never had a number behind it. -->
+              <div class="pps-preview-metrics">
+                <div class="pps-preview-metric">
+                  <span class="pps-preview-metric-val"
+                    >{{ heroSectionsStarted
+                    }}<span class="pps-preview-metric-of">/{{ HERO_SECTIONS_TOTAL }}</span></span
+                  >
+                  <span class="pps-preview-metric-lab">sections started</span>
+                </div>
+                <div class="pps-preview-metric">
+                  <span class="pps-preview-metric-val">{{ scoreVerdict }}</span>
+                  <span class="pps-preview-metric-lab">HomeScore verdict</span>
+                </div>
+                <div class="pps-preview-metric">
+                  <span class="pps-preview-metric-val">{{ exploreTiles.length }}</span>
+                  <span class="pps-preview-metric-lab">live data sources</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="pps-preview-foot">
+              <div class="pps-preview-hint">
+                <span class="pps-preview-hint-dot" />
+                {{ heroPreviewHint }}
+              </div>
+              <div class="pps-preview-track" role="presentation">
+                <div
+                  class="pps-preview-track-fill"
+                  :style="{ width: (pageState === 'unclaimed' ? 0 : progressPct) + '%' }"
+                />
+              </div>
+            </div>
+          </aside>
+        </div>
+      </div>
+
+      <!-- ─── SECTION 2: Passport status ───────────────────────────────
+           Whether a Passport exists for this home and whether the viewer
+           can see it (Unclaimed / Private / Partially Public / Public).
+           Hidden outright when the status fetch failed, so a network error
+           never renders as a confident "unclaimed". -->
+      <section v-if="!passportStatusUnknown" class="pps-section pps-section--claim">
+        <div class="pps-claimcard" :class="`pps-claimcard--${claimCardState}`">
+          <div v-if="streetClaimLabel" class="pps-claimcard-streetpill">
+            <span class="pps-claimcard-streetpill-dot" />
+            {{ streetClaimLabel }}
+          </div>
+
+          <div class="pps-claimcard-row">
+            <img
+              :src="claimCardIcon"
+              alt=""
+              class="pps-claimcard-ic"
+              loading="lazy"
+            />
+
+            <div class="pps-claimcard-body">
+              <h2 class="pps-claimcard-title">{{ claimCardTitle }}</h2>
+              <p class="pps-claimcard-sub">{{ claimCardSub }}</p>
+              <p v-if="claimCardEmphasis" class="pps-claimcard-emphasis">
+                {{ claimCardEmphasis }}
+              </p>
+              <p v-if="claimCardSub2" class="pps-claimcard-sub2">
+                {{ claimCardSub2 }}
+              </p>
+
+              <div class="pps-claimcard-meta">
+                <button
+                  v-if="claimCardExplainerLabel"
+                  type="button"
+                  class="pps-claimcard-explain"
+                  @click="onClaimCardExplainerClick"
+                >
+                  {{ claimCardExplainerLabel
+                  }}<span class="pps-claimcard-explain-q">?</span>
+                </button>
+                <span v-if="watcherCountLabel" class="pps-claimcard-watchers">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z" /><circle cx="12" cy="12" r="3" /></svg>
+                  {{ watcherCountLabel }}
+                </span>
+              </div>
+            </div>
+
+            <div class="pps-claimcard-cta">
+              <button
+                type="button"
+                class="pps-claimcard-btn"
+                @click="onClaimCardCtaClick"
+              >
+                {{ claimCardCta }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ─── SECTION 3: HomeScore ─────────────────────────────────────
+           Two panes at desktop width: the score and its verdict on the
+           left, the EPC component breakdown in its own panel on the
+           right — the bars were previously stretched the full 1000px of
+           the shell because they came straight off the phone layout. -->
+      <section class="pps-section pps-section--score">
+        <div class="pps-section-head">
+          <div class="pps-section-heading">
+            <span class="pps-section-eyebrow">
+              <span class="pps-section-eyebrow-dash" />
+              HomeScore™
+            </span>
+            <h2 class="pps-section-title">{{ scoreVerdictLine }}</h2>
+            <p class="pps-section-sub">
+              Scored from {{ exploreTiles.length }} public data sources<template
+                v-if="property.postcode"
+              >
+                for {{ property.postcode }}</template
+              >. No document upload needed to see it.
+            </p>
+          </div>
+          <button type="button" class="pps-section-cta" @click="onScoreCardTap">
+            Run a full HomeScore
+            <span aria-hidden="true">→</span>
+          </button>
+        </div>
+
+        <div
+          class="pps-score-card pps-score-card--clickable"
+          @click="onScoreCardTap"
+        >
+          <div class="pps-score-main">
+            <div class="pps-score-top">
+              <div class="pps-gauge-wrap">
+                <svg class="pps-gauge-svg" viewBox="0 0 100 100">
+                  <circle class="pps-gauge-bg" cx="50" cy="50" r="40" />
+                  <circle
+                    class="pps-gauge-fill"
+                    cx="50"
+                    cy="50"
+                    r="40"
+                    :stroke-dashoffset="251.33 - (homescore / 100) * 251.33"
+                  />
+                </svg>
+                <div class="pps-gauge-center">
+                  <span class="pps-gauge-num">{{ homescore }}</span>
+                  <span class="pps-gauge-denom">/100</span>
+                </div>
+              </div>
+
+              <div class="pps-score-info">
+                <div class="pps-score-desc">{{ scoreDesc }}</div>
+                <div class="pps-score-pills">
+                  <span v-if="property.epcRating" class="pps-score-pill pps-score-pill--epc">
+                    EPC {{ property.epcRating
+                    }}<template v-if="property.epcScore">
+                      ({{ property.epcScore }})</template
+                    >
+                  </span>
+                  <span
+                    v-if="pageState !== 'published'"
+                    class="pps-score-pill pps-score-pill--warn"
+                    >Public data only — unverified</span
+                  >
+                  <span class="pps-score-pill pps-score-pill--plain"
+                    >{{ exploreTiles.length }} sources scored</span
+                  >
+                </div>
+                <button
+                  type="button"
+                  class="pps-score-run-btn"
+                  @click.stop="onScoreCardTap"
+                >
+                  Run a full HomeScore
+                </button>
+              </div>
+            </div>
+
+            <!-- Component-level EPC ratings from the public certificate.
+                 Its own panel, so each bar reads at a sane length. -->
+            <div v-if="epcBars.length > 0" class="pps-score-epc">
+              <div class="pps-epc-header">From the public EPC certificate</div>
+              <div class="pps-epc-rows">
+                <div v-for="bar in epcBars" :key="bar.label" class="pps-epc-row">
+                  <span class="pps-epc-label">{{ bar.label }}</span>
+                  <div class="pps-epc-track">
+                    <div class="pps-bar-fill" :style="{ width: bar.pct + '%', background: bar.color }" />
+                  </div>
+                  <span class="pps-epc-rating">{{ bar.rating }}</span>
+                </div>
+              </div>
+              <div class="pps-epc-attr">
+                EPC Register · component ratings as assessed
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ─── SECTION 4: Explore this property ─────────────────────────
+           Four columns at desktop width instead of three, and the last
+           row is closed off by a CTA tile sized to the exact gap that is
+           left over (exploreFillSpan) so the grid never ends ragged. -->
+      <section class="pps-section pps-section--explore">
+        <div class="pps-section-head">
+          <div class="pps-section-heading">
+            <span class="pps-section-eyebrow">
+              <span class="pps-section-eyebrow-dash" />
+              Live record
+            </span>
+            <h2 class="pps-section-title">Explore this property</h2>
+            <p class="pps-section-sub">
+              Every figure below is read from the public record and refreshes
+              on its own — tap any card for the detail behind it.
+            </p>
+          </div>
+          <span class="pps-section-badge"
+            >{{ exploreTiles.length }} live data sources</span
+          >
+        </div>
+
+        <div class="pps-explore-grid">
+          <button
+            v-for="tile in exploreTiles"
+            :key="tile.key"
+            type="button"
+            class="pps-tile"
+            @click="onExploreTileClick(tile.key)"
+          >
+            <div class="pps-tile-head">
+              <div
+                class="pps-tile-icon"
+                :class="{ 'pps-tile-icon--img': !!tileArt(tile) }"
+                :style="
+                  tileArt(tile)
+                    ? undefined
+                    : { background: tileIcon(tile.key).bg, color: tileIcon(tile.key).color }
+                "
+              >
+                <img
+                  v-if="tileArt(tile)"
+                  :src="tileArt(tile)"
+                  :alt="tile.title"
+                  class="pps-tile-img"
+                  loading="lazy"
+                />
+                <svg
+                  v-else
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.7"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  v-html="tileIcon(tile.key).svg"
+                />
+              </div>
+              <span class="pps-tile-arrow" aria-hidden="true">→</span>
+            </div>
+
+            <div class="pps-tile-body">
+              <div class="pps-tile-title">
+                {{ tile.title }}
+                <span
+                  v-if="tile.pip"
+                  class="pps-tile-new-pip"
+                  :style="tile.pip === '!' ? { background: '#C73E36' } : undefined"
+                  >{{ tile.pip }}</span
+                >
+              </div>
+              <div
+                class="pps-tile-value"
+                :class="{ 'pps-tile-value--warn': /unavailable|tap to retry/i.test(tile.value) }"
+                :style="tile.valueStyle"
+              >
+                {{ tile.value }}
+              </div>
+              <div class="pps-tile-sub">{{ tile.sub }}</div>
+              <div v-if="tile.trend" class="pps-tile-trend">
+                <span class="pps-tile-trend-arrow">↑</span> {{ tile.trend }}
+              </div>
+            </div>
+          </button>
+
+          <!-- Row-closing CTA. Spans whatever the tile count leaves free. -->
+          <button
+            type="button"
+            class="pps-tile pps-tile--cta"
+            :style="{ '--pps-fill-span': exploreFillSpan }"
+            @click="onScoreCardTap"
+          >
+            <img
+              src="/op-icons/misc/exploreHomescore.png"
+              alt=""
+              class="pps-tile-cta-ic"
+              loading="lazy"
+            />
+            <div class="pps-tile-cta-body">
+              <div class="pps-tile-cta-title">Run the full HomeScore</div>
+              <div class="pps-tile-cta-sub">
+                All {{ exploreTiles.length }} sources scored together, with the
+                risks called out.
+              </div>
+            </div>
+            <span class="pps-tile-cta-arrow" aria-hidden="true">→</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- ─── SECTION 5: Running costs ─────────────────────────────────
+           Four cost boxes across at desktop width instead of a 2×2 block
+           of 68px-tall phone tiles. -->
+      <section v-if="costsBoxes.length > 0" class="pps-section pps-section--costs">
+        <div class="pps-section-head">
+          <div class="pps-section-heading">
+            <span class="pps-section-eyebrow">
+              <span class="pps-section-eyebrow-dash" />
+              Cost to run
+            </span>
+            <h2 class="pps-section-title">Estimated running costs</h2>
+            <p class="pps-section-sub">
+              Taken from the EPC assessor's figures for this address. Hover any
+              box for the monthly equivalent.
+            </p>
+          </div>
+          <span class="pps-section-badge">EPC estimate</span>
+        </div>
+
+        <div class="pps-costs-card">
+          <div class="pps-costs-body">
+            <div class="pps-costs-grid">
+              <div
+                v-for="box in costsBoxes"
+                :key="box.label"
+                class="pps-costs-box"
+                :class="{ 'pps-costs-box--highlight': box.highlight }"
+              >
+                <div class="pps-costs-box-inner">
+                  <div class="pps-costs-box-front">
+                    <span class="pps-costs-box-value"
+                      >£{{ box.value.toLocaleString() }}</span
+                    >
+                    <span class="pps-costs-box-label">{{ box.label }}</span>
+                  </div>
+                  <div class="pps-costs-box-back">
+                    <div class="pps-costs-box-back-label">Per month</div>
+                    <div class="pps-costs-box-back-val">
+                      ~£{{ Math.round(box.value / 12).toLocaleString() }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="pps-costs-foot">
+              <div class="pps-costs-attr">
+                Based on EPC assumptions. Costs vary by usage and tariff.
+              </div>
+              <!-- EPC potential rating — the upside the EPC surveyor noted,
+                   e.g. "could reach A 92". -->
+              <div
+                v-if="
+                  epcPotentialRating && epcPotentialRating !== property?.epcRating
+                "
+                class="pps-costs-upside"
+              >
+                <span class="pps-costs-upside-ic">↑</span>
+                <span>
+                  Could reach
+                  <strong
+                    >{{ epcPotentialRating
+                    }}<template v-if="epcPotentialScore">
+                      {{ epcPotentialScore }}</template
+                    ></strong
+                  >
+                  with the EPC's recommended upgrades
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ─── SECTION 6: Keep going with umovingu ──────────────────────
+           The next step once the record has been read. -->
+      <div class="pps-keepgoing">
+        <div class="pps-keepgoing-head">
+          <div class="pps-keepgoing-title">Keep going with umovingu</div>
+          <div class="pps-keepgoing-sub">
+            More tools. More insight. More ways to get move-ready.
+          </div>
+        </div>
+        <div class="pps-keepgoing-cards">
+          <div class="pps-keepgoing-card">
+            <div class="pps-keepgoing-card-top">
+              <img src="/op-icons/misc/passportFanReversed.png" alt="" class="pps-keepgoing-card-ic pps-keepgoing-card-ic--fan" loading="lazy" />
+              <div class="pps-keepgoing-card-body">
+                <div class="pps-keepgoing-card-title">Explore passports</div>
+                <div class="pps-keepgoing-card-sub">
+                  Discover how Property, Buyer and Tenant Passports keep key
+                  information organised, verified and reusable.
+                </div>
+              </div>
+            </div>
+            <button type="button" class="pps-keepgoing-card-btn" @click="passportEcosystemOpen = true">
+              Explore passports
+            </button>
+          </div>
+          <div class="pps-keepgoing-card">
+            <div class="pps-keepgoing-card-top">
+              <img src="/op-icons/misc/exploreLocation.png" alt="" class="pps-keepgoing-card-ic" loading="lazy" />
+              <div class="pps-keepgoing-card-body">
+                <div class="pps-keepgoing-card-title">Explore more homes</div>
+                <div class="pps-keepgoing-card-sub">
+                  Compare listings, review HomeScores and dig into the
+                  neighbourhood data near you.
+                </div>
+              </div>
+            </div>
+            <button type="button" class="pps-keepgoing-card-btn" @click="goToExplore">
+              Back to Explore
+            </button>
+          </div>
+        </div>
+      </div>
+
+      </div><!-- /pps-shell -->
+
+      <!-- ─────────────────────────── FOOTER ─────────────────────────── -->
+      <footer class="pps-footer">
+        <div class="pps-footer-grid">
+          <div class="pps-footer-intro">
+            <div class="pps-footer-brand">
+              <img src="/logo-new.png" alt="" class="pps-footer-logo" />
+              <strong>umovingu</strong>
+              <span style="font-size:9.5px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:#2fd0c6;background:rgba(0,161,154,.16);border:1px solid rgba(47,208,198,.35);border-radius:6px;padding:2px 7px;margin-left:2px;">BETA</span>
+            </div>
+            <p>The consumer-side property passport. Free HomeScore, solicitor-grade Passport, ready before your first viewing.</p>
+            <div class="pps-footer-chips">
+              <span>OPDA standard</span>
+              <span>Property Redress Scheme</span>
+              <span>HM Land Registry</span>
+            </div>
+          </div>
+
+          <div class="pps-footer-col">
+            <h5>Product</h5>
+            <button type="button" @click="navigateTo('/homescore')">HomeScore</button>
+            <button type="button" @click="navigateTo('/passport/collections')">Property Passport</button>
+            <button type="button" @click="navigateTo('/marketplace')">Marketplace</button>
+            <button type="button" @click="navigateTo('/explore')">Explore</button>
+          </div>
+
+          <div class="pps-footer-col">
+            <h5>Company</h5>
+            <button type="button" @click="navigateTo('/')">Our story</button>
+            <button type="button" @click="navigateTo('/profile/learn')">Learn</button>
+            <button type="button" @click="navigateTo('/profile')">Account</button>
+          </div>
+
+          <div class="pps-footer-col">
+            <h5>Legal</h5>
+            <button type="button" @click="navigateTo('/legal/privacy')">Privacy</button>
+            <button type="button" @click="navigateTo('/legal/terms')">Terms</button>
+            <button type="button" @click="navigateTo('/legal/cookies')">Cookies</button>
+          </div>
+        </div>
+        <div class="pps-footer-bottom">© 2026 umovingu. All rights reserved.</div>
+      </footer>
+    </template>
+
+    <PassportEcosystemDrawer
+      :open="passportEcosystemOpen"
+      @close="passportEcosystemOpen = false"
+    />
+
+    <!-- Drawers — wired to the new state-driven CTAs. -->
+    <!-- Owner-claim (free) goes through the global /claim/[id] flow which
+         enforces KYC + HM Land Registry verification before issuing a
+         Passport. The buyer-unlock (£99) drawer below handles the Stripe
+         payment for a published Passport. -->
+    <ClaimPassportDrawer
+      v-model="showUnlockDrawer"
+      :property="property"
+      :existing-passport-id="passportStatus?.passportId"
+      @claimed="onPassportUnlocked"
+    />
+    <WatchPropertyDrawer
+      :open="watchDrawerOpen"
+      :address-label="property?.addressLine1 || ''"
+      :submitting="watchSubmitting"
+      @close="watchDrawerOpen = false"
+      @submit="onWatchDrawerSubmit"
+    />
+    <BaseDrawer
+      v-model="showRegisterInterest"
+      title="Register Interest"
+      :show-back-button="true"
+      @close="showRegisterInterest = false"
+    >
+      <RegisterInterestContent
+        :property-id="propertyId"
+        :address="property?.addressLine1 || ''"
+        @submit="showRegisterInterest = false"
+      />
+    </BaseDrawer>
+    <BaseDrawer
+      v-model="showShare"
+      title="Share Property"
+      :show-back-button="true"
+      @close="showShare = false"
+    >
+      <ShareContent
+        :property-title="property?.addressLine1 ?? ''"
+        :property-address="`${property?.city ?? ''}, ${property?.postcode ?? ''}`"
+        :property-price="estimatedPrice ? formatPrice(estimatedPrice) : ''"
+        :property-image="propertyImages[0]"
+      />
+    </BaseDrawer>
+
+    <!-- ════════════════════════════════════════════════════════════════
+         PROPERTY BOTTOM SHEETS — prototype's data-source drawers.
+         One Teleport-to-body overlay; the body slot swaps per activeSheet.
+         ════════════════════════════════════════════════════════════════ -->
+    <Teleport to="body">
+      <div
+        v-if="activeSheet"
+        class="pps-sheet-overlay"
+        @click.self="closeSheet"
+      >
+        <div
+          ref="sheetEl"
+          class="pps-sheet"
+          :class="{ 'pps-sheet--tall': isTallSheet }"
+          role="dialog"
+          aria-modal="true"
+          tabindex="-1"
+        >
+          <div class="pps-sheet-handle" />
+
+          <!-- Always-reachable close. Sticky (not absolute) so it stays put
+               while a long sheet scrolls — several sheets are tall enough
+               that the "Close" button at the bottom was off-screen. -->
+          <div class="pps-sheet-closebar">
+            <button
+              type="button"
+              class="pps-sheet-x"
+              aria-label="Close"
+              @click="closeSheet"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 6 6 18M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <!-- ── History (Land Registry) ─────────────────────────── -->
+          <!-- ── About this estimate ─────────────────────────────── -->
+          <template v-if="activeSheet === 'price-info'">
+            <div class="pps-sheet-icon">
+              <img src="/op-icons/investment/house.png" alt="" loading="lazy" />
+            </div>
+            <div class="pps-sheet-title">About this estimate</div>
+            <div class="pps-sheet-sub">
+              {{ priceSourceLabel }} —
+              {{ property?.city || 'the local area' }}'s House Price Index
+              applied to the property's last known sale price (or, where
+              there's no recorded sale, to comparable local sales) to reflect
+              roughly what it could be worth today.
+            </div>
+            <p class="pps-ds-info-note">
+              This isn't a formal valuation. For an accurate figure, get a
+              surveyor's report or a local estate agent's assessment.
+            </p>
+            <button class="pps-sheet-cancel" @click="closeSheet">Got it</button>
+          </template>
+
+          <template v-else-if="activeSheet === 'property-details'">
+            <div class="pps-ds-header" style="background: #e9f6f5">
+              <span class="pps-ds-header-icon pps-ds-header-icon--img"><img src="/op-icons/property/type.jpeg" alt="" loading="lazy" /></span>
+              <div class="pps-ds-header-text">
+                <div class="pps-ds-header-title">Property details</div>
+                <div class="pps-ds-header-meta">
+                  Ordnance Survey · EPC Register · HM Land Registry
+                </div>
+              </div>
+            </div>
+            <div class="pps-ds-kv-list">
+              <div v-if="property?.propertyType" class="pps-ds-kv">
+                <span class="pps-ds-k">Type</span>
+                <span class="pps-ds-v">{{ property.propertyType }}</span>
+              </div>
+              <div v-if="property?.tenure" class="pps-ds-kv">
+                <span class="pps-ds-k">Tenure</span>
+                <span class="pps-ds-v">{{ property.tenure }}</span>
+              </div>
+              <div v-if="property?.floorAreaSqm" class="pps-ds-kv">
+                <span class="pps-ds-k">Floor area</span>
+                <span class="pps-ds-v">{{ property.floorAreaSqm }} m2</span>
+              </div>
+              <div v-if="property?.bedrooms" class="pps-ds-kv">
+                <span class="pps-ds-k">Bedrooms</span>
+                <span class="pps-ds-v">{{ property.bedrooms }}</span>
+              </div>
+              <div v-if="property?.yearBuilt" class="pps-ds-kv">
+                <span class="pps-ds-k">Year built</span>
+                <span class="pps-ds-v">{{ property.yearBuilt }}</span>
+              </div>
+              <div v-if="property?.epcRating" class="pps-ds-kv">
+                <span class="pps-ds-k">EPC rating</span>
+                <span class="pps-ds-v">
+                  <span class="pps-epc-badge" :style="{ background: epcDotColor }">{{ property.epcRating }}</span>
+                  <template v-if="property.epcScore"> {{ property.epcScore }}/100</template>
+                </span>
+              </div>
+              <div v-if="property?.uprn" class="pps-ds-kv">
+                <span class="pps-ds-k">UPRN</span>
+                <span class="pps-ds-v">{{ property.uprn }}</span>
+              </div>
+            </div>
+            <button
+              v-if="property?.epcRating"
+              type="button"
+              class="pps-pd-download"
+              :disabled="epcDownloading"
+              @click="downloadEpc"
+            >
+              {{ epcDownloading ? 'Opening...' : 'View the EPC certificate' }}
+            </button>
+            <div class="pps-ds-attribution">
+              Sourced from the public record. Figures update as new
+              certificates and registrations are published.
+            </div>
+          </template>
+
+          <template v-if="activeSheet === 'history'">
+            <div class="pps-ds-header" style="background: #fff3e0">
+              <span class="pps-ds-header-icon pps-ds-header-icon--img"><img src="/property-cards/propertyHistory.jpeg" alt="" loading="lazy" /></span>
+              <div class="pps-ds-header-text">
+                <div class="pps-ds-header-title">Price History</div>
+                <div class="pps-ds-header-meta">
+                  HM Land Registry · Updated monthly
+                </div>
+              </div>
+            </div>
+
+            <!-- Compound growth banner -->
+            <div
+              v-if="compoundGrowth"
+              style="
+                background: #e6f7f6;
+                border: 1.5px solid #b2e4e1;
+                border-radius: 12px;
+                padding: 12px 16px;
+                margin: 14px 0 10px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+              "
+            >
+              <div
+                style="
+                  font-size: 11px;
+                  font-weight: 800;
+                  color: #6b6783;
+                  letter-spacing: 1px;
+                  text-transform: uppercase;
+                "
+              >
+                Compound growth · since {{ compoundGrowth.sinceYear }}
+              </div>
+              <div
+                style="font-size: 16px; font-weight: 900"
+                :style="{
+                  color: compoundGrowth.pct >= 0 ? '#00a19a' : '#c73e36',
+                }"
+              >
+                {{ compoundGrowth.pct >= 0 ? '+' : ''
+                }}{{ compoundGrowth.pct.toFixed(1) }}% / yr
+              </div>
+            </div>
+
+            <!-- Current estimated value -->
+            <div
+              v-if="estimatedPrice"
+              style="
+                border: 1.5px solid #ececef;
+                border-radius: 14px;
+                padding: 16px;
+                margin-bottom: 10px;
+              "
+            >
+              <div
+                style="
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: flex-start;
+                  margin-bottom: 8px;
+                "
+              >
+                <div style="display: flex; align-items: center; gap: 10px">
+                  <div
+                    style="
+                      width: 12px;
+                      height: 12px;
+                      border-radius: 50%;
+                      background: #00a19a;
+                      border: 2px solid white;
+                      box-shadow: 0 0 0 2px #00a19a;
+                      flex-shrink: 0;
+                      margin-top: 4px;
+                    "
+                  />
+                  <div>
+                    <div
+                      style="
+                        font-size: 22px;
+                        font-weight: 900;
+                        color: #231d45;
+                        letter-spacing: -0.5px;
+                      "
+                    >
+                      {{ formatPrice(estimatedPrice) }}
+                    </div>
+                    <div
+                      style="font-size: 12px; color: #9c98ad; margin-top: 2px"
+                    >
+                      {{ priceSourceLabel }}
+                    </div>
+                  </div>
+                </div>
+                <div
+                  style="
+                    background: #e6f7f6;
+                    border: 1.5px solid #b2e4e1;
+                    border-radius: 20px;
+                    padding: 4px 12px;
+                    font-size: 12px;
+                    font-weight: 800;
+                    color: #007e78;
+                  "
+                >
+                  CURRENT
+                </div>
+              </div>
+              <div
+                v-if="deltaSinceSold"
+                :style="{
+                  background: deltaSinceSold.positive ? '#e8f5ee' : '#fdecea',
+                  borderRadius: '8px',
+                  padding: '6px 10px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }"
+              >
+                <span
+                  :style="{
+                    color: deltaSinceSold.positive ? '#2eab55' : '#c73e36',
+                    fontSize: '12px',
+                  }"
+                  >{{ deltaSinceSold.positive ? '↑' : '↓' }}</span
+                >
+                <span
+                  :style="{
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    color: deltaSinceSold.positive ? '#1a7a3a' : '#8a1d18',
+                  }"
+                >
+                  {{ deltaSinceSold.positive ? '+' : '−' }}£{{
+                    Math.abs(deltaSinceSold.abs).toLocaleString()
+                  }}
+                  ({{ deltaSinceSold.positive ? '+' : '−'
+                  }}{{ Math.abs(deltaSinceSold.pct).toFixed(0) }}%)
+                </span>
+                <span
+                  :style="{
+                    fontSize: '10px',
+                    color: deltaSinceSold.positive ? '#6b9c78' : '#a86660',
+                  }"
+                  >since last sold</span
+                >
+              </div>
+            </div>
+
+            <!-- Last sold (most recent record) -->
+            <div
+              v-if="lastSale"
+              style="
+                border: 1.5px solid #ececef;
+                border-radius: 14px;
+                padding: 16px;
+                margin-bottom: 14px;
+                opacity: 0.85;
+              "
+            >
+              <div
+                style="
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: flex-start;
+                "
+              >
+                <div style="display: flex; align-items: center; gap: 10px">
+                  <div
+                    style="
+                      width: 12px;
+                      height: 12px;
+                      border-radius: 50%;
+                      background: white;
+                      border: 2px solid #c0bdcc;
+                      flex-shrink: 0;
+                      margin-top: 4px;
+                    "
+                  />
+                  <div>
+                    <div
+                      style="
+                        font-size: 20px;
+                        font-weight: 900;
+                        color: #231d45;
+                        letter-spacing: -0.5px;
+                      "
+                    >
+                      £{{ Number(lastSale.price).toLocaleString() }}
+                    </div>
+                    <div
+                      style="font-size: 12px; color: #9c98ad; margin-top: 2px"
+                    >
+                      {{ formatSoldDate(lastSale.date) }}
+                    </div>
+                  </div>
+                </div>
+                <div
+                  style="
+                    background: #f5f5f7;
+                    border: 1.5px solid #ececef;
+                    border-radius: 20px;
+                    padding: 4px 12px;
+                    font-size: 12px;
+                    font-weight: 800;
+                    color: #9c98ad;
+                  "
+                >
+                  SOLD
+                </div>
+              </div>
+            </div>
+
+            <!-- Compound annual growth rate banner (restored from old version) -->
+            <div v-if="priceHistoryCagr" class="pps-ds-cagr-banner">
+              <div class="pps-ds-cagr-label">
+                Compound growth · since {{ priceHistoryCagr.fromYear }}
+              </div>
+              <div
+                class="pps-ds-cagr-val"
+                :class="{
+                  'pps-ds-cagr-val--up': priceHistoryCagr.cagr >= 0,
+                  'pps-ds-cagr-val--down': priceHistoryCagr.cagr < 0,
+                }"
+              >
+                {{ priceHistoryCagr.cagr >= 0 ? '+' : ''
+                }}{{ priceHistoryCagr.cagr.toFixed(1) }}% / yr
+              </div>
+            </div>
+
+            <!-- Price-history timeline (restored from old version) — current
+                 estimate at the top, then each historic sale with delta -->
+            <div v-if="priceHistoryTimeline.length > 0">
+              <div class="pps-ds-section-title">Price timeline</div>
+              <div class="pps-ds-timeline">
+                <div
+                  v-for="(t, i) in priceHistoryTimeline"
+                  :key="(t.dateStr || 'est') + i"
+                  class="pps-ds-tl-row"
+                  :class="{ 'pps-ds-tl-row--est': t.isEstimate }"
+                >
+                  <div
+                    class="pps-ds-tl-bullet"
+                    :class="{ 'pps-ds-tl-bullet--est': t.isEstimate }"
+                  />
+                  <div class="pps-ds-tl-body">
+                    <div class="pps-ds-tl-price">
+                      £{{ Number(t.price).toLocaleString() }}
+                      <span v-if="t.isEstimate" class="pps-ds-tl-est-pill"
+                        >Estimate</span
+                      >
+                    </div>
+                    <div class="pps-ds-tl-date">
+                      <template v-if="t.dateObj">{{
+                        formatSoldDate(t.dateStr)
+                      }}</template>
+                      <template v-else>Today</template>
+                    </div>
+                  </div>
+                  <div
+                    v-if="t.delta"
+                    class="pps-ds-tl-delta"
+                    :class="{
+                      'pps-ds-tl-delta--up': t.delta.positive,
+                      'pps-ds-tl-delta--down': !t.delta.positive,
+                    }"
+                  >
+                    <span class="pps-ds-tl-arrow">{{
+                      t.delta.positive ? '↑' : '↓'
+                    }}</span>
+                    {{ t.delta.positive ? '+' : '−' }}£{{
+                      Math.abs(Math.round(t.delta.amount)).toLocaleString()
+                    }}
+                    <span class="pps-ds-tl-pct"
+                      >({{ t.delta.positive ? '+' : '−'
+                      }}{{ Math.abs(t.delta.pct).toFixed(0) }}%)</span
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div v-else class="pps-ds-empty">
+              No Land Registry sale records found for this address.
+            </div>
+
+            <!-- Nearby sales (restored — the data was already fetched) -->
+            <div
+              v-if="nearbySales.length > 0"
+              class="pps-ds-section-title"
+              style="margin-top: 18px"
+            >
+              Nearby sold prices
+            </div>
+            <div v-if="nearbySales.length > 0" class="pps-ds-kv-list">
+              <div
+                v-for="s in nearbySales.slice(0, 5)"
+                :key="(s.address || s.date) + s.price"
+                class="pps-ds-kv"
+              >
+                <span class="pps-ds-k">
+                  {{ s.address || s.postcode || 'Nearby property' }}
+                  <span class="pps-ds-tl-date" style="margin-left: 4px">
+                    · {{ formatSoldDate(s.date || s.transferDate || '') }}
+                  </span>
+                </span>
+                <span class="pps-ds-v"
+                  >£{{
+                    Number(s.price ?? s.amount ?? 0).toLocaleString()
+                  }}</span
+                >
+              </div>
+            </div>
+            <div
+              v-if="property?.tenure || property?.titleNumber || property?.uprn"
+              class="pps-ds-section-title"
+              style="margin-top: 18px"
+            >
+              Title details
+            </div>
+            <div class="pps-ds-kv-list">
+              <div v-if="property?.tenure" class="pps-ds-kv">
+                <span class="pps-ds-k">Tenure</span>
+                <span class="pps-ds-v">{{ property.tenure }}</span>
+              </div>
+              <div v-if="property?.titleNumber" class="pps-ds-kv">
+                <span class="pps-ds-k">Title number</span>
+                <span class="pps-ds-v">{{ property.titleNumber }}</span>
+              </div>
+              <div v-if="property?.uprn" class="pps-ds-kv">
+                <span class="pps-ds-k">UPRN</span>
+                <span class="pps-ds-v">{{ property.uprn }}</span>
+              </div>
+            </div>
+            <div class="pps-ds-attribution">
+              Data from HM Land Registry · Updated monthly
+            </div>
+            <button class="pps-sheet-cancel" @click="closeSheet">Close</button>
+          </template>
+
+          <!-- ── Street (live energy rank) ─────────────────────────── -->
+          <template v-else-if="activeSheet === 'street'">
+            <div class="pps-ds-header" style="background: #e8f5e9">
+              <span class="pps-ds-header-icon pps-ds-header-icon--img"><img src="/property-cards/streetData.jpeg" alt="" loading="lazy" /></span>
+              <div class="pps-ds-header-text">
+                <div class="pps-ds-header-title">Street data</div>
+                <div class="pps-ds-header-meta">
+                  {{ property?.postcode || 'Outcode' }}
+                  <template v-if="streetEnergyRank?.total">
+                    · {{ streetEnergyRank.total }} properties on file
+                  </template>
+                </div>
+              </div>
+            </div>
+            <div v-if="streetEnergyRank?.rank">
+              <div class="pps-ds-section-title">
+                This property vs the street
+              </div>
+              <div class="pps-ds-rank-card">
+                <div class="pps-ds-rank-big">
+                  {{ streetEnergyRank.rank
+                  }}<span style="font-size: 18px">{{
+                    ordinalSuffix(streetEnergyRank.rank)
+                  }}</span>
+                </div>
+                <div class="pps-ds-rank-sub">
+                  out of {{ streetEnergyRank.total }} homes for energy
+                  efficiency
+                </div>
+              </div>
+            </div>
+            <!-- Street EPC distribution -->
+            <template
+              v-if="(streetEnergyRank?.epcDistribution?.length || 0) > 0"
+            >
+              <div class="pps-ds-section-title" style="margin-top: 18px">
+                Street EPC distribution
+              </div>
+              <div class="pps-ds-bar-list">
+                <div
+                  v-for="bucket in streetEnergyRank!.epcDistribution"
+                  :key="bucket.letter"
+                  class="pps-ds-bar-item"
+                  :class="{
+                    'pps-ds-bar-item--active':
+                      streetEnergyRank?.yourEpcRating === bucket.letter,
+                  }"
+                >
+                  <span class="pps-ds-bar-label">{{ bucket.letter }}</span>
+                  <div class="pps-ds-bar-track">
+                    <div
+                      class="pps-ds-bar-fill"
+                      :style="{
+                        width: epcBarMaxCount
+                          ? (bucket.count / epcBarMaxCount) * 100 + '%'
+                          : '0%',
+                        background: epcBarColor(bucket.letter),
+                      }"
+                    />
+                  </div>
+                  <span class="pps-ds-bar-count"
+                    >{{ bucket.count
+                    }}<template
+                      v-if="streetEnergyRank?.yourEpcRating === bucket.letter"
+                    >
+                      ← you</template
+                    ></span
+                  >
+                </div>
+              </div>
+            </template>
+
+            <div class="pps-ds-section-title" style="margin-top: 18px">
+              Street averages
+            </div>
+            <div class="pps-ds-kv-list">
+              <div v-if="streetEnergyRank?.avgEpcScore" class="pps-ds-kv">
+                <span class="pps-ds-k">Avg. EPC score</span>
+                <span class="pps-ds-v"
+                  >{{ streetEnergyRank.avgEpcScore }} / 100</span
+                >
+              </div>
+              <div v-if="streetEnergyRank?.yourCost" class="pps-ds-kv">
+                <span class="pps-ds-k">Your annual cost</span>
+                <span class="pps-ds-v"
+                  >£{{ streetEnergyRank.yourCost.toLocaleString() }}</span
+                >
+              </div>
+              <div v-if="streetEnergyRank?.averageCost" class="pps-ds-kv">
+                <span class="pps-ds-k">Street average</span>
+                <span class="pps-ds-v"
+                  >£{{ streetEnergyRank.averageCost.toLocaleString() }}</span
+                >
+              </div>
+              <div v-if="streetEnergyRank?.bestCost" class="pps-ds-kv">
+                <span class="pps-ds-k">Best on street</span>
+                <span class="pps-ds-v"
+                  >£{{ streetEnergyRank.bestCost.toLocaleString() }}</span
+                >
+              </div>
+              <div v-if="property?.epcScore" class="pps-ds-kv">
+                <span class="pps-ds-k">Your EPC score</span>
+                <span class="pps-ds-v">{{ property.epcScore }} / 100</span>
+              </div>
+            </div>
+            <div class="pps-ds-attribution">
+              Source: Land Registry + EPC register · Aggregated
+            </div>
+            <button class="pps-sheet-cancel" @click="closeSheet">Close</button>
+          </template>
+
+          <!-- ── Schools (Ordnance Survey NGD via /enrichment) ─────── -->
+          <template v-else-if="activeSheet === 'schools'">
+            <div class="pps-ds-header" style="background: #e3f2fd">
+              <span class="pps-ds-header-icon pps-ds-header-icon--img"><img src="/property-cards/schools.jpeg" alt="" loading="lazy" /></span>
+              <div class="pps-ds-header-text">
+                <div class="pps-ds-header-title">Schools</div>
+                <div class="pps-ds-header-meta">
+                  Source: Ordnance Survey NGD · OS Open Names
+                </div>
+              </div>
+            </div>
+            <template v-if="enrichmentSchools.length > 0">
+              <div class="pps-ds-section-title">Nearby schools</div>
+              <div class="pps-ds-kv-list">
+                <div
+                  v-for="s in enrichmentSchools"
+                  :key="s.name + s.distanceKm"
+                  class="pps-ds-kv"
+                >
+                  <span class="pps-ds-k"
+                    ><svg class="pps-ds-rowic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 10 5-10 5L2 8l10-5Z"/><path d="M6 10.5V16c0 1.7 2.7 3 6 3s6-1.3 6-3v-5.5"/></svg> {{ s.name
+                    }}<span
+                      v-if="s.phase && s.phase !== 'School'"
+                      class="pps-ds-phase-pill"
+                      :class="schoolPhaseClass(s.phase)"
+                    >{{ s.phase }}</span></span
+                  >
+                  <span class="pps-ds-v">{{ s.distanceKm.toFixed(1) }} km</span>
+                </div>
+              </div>
+              <div class="pps-ds-info-note">
+                Distances are straight-line. School phases derived from OS
+                NGD landuse data. For admissions and Ofsted ratings, check
+                the school's official page on GOV.UK.
+              </div>
+            </template>
+            <div v-else class="pps-ds-placeholder">
+              <div class="pps-ds-placeholder-icon pps-ds-placeholder-icon--img"><img src="/property-cards/schools.jpeg" alt="" loading="lazy" /></div>
+              <div class="pps-ds-placeholder-title">
+                No schools data on file
+              </div>
+              <div class="pps-ds-placeholder-sub">
+                We couldn't retrieve nearby schools for this address yet — it
+                will be backfilled on the next enrichment pass.
+              </div>
+            </div>
+            <div class="pps-ds-attribution">Source: Ordnance Survey NGD</div>
+            <button class="pps-sheet-cancel" @click="closeSheet">Close</button>
+          </template>
+
+          <!-- ── Transport (OpenStreetMap via Overpass) ───────────── -->
+          <template v-else-if="activeSheet === 'transport'">
+            <div class="pps-ds-header" style="background: #f3e5f5">
+              <span class="pps-ds-header-icon pps-ds-header-icon--img"><img src="/property-cards/trainstations.jpeg" alt="" loading="lazy" /></span>
+              <div class="pps-ds-header-text">
+                <div class="pps-ds-header-title">Transport</div>
+                <div class="pps-ds-header-meta">
+                  Source: OpenStreetMap · Overpass API
+                </div>
+              </div>
+            </div>
+
+            <!-- Proximity pills -->
+            <div
+              style="display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 14px"
+            >
+              <div
+                v-if="enrichmentTrains[0]"
+                style="
+                  background: #f5f5f7;
+                  border-radius: 20px;
+                  padding: 7px 13px;
+                  font-size: 12px;
+                  font-weight: 700;
+                  color: #1a1535;
+                "
+              >
+                <svg class="pps-ds-rowic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="13" rx="3"/><path d="M4 11h16M8 20l-2 2M16 20l2 2M7 19h10"/><circle cx="8.5" cy="13.5" r=".6" fill="currentColor"/><circle cx="15.5" cy="13.5" r=".6" fill="currentColor"/></svg> {{ enrichmentTrains[0].distanceKm.toFixed(1) }} km station
+              </div>
+              <div
+                v-if="enrichmentBuses[0]"
+                style="
+                  background: #f5f5f7;
+                  border-radius: 20px;
+                  padding: 7px 13px;
+                  font-size: 12px;
+                  font-weight: 700;
+                  color: #1a1535;
+                "
+              >
+                <svg class="pps-ds-rowic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="13" rx="3"/><path d="M3 11h18M7 17v2M17 17v2"/><circle cx="7.5" cy="14" r=".6" fill="currentColor"/><circle cx="16.5" cy="14" r=".6" fill="currentColor"/></svg> {{ enrichmentBuses[0].distanceKm.toFixed(2) }} km bus
+              </div>
+              <div
+                v-if="enrichmentAirports[0]"
+                style="
+                  background: #f5f5f7;
+                  border-radius: 20px;
+                  padding: 7px 13px;
+                  font-size: 12px;
+                  font-weight: 700;
+                  color: #1a1535;
+                "
+              >
+                <svg class="pps-ds-rowic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.8 16 14l4-4a2.1 2.1 0 1 0-3-3l-4 4-5.8-1.8a1 1 0 0 0-1 1.7l4.6 3-2.3 2.3-2.2-.6a1 1 0 0 0-1 1.6l2.1 2.1a1 1 0 0 0 1.6-.2l.6-2.2 2.3-2.3 3 4.6a1 1 0 0 0 1.7-1Z"/></svg> {{ enrichmentAirports[0].distanceKm.toFixed(0) }} km airport
+              </div>
+            </div>
+
+            <template v-if="enrichmentTrains.length > 0">
+              <div class="pps-ds-section-title">Nearest stations</div>
+              <div class="pps-ds-kv-list">
+                <div
+                  v-for="t in enrichmentTrains.slice(0, 5)"
+                  :key="t.name + t.distanceKm"
+                  class="pps-ds-kv"
+                >
+                  <span class="pps-ds-k"><svg class="pps-ds-rowic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="13" rx="3"/><path d="M4 11h16M8 20l-2 2M16 20l2 2M7 19h10"/><circle cx="8.5" cy="13.5" r=".6" fill="currentColor"/><circle cx="15.5" cy="13.5" r=".6" fill="currentColor"/></svg> {{ t.name }}</span>
+                  <span class="pps-ds-v"
+                    >{{ t.distanceKm.toFixed(1) }} km<template
+                      v-if="t.operator"
+                    >
+                      · {{ t.operator }}</template
+                    ></span
+                  >
+                </div>
+              </div>
+            </template>
+
+            <template v-if="enrichmentBuses.length > 0">
+              <div class="pps-ds-section-title" style="margin-top: 18px">
+                Bus stops
+              </div>
+              <div class="pps-ds-kv-list">
+                <div
+                  v-for="b in enrichmentBuses.slice(0, 5)"
+                  :key="(b.name || 'stop') + b.distanceKm"
+                  class="pps-ds-kv"
+                >
+                  <span class="pps-ds-k"
+                    ><svg class="pps-ds-rowic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="13" rx="3"/><path d="M3 11h18M7 17v2M17 17v2"/><circle cx="7.5" cy="14" r=".6" fill="currentColor"/><circle cx="16.5" cy="14" r=".6" fill="currentColor"/></svg> {{ b.name || 'Bus Stop'
+                    }}<template v-if="b.ref"> ({{ b.ref }})</template></span
+                  >
+                  <span class="pps-ds-v">{{ b.distanceKm.toFixed(2) }} km</span>
+                </div>
+              </div>
+            </template>
+
+            <template v-if="enrichmentAirports.length > 0">
+              <div class="pps-ds-section-title" style="margin-top: 18px">
+                Airports
+              </div>
+              <div class="pps-ds-kv-list">
+                <div
+                  v-for="a in enrichmentAirports"
+                  :key="a.name"
+                  class="pps-ds-kv"
+                >
+                  <span class="pps-ds-k"
+                    ><svg class="pps-ds-rowic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.8 16 14l4-4a2.1 2.1 0 1 0-3-3l-4 4-5.8-1.8a1 1 0 0 0-1 1.7l4.6 3-2.3 2.3-2.2-.6a1 1 0 0 0-1 1.6l2.1 2.1a1 1 0 0 0 1.6-.2l.6-2.2 2.3-2.3 3 4.6a1 1 0 0 0 1.7-1Z"/></svg> {{ a.name
+                    }}<template v-if="a.iata"> ({{ a.iata }})</template
+                    ><span
+                      v-if="a.isMajor"
+                      class="pps-ds-major-pill"
+                      title="Major international hub"
+                    >Major</span></span
+                  >
+                  <span class="pps-ds-v">{{ a.distanceKm.toFixed(1) }} km</span>
+                </div>
+              </div>
+            </template>
+
+            <div
+              v-if="
+                enrichmentTrains.length === 0 &&
+                enrichmentBuses.length === 0 &&
+                enrichmentAirports.length === 0
+              "
+              class="pps-ds-placeholder"
+            >
+              <div class="pps-ds-placeholder-icon pps-ds-placeholder-icon--img"><img src="/property-cards/trainstations.jpeg" alt="" loading="lazy" /></div>
+              <div class="pps-ds-placeholder-title">
+                No transport data on file
+              </div>
+              <div class="pps-ds-placeholder-sub">
+                Will be backfilled on next enrichment pass.
+              </div>
+            </div>
+
+            <div class="pps-ds-attribution">
+              Source: OpenStreetMap contributors
+            </div>
+            <button class="pps-sheet-cancel" @click="closeSheet">Close</button>
+          </template>
+
+          <!-- ── Train stations (dedicated sheet) ──────────────────── -->
+          <template v-else-if="activeSheet === 'trains'">
+            <div class="pps-ds-header" style="background: #f3e5f5">
+              <span class="pps-ds-header-icon pps-ds-header-icon--img"><img src="/property-cards/trainstations.jpeg" alt="" loading="lazy" /></span>
+              <div class="pps-ds-header-text">
+                <div class="pps-ds-header-title">Train stations</div>
+                <div class="pps-ds-header-meta">
+                  {{ enrichmentTrains.length }} station{{
+                    enrichmentTrains.length === 1 ? '' : 's'
+                  }}
+                  within ~4 km
+                </div>
+              </div>
+            </div>
+            <template v-if="enrichmentTrains.length > 0">
+              <div class="pps-ds-section-title">Nearest stations</div>
+              <div class="pps-ds-kv-list">
+                <div
+                  v-for="t in enrichmentTrains"
+                  :key="t.name + t.distanceKm"
+                  class="pps-ds-kv"
+                >
+                  <span class="pps-ds-k"><svg class="pps-ds-rowic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="13" rx="3"/><path d="M4 11h16M8 20l-2 2M16 20l2 2M7 19h10"/><circle cx="8.5" cy="13.5" r=".6" fill="currentColor"/><circle cx="15.5" cy="13.5" r=".6" fill="currentColor"/></svg> {{ t.name }}</span>
+                  <span class="pps-ds-v"
+                    >{{ t.distanceKm.toFixed(1) }} km<template
+                      v-if="t.operator"
+                    >
+                      · {{ t.operator }}</template
+                    ></span
+                  >
+                </div>
+              </div>
+              <div class="pps-ds-info-note">
+                Distances are straight-line. Walking distance and journey times
+                depend on the route.
+              </div>
+            </template>
+            <div v-else class="pps-ds-placeholder">
+              <div class="pps-ds-placeholder-icon pps-ds-placeholder-icon--img"><img src="/property-cards/trainstations.jpeg" alt="" loading="lazy" /></div>
+              <div class="pps-ds-placeholder-title">
+                {{ transportLookupFailed
+                  ? 'Transport data unavailable from this network'
+                  : 'No train stations within 4 km' }}
+              </div>
+              <div class="pps-ds-placeholder-sub">
+                <template v-if="transportLookupFailed">
+                  OpenStreetMap's Overpass servers couldn't be reached from
+                  the backend's network. This usually resolves automatically
+                  once deployed to UK/EU infra.
+                </template>
+                <template v-else>
+                  This address has no National Rail or light-rail station
+                  within 4 km in OpenStreetMap.
+                </template>
+              </div>
+            </div>
+            <div class="pps-ds-attribution">
+              Source: OpenStreetMap · Overpass
+            </div>
+            <button class="pps-sheet-cancel" @click="closeSheet">Close</button>
+          </template>
+
+          <!-- ── Bus stops (dedicated sheet) ──────────────────────── -->
+          <template v-else-if="activeSheet === 'buses'">
+            <div class="pps-ds-header" style="background: #fff3e0">
+              <span class="pps-ds-header-icon pps-ds-header-icon--img"><img src="/property-cards/busStops.jpeg" alt="" loading="lazy" /></span>
+              <div class="pps-ds-header-text">
+                <div class="pps-ds-header-title">Bus stops</div>
+                <div class="pps-ds-header-meta">
+                  {{ enrichmentBuses.length }} stop{{
+                    enrichmentBuses.length === 1 ? '' : 's'
+                  }}
+                  within ~700 m
+                </div>
+              </div>
+            </div>
+            <template v-if="enrichmentBuses.length > 0">
+              <div class="pps-ds-section-title">Nearest stops</div>
+              <div class="pps-ds-kv-list">
+                <div
+                  v-for="b in enrichmentBuses"
+                  :key="(b.name || 'stop') + b.distanceKm"
+                  class="pps-ds-kv"
+                >
+                  <span class="pps-ds-k"
+                    ><svg class="pps-ds-rowic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="13" rx="3"/><path d="M3 11h18M7 17v2M17 17v2"/><circle cx="7.5" cy="14" r=".6" fill="currentColor"/><circle cx="16.5" cy="14" r=".6" fill="currentColor"/></svg> {{ b.name || 'Bus Stop'
+                    }}<template v-if="b.ref"> ({{ b.ref }})</template></span
+                  >
+                  <span class="pps-ds-v">{{ b.distanceKm.toFixed(2) }} km</span>
+                </div>
+              </div>
+              <div class="pps-ds-info-note">
+                Bus stop locations from OpenStreetMap. Route numbers and
+                operators vary by stop — check Traveline for live timetables.
+              </div>
+            </template>
+            <div v-else class="pps-ds-placeholder">
+              <div class="pps-ds-placeholder-icon pps-ds-placeholder-icon--img"><img src="/property-cards/busStops.jpeg" alt="" loading="lazy" /></div>
+              <div class="pps-ds-placeholder-title">
+                {{ transportLookupFailed
+                  ? 'Bus stop data unavailable from this network'
+                  : 'No bus stops within 700 m' }}
+              </div>
+              <div class="pps-ds-placeholder-sub">
+                <template v-if="transportLookupFailed">
+                  OpenStreetMap's Overpass servers couldn't be reached from
+                  the backend's network. This usually resolves once
+                  deployed to UK/EU infra.
+                </template>
+                <template v-else>
+                  No bus stops are mapped within walking distance in
+                  OpenStreetMap.
+                </template>
+              </div>
+            </div>
+            <div class="pps-ds-attribution">
+              Source: OpenStreetMap · Overpass
+            </div>
+            <button class="pps-sheet-cancel" @click="closeSheet">Close</button>
+          </template>
+
+          <!-- ── Airports (dedicated sheet) ───────────────────────── -->
+          <template v-else-if="activeSheet === 'airports'">
+            <div class="pps-ds-header" style="background: #e1f5fe">
+              <span class="pps-ds-header-icon pps-ds-header-icon--img"><img src="/property-cards/airports.jpeg" alt="" loading="lazy" /></span>
+              <div class="pps-ds-header-text">
+                <div class="pps-ds-header-title">Airports</div>
+                <div class="pps-ds-header-meta">
+                  {{ enrichmentAirports.length }} airport{{
+                    enrichmentAirports.length === 1 ? '' : 's'
+                  }}
+                  — majors prioritised, then by distance
+                </div>
+              </div>
+            </div>
+            <template v-if="enrichmentAirports.length > 0">
+              <div class="pps-ds-section-title">Nearest airports</div>
+              <div class="pps-ds-kv-list">
+                <div
+                  v-for="a in enrichmentAirports"
+                  :key="a.name"
+                  class="pps-ds-kv"
+                >
+                  <span class="pps-ds-k"
+                    ><svg class="pps-ds-rowic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.8 16 14l4-4a2.1 2.1 0 1 0-3-3l-4 4-5.8-1.8a1 1 0 0 0-1 1.7l4.6 3-2.3 2.3-2.2-.6a1 1 0 0 0-1 1.6l2.1 2.1a1 1 0 0 0 1.6-.2l.6-2.2 2.3-2.3 3 4.6a1 1 0 0 0 1.7-1Z"/></svg> {{ a.name
+                    }}<template v-if="a.iata"> ({{ a.iata }})</template
+                    ><span
+                      v-if="a.isMajor"
+                      class="pps-ds-major-pill"
+                      title="Major international hub"
+                    >Major</span></span
+                  >
+                  <span class="pps-ds-v">{{ a.distanceKm.toFixed(1) }} km</span>
+                </div>
+              </div>
+              <div class="pps-ds-info-note">
+                Distances are straight-line. Drive times depend on route and
+                traffic.
+              </div>
+            </template>
+            <div v-else class="pps-ds-placeholder">
+              <div class="pps-ds-placeholder-icon pps-ds-placeholder-icon--img"><img src="/property-cards/airports.jpeg" alt="" loading="lazy" /></div>
+              <div class="pps-ds-placeholder-title">
+                {{ airportsLookupFailed
+                  ? 'Airport data unavailable from this network'
+                  : 'No airports found within 150 km' }}
+              </div>
+              <div class="pps-ds-placeholder-sub">
+                <template v-if="airportsLookupFailed">
+                  OpenStreetMap's Overpass servers couldn't be reached from
+                  the backend's network. This usually resolves once
+                  deployed to UK/EU infra.
+                </template>
+                <template v-else>
+                  Only commercial airports (IATA code, international flag,
+                  or "Airport" in their name) are shown.
+                </template>
+              </div>
+            </div>
+            <div class="pps-ds-attribution">
+              Source: OpenStreetMap · Overpass
+            </div>
+            <button class="pps-sheet-cancel" @click="closeSheet">Close</button>
+          </template>
+
+          <!-- ── Map (light Leaflet via existing pps-map-iframe) ───── -->
+          <template v-else-if="activeSheet === 'map'">
+            <div class="pps-ds-header" style="background: #e8f5e9">
+              <span class="pps-ds-header-icon pps-ds-header-icon--img"><img src="/property-cards/locationAndMap.jpeg" alt="" loading="lazy" /></span>
+              <div class="pps-ds-header-text">
+                <div class="pps-ds-header-title">Location &amp; Map</div>
+                <div class="pps-ds-header-meta">
+                  {{ property?.city || '' }}
+                  <template v-if="property?.postcode">
+                    · {{ property.postcode }}</template
+                  >
+                </div>
+              </div>
+            </div>
+            <iframe
+              v-if="property?.latitude && property?.longitude"
+              class="pps-map-frame"
+              :src="`https://www.openstreetmap.org/export/embed.html?bbox=${property.longitude - 0.005},${property.latitude - 0.0025},${property.longitude + 0.005},${property.latitude + 0.0025}&layer=mapnik&marker=${property.latitude},${property.longitude}`"
+              loading="lazy"
+            />
+            <div v-else class="pps-ds-placeholder">
+              <div class="pps-ds-placeholder-icon pps-ds-placeholder-icon--img"><img src="/property-cards/locationAndMap.jpeg" alt="" loading="lazy" /></div>
+              <div class="pps-ds-placeholder-title">Map unavailable</div>
+              <div class="pps-ds-placeholder-sub">
+                No coordinates on file for this property.
+              </div>
+            </div>
+
+            <template v-if="enrichmentParks.length > 0">
+              <div class="pps-ds-section-title">Parks &amp; green space</div>
+              <div class="pps-ds-kv-list">
+                <div
+                  v-for="p in enrichmentParks"
+                  :key="p.name + p.distanceKm"
+                  class="pps-ds-kv"
+                >
+                  <span class="pps-ds-k"><svg class="pps-ds-rowic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 6.5 11h3L5 17h14l-4.5-6h3L12 3ZM12 17v4"/></svg> {{ p.name }}</span>
+                  <span class="pps-ds-v">{{ p.distanceKm.toFixed(2) }} km</span>
+                </div>
+              </div>
+            </template>
+
+            <template v-if="enrichmentAmenities.length > 0">
+              <div class="pps-ds-section-title" style="margin-top: 18px">
+                Local amenities
+              </div>
+              <template v-for="(group, cat) in amenitiesByCategory" :key="cat">
+                <div
+                  v-if="group.length > 0"
+                  class="pps-ds-kv-list"
+                  style="margin-bottom: 8px"
+                >
+                  <div
+                    v-for="a in group.slice(0, 2)"
+                    :key="a.name + a.distanceKm"
+                    class="pps-ds-kv"
+                  >
+                    <span class="pps-ds-k"
+                      ><svg class="pps-ds-rowic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" v-html="amenityIcon(a.category)" />
+                      {{ a.name }}</span
+                    >
+                    <span class="pps-ds-v"
+                      >{{ Number(a.distanceKm).toFixed(2) }} km ·
+                      {{ a.category }}</span
+                    >
+                  </div>
+                </div>
+              </template>
+            </template>
+
+            <div class="pps-ds-attribution">
+              Map: OpenStreetMap contributors
+            </div>
+            <button class="pps-sheet-cancel" @click="closeSheet">Close</button>
+          </template>
+
+          <!-- ── Flood (real EA RoFRS data) ───────────────────────── -->
+          <template v-else-if="activeSheet === 'flood'">
+            <div class="pps-ds-header" style="background: #fff8e1">
+              <span class="pps-ds-header-icon pps-ds-header-icon--img"><img src="/property-cards/floodAndRisj.jpeg" alt="" loading="lazy" /></span>
+              <div class="pps-ds-header-text">
+                <div class="pps-ds-header-title">
+                  Flood &amp; environmental risk
+                </div>
+                <div class="pps-ds-header-meta">
+                  Source: Environment Agency · GOV.UK
+                </div>
+              </div>
+            </div>
+            <div
+              v-if="floodRiskLabel"
+              class="pps-ds-risk-card"
+              :class="{
+                'pps-ds-risk-card--high': /high/i.test(floodRiskLabel),
+                'pps-ds-risk-card--medium': /medium/i.test(floodRiskLabel),
+                'pps-ds-risk-card--low':
+                  /low/i.test(floodRiskLabel) &&
+                  !/very/i.test(floodRiskLabel),
+                'pps-ds-risk-card--clear': /very low|unknown/i.test(
+                  floodRiskLabel,
+                ),
+              }"
+            >
+              <div class="pps-ds-risk-label">
+                {{ floodRiskLabel }} flood risk
+              </div>
+              <div class="pps-ds-risk-desc">
+                <template v-if="/high/i.test(floodRiskLabel)">
+                  This address sits in an EA-classified high-risk zone (greater
+                  than 3.3% chance of flooding in any given year from rivers or
+                  sea).
+                </template>
+                <template v-else-if="/medium/i.test(floodRiskLabel)">
+                  Medium risk — between 1% and 3.3% annual probability of river
+                  or sea flooding.
+                </template>
+                <template v-else-if="/very low/i.test(floodRiskLabel)">
+                  Very low risk — less than 0.1% annual probability of river or
+                  sea flooding.
+                </template>
+                <template v-else-if="/low/i.test(floodRiskLabel)">
+                  Low risk — between 0.1% and 1% annual probability of river or
+                  sea flooding.
+                </template>
+                <template v-else>
+                  EA risk classification: {{ floodRiskLabel }}.
+                </template>
+              </div>
+            </div>
+            <div v-else class="pps-ds-placeholder">
+              <div class="pps-ds-placeholder-icon pps-ds-placeholder-icon--img"><img src="/property-cards/floodAndRisj.jpeg" alt="" loading="lazy" /></div>
+              <div class="pps-ds-placeholder-title">No flood risk on file</div>
+              <div class="pps-ds-placeholder-sub">
+                We couldn't retrieve an EA flood-risk classification for this
+                address yet. It will be backfilled on the next enrichment pass.
+              </div>
+            </div>
+
+            <!-- Risk breakdown -->
+            <div class="pps-ds-section-title" style="margin-top: 18px">
+              Risk breakdown
+            </div>
+            <div class="pps-ds-kv-list">
+              <div class="pps-ds-kv">
+                <span class="pps-ds-k">River &amp; sea</span>
+                <span
+                  class="pps-ds-v"
+                  :class="floodBreakdownClass(floodRiskLabel)"
+                  >{{ floodRiskLabel || 'Not assessed' }}</span
+                >
+              </div>
+              <div v-if="nearestWatercourse" class="pps-ds-kv">
+                <span class="pps-ds-k">Nearest watercourse</span>
+                <span class="pps-ds-v">{{ nearestWatercourse }}</span>
+              </div>
+              <div v-for="z in floodZonesList" :key="z.name" class="pps-ds-kv">
+                <span class="pps-ds-k"><svg class="pps-ds-rowic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg> {{ z.name }}</span>
+                <span
+                  class="pps-ds-v"
+                  :class="floodBreakdownClass(z.severity)"
+                  >{{ z.severity }}</span
+                >
+              </div>
+              <div class="pps-ds-kv">
+                <span class="pps-ds-k">Surface water</span>
+                <span class="pps-ds-v pps-ds-v--muted"
+                  >Not in EA monitoring feed</span
+                >
+              </div>
+              <div class="pps-ds-kv">
+                <span class="pps-ds-k">Groundwater</span>
+                <span class="pps-ds-v pps-ds-v--muted"
+                  >Not in EA monitoring feed</span
+                >
+              </div>
+              <div class="pps-ds-kv">
+                <span class="pps-ds-k">Reservoir</span>
+                <span class="pps-ds-v pps-ds-v--muted"
+                  >Not in EA monitoring feed</span
+                >
+              </div>
+            </div>
+
+            <!-- Other environmental — links to official postcode lookups -->
+            <div class="pps-ds-section-title" style="margin-top: 18px">
+              Other environmental
+            </div>
+            <div class="pps-ds-kv-list">
+              <a
+                :href="`https://www.ukradon.org/information/ukmaps?utm_source=umovingu`"
+                target="_blank"
+                rel="noopener"
+                class="pps-ds-kv pps-ds-kv--link"
+              >
+                <span class="pps-ds-k"><svg class="pps-ds-rowic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2"/><path d="M12 10V3M12 14l-6 3.5M12 14l6 3.5"/><circle cx="12" cy="12" r="9"/></svg> Radon risk</span>
+                <span class="pps-ds-v pps-ds-v--muted">UKHSA lookup →</span>
+              </a>
+              <a
+                :href="`https://www.bgs.ac.uk/geology-projects/shrink-swell/`"
+                target="_blank"
+                rel="noopener"
+                class="pps-ds-kv pps-ds-kv--link"
+              >
+                <span class="pps-ds-k"><svg class="pps-ds-rowic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V9l7-6 7 6v12"/><path d="m11 21 1.5-5-2.5-1 2-4"/></svg> Subsidence / clay shrink-swell</span>
+                <span class="pps-ds-v pps-ds-v--muted">BGS lookup →</span>
+              </a>
+              <a
+                :href="`https://uk-air.defra.gov.uk/data/local-authority-statistics${property?.city ? `?la=${encodeURIComponent(property.city)}` : ''}`"
+                target="_blank"
+                rel="noopener"
+                class="pps-ds-kv pps-ds-kv--link"
+              >
+                <span class="pps-ds-k"><svg class="pps-ds-rowic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h11a3 3 0 1 0-3-3M3 12h14a3 3 0 1 1-3 3M4 16h9a2.5 2.5 0 1 1-2.5 2.5"/></svg> Air quality (NO₂ / PM2.5)</span>
+                <span class="pps-ds-v pps-ds-v--muted">DEFRA UK-AIR →</span>
+              </a>
+              <a
+                :href="`https://www.bgs.ac.uk/datasets/geosure/`"
+                target="_blank"
+                rel="noopener"
+                class="pps-ds-kv pps-ds-kv--link"
+              >
+                <span class="pps-ds-k"><svg class="pps-ds-rowic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17h18M6 17l3-5 3 3 2.5-4L21 17"/><path d="M3 20h18"/></svg> Ground stability</span>
+                <span class="pps-ds-v pps-ds-v--muted">BGS GeoSure →</span>
+              </a>
+            </div>
+
+            <div class="pps-ds-info-note">
+              Flood risk data is from the Environment Agency's national mapping.
+              It indicates statistical probability — not a guarantee of
+              flooding. Surface water, groundwater and reservoir ratings need
+              the EA RoFRS bulk dataset. Radon, subsidence, ground stability and
+              air quality come from third-party government datasets — links
+              above open the official postcode lookup.
+            </div>
+            <div class="pps-ds-attribution">
+              Sources: Environment Agency · UKHSA · BGS · DEFRA
+            </div>
+            <button class="pps-sheet-cancel" @click="closeSheet">Close</button>
+          </template>
+
+          <!-- ── Planning (placeholder) ────────────────────────────── -->
+          <template v-else-if="activeSheet === 'planning'">
+            <div class="pps-ds-header" style="background: #f5f5f7">
+              <span class="pps-ds-header-icon pps-ds-header-icon--img"><img src="/property-cards/planning.jpeg" alt="" loading="lazy" /></span>
+              <div class="pps-ds-header-text">
+                <div class="pps-ds-header-title">Planning history</div>
+                <div class="pps-ds-header-meta">
+                  Source: planning.data.gov.uk{{
+                    property?.city ? ` · ${property.city}` : ''
+                  }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Constraints (heritage, environment, development) -->
+            <template v-if="planningConstraints.length > 0">
+              <div class="pps-ds-section-title">Planning constraints</div>
+              <div class="pps-ds-kv-list">
+                <div
+                  v-for="(c, i) in planningConstraints"
+                  :key="i"
+                  class="pps-ds-kv"
+                >
+                  <span class="pps-ds-k"
+                    ><svg class="pps-ds-rowic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" v-html="constraintIcon(c.category)" />
+                    {{ c.type }}</span
+                  >
+                  <span class="pps-ds-v">{{ c.name }}</span>
+                </div>
+              </div>
+            </template>
+
+            <!-- Applications (property-specific via UPRN) -->
+            <template v-if="planningApplications.length > 0">
+              <div class="pps-ds-section-title" style="margin-top: 18px">
+                Planning applications
+              </div>
+              <div class="pps-ds-table">
+                <div class="pps-ds-row pps-ds-row--header">
+                  <span>Date</span><span>Type</span><span>Status</span>
+                </div>
+                <div
+                  v-for="(a, i) in planningApplications.slice(0, 10)"
+                  :key="i"
+                  class="pps-ds-row"
+                >
+                  <span>{{
+                    a.decisionDate
+                      ? new Date(a.decisionDate).getFullYear()
+                      : '—'
+                  }}</span>
+                  <span class="pps-ds-val">{{
+                    (a.applicationType || a.description || 'Application').slice(
+                      0,
+                      40,
+                    )
+                  }}</span>
+                  <span class="pps-ds-muted">{{
+                    a.decision || a.status || '—'
+                  }}</span>
+                </div>
+              </div>
+            </template>
+
+            <div
+              v-if="
+                planningConstraints.length === 0 &&
+                planningApplications.length === 0
+              "
+              class="pps-ds-placeholder"
+            >
+              <div class="pps-ds-placeholder-icon pps-ds-placeholder-icon--img"><img src="/property-cards/planning.jpeg" alt="" loading="lazy" /></div>
+              <div class="pps-ds-placeholder-title">
+                No constraints or applications on file
+              </div>
+              <div class="pps-ds-placeholder-sub">
+                This address has no conservation area, listed building, Article
+                4 direction, Green Belt, AONB or other planning designation in
+                <a
+                  href="https://www.planning.data.gov.uk"
+                  target="_blank"
+                  rel="noopener"
+                  style="color: #00a19a; font-weight: 700"
+                  >planning.data.gov.uk</a
+                >, and no planning applications linked to this UPRN.
+              </div>
+            </div>
+
+            <div class="pps-ds-info-note">
+              Constraints come from the national Planning Data platform.
+              Applications are matched to this property's UPRN — they may
+              exclude older paper records held only by the LA portal.
+            </div>
+            <div class="pps-ds-attribution">
+              Source: planning.data.gov.uk · MHCLG
+            </div>
+            <button class="pps-sheet-cancel" @click="closeSheet">Close</button>
+          </template>
+
+          <!-- ── Local Land Charges (HM Land Registry) ─────────────── -->
+          <template v-else-if="activeSheet === 'llc'">
+            <!-- LlcChargesCard renders its own header; don't duplicate. -->
+            <LlcChargesCard v-if="propertyId" :property-id="propertyId" />
+            <button class="pps-sheet-cancel" @click="closeSheet">Close</button>
+          </template>
+
+          <!-- ── Council tax (real band) ───────────────────────────── -->
+          <template v-else-if="activeSheet === 'council'">
+            <div class="pps-ds-header" style="background: #e8f5e9">
+              <span class="pps-ds-header-icon pps-ds-header-icon--img"><img src="/property-cards/councilTax.jpeg" alt="" loading="lazy" /></span>
+              <div class="pps-ds-header-text">
+                <div class="pps-ds-header-title">Council tax</div>
+                <div class="pps-ds-header-meta">
+                  Source: {{ councilTaxSource || 'VOA'
+                  }}<template v-if="councilTaxCouncilName">
+                    · {{ councilTaxCouncilName }}</template
+                  >
+                </div>
+              </div>
+            </div>
+            <div v-if="councilTaxAnnual" class="pps-ds-highlight-box">
+              <div class="pps-ds-highlight-num">
+                £{{ councilTaxAnnual.toLocaleString() }} / yr
+              </div>
+              <div class="pps-ds-highlight-sub">
+                Band {{ property.councilTaxBand }} · 2024/25 average
+                <template v-if="property.city"> · {{ property.city }}</template>
+              </div>
+            </div>
+            <div class="pps-ds-section-title" style="margin-top: 18px">
+              All bands · 2024/25 average
+            </div>
+            <div class="pps-ds-band-list">
+              <div
+                v-for="b in councilTaxBands"
+                :key="b.letter"
+                class="pps-ds-band-row"
+                :class="{ 'pps-ds-band-row--active': b.active }"
+              >
+                <span class="pps-ds-band-letter"
+                  >{{ b.letter }}{{ b.active ? ' ←' : '' }}</span
+                >
+                <div class="pps-ds-band-bar-track">
+                  <div
+                    class="pps-ds-band-bar"
+                    :style="{
+                      width: b.pct + '%',
+                      background: b.active ? '#00a19a' : undefined,
+                    }"
+                  />
+                </div>
+                <span class="pps-ds-band-amt"
+                  >£{{ b.amount.toLocaleString() }}</span
+                >
+              </div>
+            </div>
+            <div
+              v-if="councilTaxAnnual"
+              class="pps-ds-kv-list"
+              style="margin-top: 14px"
+            >
+              <div class="pps-ds-kv">
+                <span class="pps-ds-k">Monthly equivalent</span>
+                <span class="pps-ds-v"
+                  >£{{ Math.round(councilTaxAnnual / 12) }} / month</span
+                >
+              </div>
+            </div>
+
+            <!-- Nearby council tax bands (restored — uses the enrichment.councilTax.nearby
+                 array that was previously fetched but never rendered). -->
+            <template v-if="councilTaxNearby.length > 0">
+              <div class="pps-ds-section-title" style="margin-top: 18px">
+                Nearby addresses
+              </div>
+              <div class="pps-ds-kv-list">
+                <div
+                  v-for="(n, i) in councilTaxNearby.slice(0, 6)"
+                  :key="(n.address || 'n') + i"
+                  class="pps-ds-kv"
+                >
+                  <span class="pps-ds-k">{{
+                    n.address || n.postcode || 'Nearby property'
+                  }}</span>
+                  <span class="pps-ds-v">
+                    Band {{ n.band
+                    }}<template v-if="n.annualEstimate">
+                      · £{{ n.annualEstimate.toLocaleString() }}/yr</template
+                    >
+                  </span>
+                </div>
+              </div>
+            </template>
+
+            <div class="pps-ds-attribution">
+              Source: Valuation Office Agency · 2024/25
+            </div>
+            <button class="pps-sheet-cancel" @click="closeSheet">Close</button>
+          </template>
+
+          <!-- ── Broadband (Ofcom Connected Nations) ──────────────── -->
+          <template v-else-if="activeSheet === 'broadband'">
+            <div class="pps-ds-header" style="background: #e3f2fd">
+              <span class="pps-ds-header-icon pps-ds-header-icon--img"><img src="/property-cards/broadband.jpeg" alt="" loading="lazy" /></span>
+              <div class="pps-ds-header-text">
+                <div class="pps-ds-header-title">Broadband</div>
+                <div class="pps-ds-header-meta">
+                  Source: Ofcom Connected Nations
+                </div>
+              </div>
+            </div>
+
+            <template v-if="enrichmentBroadband?.available">
+              <div
+                v-if="enrichmentBroadband.maxDownload"
+                class="pps-ds-highlight-box"
+              >
+                <div class="pps-ds-highlight-num">
+                  Up to {{ formatMbps(enrichmentBroadband.maxDownload) }}
+                </div>
+                <div class="pps-ds-highlight-sub">
+                  <template v-if="enrichmentBroadband.fttp"
+                    >Full fibre (FTTP) available at this address</template
+                  >
+                  <template v-else-if="enrichmentBroadband.ultrafast"
+                    >Ultrafast available at this address</template
+                  >
+                  <template v-else-if="enrichmentBroadband.superfast"
+                    >Superfast available at this address</template
+                  >
+                  <template v-else
+                    >Standard broadband · upgrade may be possible</template
+                  >
+                </div>
+              </div>
+
+              <div class="pps-ds-section-title" style="margin-top: 18px">
+                Technology available
+              </div>
+              <div class="pps-ds-bb-list">
+                <div class="pps-ds-bb-row">
+                  <div
+                    class="pps-ds-bb-check"
+                    :class="
+                      enrichmentBroadband.fttp
+                        ? 'pps-ds-bb-check--yes'
+                        : 'pps-ds-bb-check--no'
+                    "
+                  >
+                    {{ enrichmentBroadband.fttp ? '✓' : '✗' }}
+                  </div>
+                  <div class="pps-ds-bb-info">
+                    <div class="pps-ds-bb-name">Full Fibre (FTTP)</div>
+                    <div class="pps-ds-bb-meta">
+                      Up to 1,000+ Mbps · Openreach / altnets
+                    </div>
+                  </div>
+                </div>
+                <div class="pps-ds-bb-row">
+                  <div
+                    class="pps-ds-bb-check"
+                    :class="
+                      enrichmentBroadband.fttc
+                        ? 'pps-ds-bb-check--yes'
+                        : 'pps-ds-bb-check--no'
+                    "
+                  >
+                    {{ enrichmentBroadband.fttc ? '✓' : '✗' }}
+                  </div>
+                  <div class="pps-ds-bb-info">
+                    <div class="pps-ds-bb-name">Superfast (FTTC)</div>
+                    <div class="pps-ds-bb-meta">
+                      Up to 80 Mbps · BT Openreach
+                    </div>
+                  </div>
+                </div>
+                <div class="pps-ds-bb-row">
+                  <div
+                    class="pps-ds-bb-check"
+                    :class="
+                      enrichmentBroadband.cable
+                        ? 'pps-ds-bb-check--yes'
+                        : 'pps-ds-bb-check--no'
+                    "
+                  >
+                    {{ enrichmentBroadband.cable ? '✓' : '✗' }}
+                  </div>
+                  <div class="pps-ds-bb-info">
+                    <div class="pps-ds-bb-name">Cable (DOCSIS)</div>
+                    <div class="pps-ds-bb-meta">
+                      Up to 1,130 Mbps · Virgin Media
+                    </div>
+                  </div>
+                </div>
+                <div class="pps-ds-bb-row">
+                  <div
+                    class="pps-ds-bb-check"
+                    :class="
+                      enrichmentBroadband.ultrafast
+                        ? 'pps-ds-bb-check--yes'
+                        : 'pps-ds-bb-check--no'
+                    "
+                  >
+                    {{ enrichmentBroadband.ultrafast ? '✓' : '✗' }}
+                  </div>
+                  <div class="pps-ds-bb-info">
+                    <div class="pps-ds-bb-name">Ultrafast (>300 Mbps)</div>
+                    <div class="pps-ds-bb-meta">
+                      <template v-if="enrichmentBroadband.maxUfDownload">
+                        Up to
+                        {{ formatMbps(enrichmentBroadband.maxUfDownload) }}
+                      </template>
+                      <template v-else>Not currently listed</template>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </template>
+            <div v-else class="pps-ds-placeholder">
+              <div class="pps-ds-placeholder-icon pps-ds-placeholder-icon--img"><img src="/property-cards/broadband.jpeg" alt="" loading="lazy" /></div>
+              <div class="pps-ds-placeholder-title">
+                {{ broadbandPlaceholder.title }}
+              </div>
+              <div class="pps-ds-placeholder-sub">
+                {{ broadbandPlaceholder.sub }}
+              </div>
+              <a
+                v-if="property?.postcode"
+                :href="`https://checker.ofcom.org.uk/en-gb/broadband-coverage?Postcode=${encodeURIComponent(property.postcode)}`"
+                target="_blank"
+                rel="noopener"
+                class="pps-ds-placeholder-link"
+              >
+                Check on Ofcom's site →
+              </a>
+            </div>
+
+            <template v-if="enrichmentMobile?.available">
+              <div class="pps-ds-section-title" style="margin-top: 18px">
+                Mobile signal (outdoor)
+              </div>
+              <div class="pps-ds-kv-list">
+                <div
+                  v-for="op in mobileOperatorRows"
+                  :key="op.label"
+                  class="pps-ds-kv"
+                >
+                  <span class="pps-ds-k">{{ op.label }}</span>
+                  <span class="pps-ds-v" :class="op.colour">{{
+                    op.summary
+                  }}</span>
+                </div>
+              </div>
+            </template>
+
+            <div class="pps-ds-attribution">
+              Source: Ofcom Connected Nations · 2024
+            </div>
+            <button class="pps-sheet-cancel" @click="closeSheet">Close</button>
+          </template>
+
+          <!-- ── Stamp Duty Calculator (live) ──────────────────────── -->
+          <template v-else-if="activeSheet === 'stamp-duty'">
+            <!-- Standard data-source header (was a bespoke inline-styled row
+                 with no icon — the only sheet on the page missing one). -->
+            <div class="pps-ds-header" style="background: #fce4ec">
+              <span class="pps-ds-header-icon pps-ds-header-icon--img"><img src="/property-cards/stampDuty.jpeg" alt="" loading="lazy" /></span>
+              <div class="pps-ds-header-text">
+                <div class="pps-ds-header-title">Stamp Duty Calculator</div>
+                <div class="pps-ds-header-meta">England &amp; NI · 2026 rates</div>
+              </div>
+            </div>
+            <div
+              style="
+                background: #e6f7f6;
+                border: 1.5px solid #b2e4e1;
+                border-radius: 14px;
+                padding: 16px 18px;
+                margin-bottom: 16px;
+              "
+            >
+              <div
+                style="
+                  font-size: 9px;
+                  font-weight: 800;
+                  color: #6b6783;
+                  letter-spacing: 1.5px;
+                  text-transform: uppercase;
+                  margin-bottom: 4px;
+                "
+              >
+                Your estimated stamp duty
+              </div>
+              <div
+                style="
+                  font-size: 32px;
+                  font-weight: 900;
+                  color: #00a19a;
+                  letter-spacing: -1px;
+                "
+              >
+                £{{ stampDuty.total.toLocaleString() }}
+              </div>
+              <div style="font-size: 13px; color: #6b6783; margin-top: 4px">
+                On a price of £{{ (sdInput || 0).toLocaleString() }}
+              </div>
+            </div>
+            <div
+              style="
+                border: 1.5px solid #ececef;
+                border-radius: 14px;
+                padding: 14px 18px;
+                margin-bottom: 14px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+              "
+            >
+              <span style="font-size: 20px; color: #c0bdcc; font-weight: 700"
+                >£</span
+              >
+              <input
+                :value="sdInput"
+                type="number"
+                min="0"
+                max="10000000"
+                step="1000"
+                @input="onSdInput"
+                style="
+                  border: none;
+                  outline: none;
+                  font-size: 22px;
+                  font-weight: 800;
+                  color: #231d45;
+                  font-family: inherit;
+                  width: 100%;
+                  background: transparent;
+                  letter-spacing: -0.5px;
+                "
+              />
+            </div>
+            <div
+              style="
+                background: #f5f5f7;
+                border-radius: 12px;
+                padding: 4px;
+                display: grid;
+                grid-template-columns: 1fr 1fr 1fr;
+                gap: 4px;
+                margin-bottom: 18px;
+              "
+            >
+              <button
+                class="pps-sd-type-btn"
+                :class="{ 'pps-sd-type-btn--active': sdType === 'standard' }"
+                @click="sdType = 'standard'"
+              >
+                <svg class="pps-sd-type-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V21H3zM9 21v-6h6v6"/></svg> Standard
+              </button>
+              <button
+                class="pps-sd-type-btn"
+                :class="{ 'pps-sd-type-btn--active': sdType === 'first' }"
+                @click="sdType = 'first'"
+              >
+                <svg class="pps-sd-type-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21v-8M12 13c0-3.3-2.7-6-6-6 0 3.3 2.7 6 6 6ZM12 13c0-3.9 3.1-7 7-7 0 3.9-3.1 7-7 7Z"/></svg> First-time
+              </button>
+              <button
+                class="pps-sd-type-btn"
+                :class="{ 'pps-sd-type-btn--active': sdType === 'additional' }"
+                @click="sdType = 'additional'"
+              >
+                <svg class="pps-sd-type-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21V11l6-4.5V21M2 21h20M14 21V9l6 4v8M4 21v-6h4"/></svg> Additional
+              </button>
+            </div>
+            <div
+              style="
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+                margin-bottom: 16px;
+              "
+            >
+              <div
+                v-for="(b, i) in stampDuty.bands"
+                :key="i"
+                class="pps-sd-band"
+              >
+                <div class="pps-sd-band-top">
+                  <span class="pps-sd-band-pct"
+                    >{{ Math.round(b.rate * 100) }}%</span
+                  >
+                  <span class="pps-sd-band-amt"
+                    >£{{ b.amount.toLocaleString() }}</span
+                  >
+                </div>
+                <div class="pps-sd-band-track">
+                  <div
+                    class="pps-sd-band-fill"
+                    :style="{
+                      width:
+                        stampDuty.total > 0
+                          ? (b.amount / stampDuty.total) * 100 + '%'
+                          : '0%',
+                    }"
+                  />
+                </div>
+                <div class="pps-sd-band-range">{{ b.range }}</div>
+              </div>
+            </div>
+            <div style="margin-bottom: 14px">
+              <a
+                href="https://www.gov.uk/stamp-duty-land-tax"
+                target="_blank"
+                style="
+                  font-size: 13px;
+                  font-weight: 700;
+                  color: #00a19a;
+                  text-decoration: none;
+                "
+                >Full rates on GOV.UK →</a
+              >
+            </div>
+            <button class="pps-sheet-cancel" @click="closeSheet">Close</button>
+          </template>
+
+          <!-- ── Listed buildings / heritage sites ────────────────────── -->
+          <template v-else-if="activeSheet === 'listed'">
+            <div class="pps-ds-header" style="background: #fbefd9">
+              <span class="pps-ds-header-icon pps-ds-header-icon--img"><img src="/property-cards/listedBuildings.jpeg" alt="" loading="lazy" /></span>
+              <div class="pps-ds-header-text">
+                <div class="pps-ds-header-title">Heritage sites nearby</div>
+                <div class="pps-ds-header-meta">
+                  Source: OpenStreetMap · Historic England
+                </div>
+              </div>
+            </div>
+            <template v-if="enrichmentListedBuildings.length > 0">
+              <div class="pps-ds-section-title">
+                {{ enrichmentListedBuildings.length }} listed / historic site{{
+                  enrichmentListedBuildings.length === 1 ? '' : 's'
+                }}
+                within ~800m
+              </div>
+              <div class="pps-ds-kv-list">
+                <div
+                  v-for="(b, i) in enrichmentListedBuildings"
+                  :key="(b.name || 'site') + i"
+                  class="pps-ds-kv"
+                >
+                  <span class="pps-ds-k"
+                    ><svg class="pps-ds-rowic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V10M19 21V10M12 3 3 8h18l-9-5ZM9 21v-7M15 21v-7"/></svg> {{ b.name || 'Unnamed site'
+                    }}<template v-if="b.location">
+                      · {{ b.location }}</template
+                    ></span
+                  >
+                  <span class="pps-ds-v">{{ b.grade || 'Heritage' }}</span>
+                </div>
+              </div>
+              <div class="pps-ds-info-note">
+                Heritage designations may affect what alterations or extensions
+                you can make. Always check with the local conservation officer.
+              </div>
+            </template>
+            <div v-else class="pps-ds-placeholder">
+              <div class="pps-ds-placeholder-icon pps-ds-placeholder-icon--img"><img src="/property-cards/listedBuildings.jpeg" alt="" loading="lazy" /></div>
+              <div class="pps-ds-placeholder-title">
+                No heritage sites nearby
+              </div>
+              <div class="pps-ds-placeholder-sub">
+                No listed buildings or scheduled monuments within ~800m.
+              </div>
+            </div>
+            <div class="pps-ds-attribution">
+              Source: OpenStreetMap heritage tags
+            </div>
+            <button class="pps-sheet-cancel" @click="closeSheet">Close</button>
+          </template>
+
+          <!-- ── Crime / safety (data.police.uk) ────────────────────── -->
+          <template v-else-if="activeSheet === 'crime'">
+            <div class="pps-ds-header" style="background: #eeedf5">
+              <span class="pps-ds-header-icon pps-ds-header-icon--img"><img src="/property-cards/crime.jpeg" alt="" loading="lazy" /></span>
+              <div class="pps-ds-header-text">
+                <div class="pps-ds-header-title">Crime in this area</div>
+                <div class="pps-ds-header-meta">
+                  Source: data.police.uk · last 12 months · 1 mile radius
+                </div>
+              </div>
+            </div>
+            <template v-if="enrichmentCrime?.totalLast12m != null">
+              <div class="pps-ds-highlight-box">
+                <div class="pps-ds-highlight-num">
+                  {{ enrichmentCrime.totalLast12m.toLocaleString() }} crimes
+                </div>
+                <div class="pps-ds-highlight-sub">
+                  Over the past 12 months within 1 mile of this address
+                </div>
+              </div>
+              <div class="pps-ds-section-title" style="margin-top: 18px">
+                Breakdown by category
+              </div>
+              <div class="pps-ds-kv-list">
+                <div
+                  v-for="cat in enrichmentCrime.byCategory"
+                  :key="cat.category"
+                  class="pps-ds-kv"
+                >
+                  <span class="pps-ds-k">{{ cat.label }}</span>
+                  <span class="pps-ds-v">{{ cat.count.toLocaleString() }}</span>
+                </div>
+              </div>
+              <div class="pps-ds-info-note">
+                Counts reflect reported crimes only. Many incidents go
+                unreported, and definitions vary by force. Use as a relative
+                indicator, not an absolute measure.
+              </div>
+            </template>
+            <div v-else class="pps-ds-placeholder">
+              <div class="pps-ds-placeholder-icon pps-ds-placeholder-icon--img"><img src="/property-cards/crime.jpeg" alt="" loading="lazy" /></div>
+              <div class="pps-ds-placeholder-title">Crime data unavailable</div>
+              <div class="pps-ds-placeholder-sub">
+                Couldn't load data.police.uk stats for this location.
+              </div>
+            </div>
+            <div class="pps-ds-attribution">
+              Source: data.police.uk · open government licence
+            </div>
+            <button class="pps-sheet-cancel" @click="closeSheet">Close</button>
+          </template>
+
+          <!-- ── Watch this (Register interest) ────────────────────── -->
+          <template v-else-if="activeSheet === 'watch'">
+            <div class="pps-sheet-icon pps-sheet-icon--img">
+              <img src="/property-cards/watchThis.jpeg" alt="" loading="lazy" />
+            </div>
+            <div class="pps-sheet-title">Watch this property</div>
+            <div class="pps-sheet-sub">
+              Save it to your list. We'll alert you if it comes to market, when
+              the Passport publishes, or if anything changes.
+            </div>
+
+            <div class="pps-field-group">
+              <div class="pps-field">
+                <label class="pps-field-label">Your name</label>
+                <input
+                  v-model="watchName"
+                  type="text"
+                  class="pps-text-input"
+                  placeholder="Alex Quinn"
+                />
+              </div>
+              <div class="pps-field">
+                <label class="pps-field-label">Email address</label>
+                <input
+                  v-model="watchEmail"
+                  type="email"
+                  class="pps-text-input"
+                  placeholder="alex@email.com"
+                />
+              </div>
+              <div class="pps-field">
+                <label class="pps-field-label">Why are you watching?</label>
+                <div class="pps-choice-row">
+                  <button
+                    v-for="r in [
+                      'Potential buyer',
+                      'I love the road',
+                      'Investor',
+                    ]"
+                    :key="r"
+                    type="button"
+                    class="pps-choice"
+                    :class="{ 'pps-choice--active': watchReason === r }"
+                    @click="watchReason = r"
+                  >
+                    {{ r }}
+                  </button>
+                </div>
+              </div>
+              <div class="pps-field">
+                <label class="pps-field-label">Alert me when…</label>
+                <div class="pps-choice-row">
+                  <button
+                    v-for="t in [
+                      'Listed for sale',
+                      'Passport live',
+                      'Any update',
+                    ]"
+                    :key="t"
+                    type="button"
+                    class="pps-choice"
+                    :class="{ 'pps-choice--active': watchTrigger === t }"
+                    @click="watchTrigger = t"
+                  >
+                    {{ t }}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <p v-if="watchError" class="pps-form-error">{{ watchError }}</p>
+
+            <button
+              type="button"
+              class="pps-sheet-cta"
+              :disabled="watchSubmitting"
+              @click="submitWatch"
+            >
+              {{ watchSubmitting ? 'Saving…' : 'Save & watch →' }}
+            </button>
+            <button class="pps-sheet-cancel" @click="closeSheet">
+              Not now
+            </button>
+          </template>
+
+          <!-- ── Make Contact (Owner / Neighbour) ──────────────────── -->
+          <template v-else-if="activeSheet === 'owner'">
+            <div class="pps-sheet-icon pps-sheet-icon--img">
+              <img src="/property-cards/askAQuestion.jpeg" alt="" loading="lazy" />
+            </div>
+            <div class="pps-sheet-title">Make contact</div>
+            <div class="pps-sheet-sub">
+              Drop a note to the owner — whether you're a neighbour with a
+              question or a buyer making a quiet approach.
+            </div>
+
+            <!-- Role -->
+            <div class="pps-field-group">
+              <div class="pps-field">
+                <label class="pps-field-label">I am a…</label>
+                <div class="pps-choice-row">
+                  <button
+                    v-for="r in ['Potential buyer', 'Neighbour', 'Agent']"
+                    :key="r"
+                    type="button"
+                    class="pps-choice"
+                    :class="{ 'pps-choice--active': contactRole === r }"
+                    @click="contactRole = r"
+                  >
+                    {{ r }}
+                  </button>
+                </div>
+              </div>
+
+              <!-- Name -->
+              <div class="pps-field">
+                <label class="pps-field-label">Your name</label>
+                <input
+                  v-model="contactName"
+                  type="text"
+                  class="pps-text-input"
+                  placeholder="Alex Quinn"
+                />
+              </div>
+
+              <!-- Message -->
+              <div class="pps-field">
+                <label class="pps-field-label">Your message</label>
+                <textarea
+                  v-model="contactMessage"
+                  class="pps-text-input pps-text-textarea"
+                  :placeholder="contactPlaceholder"
+                />
+              </div>
+
+              <!-- Reply preference -->
+              <div class="pps-field">
+                <label class="pps-field-label">How should they reply?</label>
+                <div class="pps-choice-row">
+                  <button
+                    v-for="r in ['Email', 'Phone', 'Either']"
+                    :key="r"
+                    type="button"
+                    class="pps-choice"
+                    :class="{ 'pps-choice--active': contactReplyPref === r }"
+                    @click="contactReplyPref = r"
+                  >
+                    {{ r }}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="pps-privacy-note">
+              <svg class="pps-privacy-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+              Your details go only to the verified owner. We never share with
+              third parties or agents without your consent.
+            </div>
+
+            <p v-if="contactError" class="pps-form-error">{{ contactError }}</p>
+
+            <button
+              type="button"
+              class="pps-sheet-cta"
+              :disabled="contactSubmitting"
+              @click="submitOwnerContact"
+            >
+              {{ contactSubmitting ? 'Sending…' : 'Send message →' }}
+            </button>
+            <button class="pps-sheet-cancel" @click="closeSheet">Cancel</button>
+          </template>
+
+          <!-- ── Passport unlock (Published — £99) ─────────────────── -->
+          <template v-else-if="activeSheet === 'passport'">
+            <!-- Header branches by state: the badge text + dot colour reflect
+                 whether the Passport is verified, being built, or absent. -->
+            <div
+              class="pps-passport-sheet-header"
+              :class="{
+                'pps-passport-sheet-header--unclaimed': pageState === 'unclaimed',
+                'pps-passport-sheet-header--progress': pageState === 'progress',
+              }"
+            >
+              <div class="pps-passport-sheet-badge">
+                <span
+                  class="pps-passport-sheet-dot"
+                  :style="{ background: heroStatePill.dot }"
+                />
+                <!-- Same computed as the hero pill and the passport-status
+                     card, so this drawer can't drift into a third set of
+                     words for one fact. -->
+                {{ heroStatePill.label }}
+              </div>
+              <div class="pps-passport-sheet-address">
+                {{ property?.addressLine1 }}
+              </div>
+              <div class="pps-passport-sheet-meta">
+                {{ property?.city }} · {{ property?.postcode }}
+                <template v-if="property?.propertyType">
+                  · {{ property.propertyType }}</template
+                >
+              </div>
+            </div>
+
+            <!-- ── PUBLISHED: existing £99 unlock flow ── -->
+            <template v-if="pageState === 'published'">
+              <div class="pps-passport-sheet-section-title">What's inside</div>
+              <div class="pps-passport-sheet-items">
+                <div
+                  v-for="f in publishedFeatures"
+                  :key="f.title"
+                  class="pps-psi-row"
+                >
+                  <div class="pps-psi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8zM14 3v5h5M9 13h6M9 17h4"/></svg></div>
+                  <div class="pps-psi-text">
+                    <div class="pps-psi-name">{{ f.title }}</div>
+                    <div class="pps-psi-meta">{{ f.sub }}</div>
+                  </div>
+                  <div class="pps-psi-check">✓</div>
+                </div>
+              </div>
+              <div
+                class="pps-passport-sheet-section-title"
+                style="margin-top: 18px"
+              >
+                One-off access
+              </div>
+              <div class="pps-passport-price-breakdown">
+                <div class="pps-ppb-row">
+                  <span>Passport access</span><span>£79</span>
+                </div>
+                <div class="pps-ppb-row">
+                  <span>HomeScore™ full report</span><span>£20</span>
+                </div>
+                <div class="pps-ppb-divider" />
+                <div class="pps-ppb-row pps-ppb-total">
+                  <span>Total today</span><span>£99</span>
+                </div>
+                <div class="pps-ppb-note">
+                  Instant access · No subscription · Secure payment
+                </div>
+              </div>
+              <button class="pps-sheet-cta" @click="onPassportUnlock">
+                Unlock for £99 →
+              </button>
+            </template>
+
+            <!-- ── PROGRESS: not yet published, owner is building it ── -->
+            <template v-else-if="pageState === 'progress'">
+              <div class="pps-passport-sheet-section-title">
+                {{ progressPct }}% complete
+              </div>
+              <div class="pps-progress-bar-wrap" style="margin: 6px 0 14px">
+                <div
+                  class="pps-progress-bar-fill"
+                  :style="{
+                    width: progressPct + '%',
+                    background: 'linear-gradient(90deg, #00a19a, #4DD4CE)',
+                  }"
+                />
+              </div>
+              <div class="pps-passport-sheet-items">
+                <div
+                  v-for="f in passportFeatures"
+                  :key="f.title"
+                  class="pps-psi-row"
+                >
+                  <div class="pps-psi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" v-html="f.verified ? PSI_CHECK : PSI_CLOCK" /></div>
+                  <div class="pps-psi-text">
+                    <div class="pps-psi-name">{{ f.title }}</div>
+                    <div class="pps-psi-meta">{{ f.sub }}</div>
+                  </div>
+                </div>
+              </div>
+              <button
+                v-if="isPassportOwnerOrCollab"
+                class="pps-sheet-cta"
+                style="background: #00a19a"
+                @click="onProgressCtaClick"
+              >
+                <svg class="pps-cta-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="4" width="10" height="4" rx="1.4"/><path d="M9 6H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-3M8.5 12h7M8.5 16h5"/></svg> Continue building your Passport →
+              </button>
+              <button
+                v-else
+                class="pps-sheet-cta"
+                style="background: #00a19a"
+                @click="onWatchClick"
+              >
+                <svg class="pps-cta-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 9a6 6 0 1 0-12 0c0 5-2 6.5-2 6.5h16S18 14 18 9ZM10.5 20a2 2 0 0 0 3 0"/></svg> Get notified when published →
+              </button>
+            </template>
+
+            <!-- ── UNCLAIMED: no passport yet — pitch a Claim, not an Unlock ── -->
+            <template v-else>
+              <div class="pps-passport-sheet-section-title">
+                This home hasn't claimed its Passport yet
+              </div>
+              <p class="pps-passport-sheet-empty">
+                A Passport is the verified record of this property — TA6 / TA7 /
+                TA10 forms, certificates, planning, alterations, services and
+                history. It stays with the address for life. Anyone who owns
+                this property can claim it.
+              </p>
+              <div class="pps-passport-sheet-section-title" style="margin-top: 18px">
+                What you'd build
+              </div>
+              <div class="pps-passport-sheet-items">
+                <div
+                  v-for="f in passportFeatures.slice(0, 5)"
+                  :key="f.title"
+                  class="pps-psi-row"
+                >
+                  <div class="pps-psi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8zM14 3v5h5M9 13h6M9 17h4"/></svg></div>
+                  <div class="pps-psi-text">
+                    <div class="pps-psi-name">{{ f.title }}</div>
+                    <div class="pps-psi-meta">{{ f.sub }}</div>
+                  </div>
+                </div>
+              </div>
+              <button
+                class="pps-sheet-cta"
+                style="background: #231d45"
+                @click="closeSheet(); onClaimClick()"
+              >
+                Claim this property — it's free →
+              </button>
+              <div
+                style="text-align: center; font-size: 12px; color: #9c98ad; margin-top: 8px"
+              >
+                Takes 2 minutes · No listing required · Free forever
+              </div>
+            </template>
+
+            <button class="pps-sheet-cancel" @click="closeSheet">
+              Not now
+            </button>
+          </template>
+
+          <!-- ── Explain: Unclaimed ────────────────────────────────── -->
+          <template v-else-if="activeSheet === 'explain-unclaimed'">
+            <div class="pps-explain-hero pps-explain-hero--unclaimed">
+              <div
+                class="pps-explain-eyebrow"
+                style="color: rgba(255, 255, 255, 0.55)"
+              >
+                Property Passport™
+              </div>
+              <div class="pps-explain-title">
+                Your home's permanent record — not just for selling, for owning.
+              </div>
+              <div class="pps-explain-body">
+                A Passport stays with this property for life. Build it now, keep
+                it updated, and when you do decide to sell — the hard work is
+                already done.
+              </div>
+            </div>
+            <div class="pps-explain-callout pps-explain-callout--unclaimed">
+              <div class="pps-explain-callout-eyebrow">
+                The car you'd never buy blind
+              </div>
+              <div class="pps-explain-callout-body">
+                You wouldn't buy a £15,000 car without an HPI check, its MOT
+                history, and a service record. Yet every day people spend
+                £300,000, £400,000, £500,000 on a home with almost no verified
+                information at all. A Property Passport changes that —
+                permanently.
+              </div>
+              <div class="pps-explain-callout-foot">
+                <svg class="pps-callout-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V21H3z"/><path d="M12 17.5s-2.6-1.7-2.6-3.3a1.5 1.5 0 0 1 2.6-1 1.5 1.5 0 0 1 2.6 1c0 1.6-2.6 3.3-2.6 3.3Z"/></svg> The biggest financial investment anyone makes — and it's done
+                almost completely blind
+              </div>
+            </div>
+
+            <!-- Lifetime concept -->
+            <div class="pps-explain-callout pps-explain-callout--lifetime">
+              <div class="pps-explain-callout-eyebrow" style="color: #5b52a0">
+                Stays with the property forever
+              </div>
+              <div class="pps-explain-callout-body">
+                A Passport isn't a transaction tool. It's property
+                infrastructure. Claim it now, add your gas certificate when it's
+                renewed, upload planning permission when you do the extension.
+                By the time you sell — in 5, 10, 20 years — everything is
+                already there.
+              </div>
+            </div>
+
+            <div class="pps-explain-stats">
+              <div>
+                <div class="pps-explain-stat-num">Free</div>
+                <div class="pps-explain-stat-sub">
+                  To claim &amp; build forever
+                </div>
+              </div>
+              <div>
+                <div class="pps-explain-stat-num">2 min</div>
+                <div class="pps-explain-stat-sub">To claim ownership today</div>
+              </div>
+              <div>
+                <div class="pps-explain-stat-num">150</div>
+                <div class="pps-explain-stat-sub">
+                  Days avg. conveyancing anxiety
+                </div>
+              </div>
+              <div>
+                <div class="pps-explain-stat-num">18</div>
+                <div class="pps-explain-stat-sub">
+                  Searches on this address this month
+                </div>
+              </div>
+            </div>
+
+            <!-- 4 steps -->
+            <div class="pps-explain-section-label">Your four steps</div>
+            <div class="pps-explain-steps">
+              <div class="pps-explain-step pps-explain-step--active">
+                <div class="pps-explain-step-num">1</div>
+                <div class="pps-explain-step-title">Claim</div>
+                <div class="pps-explain-step-sub">
+                  Confirm ownership. 2 min. Free.
+                </div>
+              </div>
+              <div class="pps-explain-step-line" />
+              <div class="pps-explain-step">
+                <div class="pps-explain-step-num">2</div>
+                <div class="pps-explain-step-title">Verify</div>
+                <div class="pps-explain-step-sub">
+                  Upload docs. We verify against official sources.
+                </div>
+              </div>
+              <div class="pps-explain-step-line" />
+              <div class="pps-explain-step">
+                <div class="pps-explain-step-num">3</div>
+                <div class="pps-explain-step-title">Score</div>
+                <div class="pps-explain-step-sub">
+                  Get your verified HomeScore.
+                </div>
+              </div>
+              <div class="pps-explain-step-line" />
+              <div class="pps-explain-step">
+                <div class="pps-explain-step-num">4</div>
+                <div class="pps-explain-step-title">Publish</div>
+                <div class="pps-explain-step-sub">
+                  Go live whenever you're ready.
+                </div>
+              </div>
+            </div>
+
+            <div class="pps-explain-footer">
+              The way people buy homes is changing — and we're building that
+              future with government.
+            </div>
+            <button class="pps-sheet-cancel" @click="closeSheet">Got it</button>
+          </template>
+
+          <!-- ── Explain: In Progress ──────────────────────────────── -->
+          <template v-else-if="activeSheet === 'explain-progress'">
+            <div class="pps-explain-hero pps-explain-hero--progress">
+              <div class="pps-explain-eyebrow">
+                Property Passport™ · In Progress
+              </div>
+              <div class="pps-explain-title">
+                This owner is building something that removes 150 days of
+                uncertainty.
+              </div>
+              <div class="pps-explain-body">
+                A permanent verified record for this property. When it
+                publishes, you get instant access to everything — before you
+                even make an offer.
+              </div>
+            </div>
+            <div class="pps-explain-callout pps-explain-callout--progress">
+              <div class="pps-explain-callout-eyebrow" style="color: #00a19a">
+                Why this matters
+              </div>
+              <div class="pps-explain-callout-body">
+                People fall in love with a house in 20 minutes, then spend an
+                average of 150 days hanging off a cliff — chasing solicitors,
+                waiting on documents that already exist somewhere. This Passport
+                collects all of that upfront, so by the time you make an offer,
+                the hard work is already done.
+              </div>
+              <div class="pps-explain-callout-foot">
+                <svg class="pps-cta-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 9a6 6 0 1 0-12 0c0 5-2 6.5-2 6.5h16S18 14 18 9ZM10.5 20a2 2 0 0 0 3 0"/></svg> Get notified the moment it publishes — be first in the door
+              </div>
+            </div>
+
+            <!-- Progress bar -->
+            <div class="pps-explain-section-label">Build progress</div>
+            <div class="pps-explain-progress-row">
+              <span class="pps-explain-progress-pct"
+                >{{ passportProgressPct }}% complete</span
+              >
+              <span class="pps-explain-progress-frac"
+                >{{ passportProgressVerified }} of
+                {{ passportProgressTotal }} verified</span
+              >
+            </div>
+            <div class="pps-explain-progress-track">
+              <div
+                class="pps-explain-progress-fill"
+                :style="{ width: passportProgressPct + '%' }"
+              />
+            </div>
+
+            <!-- Already verified -->
+            <div
+              v-if="passportVerifiedItems.length > 0"
+              class="pps-explain-section-label"
+              style="margin-top: 16px"
+            >
+              Already verified
+            </div>
+            <div
+              v-if="passportVerifiedItems.length > 0"
+              class="pps-explain-checklist"
+            >
+              <div
+                v-for="item in passportVerifiedItems"
+                :key="item.title"
+                class="pps-explain-checklist-item"
+              >
+                <div
+                  class="pps-explain-checklist-icon pps-explain-checklist-icon--img"
+                >
+                  <img :src="item.img" alt="" loading="lazy" />
+                </div>
+                <div class="pps-explain-checklist-text">
+                  <div class="pps-explain-checklist-title">
+                    {{ item.title }}
+                  </div>
+                  <div class="pps-explain-checklist-sub">{{ item.sub }}</div>
+                </div>
+                <div class="pps-explain-checklist-tick">✓</div>
+              </div>
+            </div>
+
+            <div class="pps-explain-footer">
+              The way people buy homes is changing — and we're building that
+              future with government.
+            </div>
+            <button class="pps-sheet-cancel" @click="closeSheet">Got it</button>
+          </template>
+
+          <!-- ── Explain: Published ────────────────────────────────── -->
+          <template v-else-if="activeSheet === 'explain-published'">
+            <div class="pps-explain-hero pps-explain-hero--published">
+              <div class="pps-explain-eyebrow">Property Passport™</div>
+              <div class="pps-explain-title">
+                The biggest purchase of your life — and you're doing it blind.
+              </div>
+              <div class="pps-explain-body">
+                You wouldn't buy a £15,000 car without its service history. This
+                is the verified record that should have always existed for every
+                home.
+              </div>
+            </div>
+            <div class="pps-explain-callout pps-explain-callout--progress">
+              <div class="pps-explain-callout-eyebrow" style="color: #00a19a">
+                Why this exists
+              </div>
+              <div class="pps-explain-callout-body">
+                Conveyancing takes 150 days on average. Nearly half that time is
+                spent chasing documents that already exist somewhere — just not
+                in one place. The Property Passport ends that. Everything
+                verified by the owner, ready before solicitors are even
+                instructed.
+              </div>
+              <div class="pps-explain-callout-foot">
+                ⏱ Average sale time cut by 6–8 weeks with upfront disclosure
+              </div>
+            </div>
+
+            <!-- Search reuse insight -->
+            <div class="pps-explain-callout pps-explain-callout--reuse">
+              <div class="pps-explain-callout-eyebrow" style="color: #b07a1c">
+                Not just for buying this home
+              </div>
+              <div class="pps-explain-callout-body">
+                The environmental data, flood risk, and planning history in this
+                Passport applies to the whole street. Solicitors charge £300–500
+                for searches that get thrown away after every transaction. This
+                data stays — and you can use it even if you're interested in a
+                neighbouring property.
+              </div>
+            </div>
+
+            <div class="pps-explain-stats">
+              <div>
+                <div class="pps-explain-stat-num">150</div>
+                <div class="pps-explain-stat-sub">
+                  Avg. days in conveyancing
+                </div>
+              </div>
+              <div>
+                <div class="pps-explain-stat-num">£99</div>
+                <div class="pps-explain-stat-sub">
+                  One-off · no subscription
+                </div>
+              </div>
+              <div>
+                <div class="pps-explain-stat-num">23×</div>
+                <div class="pps-explain-stat-sub">
+                  Same search bought per street
+                </div>
+              </div>
+              <div>
+                <div class="pps-explain-stat-num">100%</div>
+                <div class="pps-explain-stat-sub">
+                  Owner-verified · HMLR backed
+                </div>
+              </div>
+            </div>
+
+            <!-- What's inside -->
+            <div class="pps-explain-section-label">What's inside</div>
+            <div class="pps-explain-checklist">
+              <div class="pps-explain-checklist-item">
+                <div class="pps-explain-checklist-icon pps-explain-checklist-icon--img"><img src="/property-cards/surveys.jpeg" alt="" loading="lazy" /></div>
+                <div class="pps-explain-checklist-text">
+                  <div class="pps-explain-checklist-title">
+                    TA6, TA7 &amp; TA10 forms
+                  </div>
+                  <div class="pps-explain-checklist-sub">
+                    All conveyancing questions answered upfront
+                  </div>
+                </div>
+                <div class="pps-explain-checklist-tick">✓</div>
+              </div>
+              <div class="pps-explain-checklist-item">
+                <div class="pps-explain-checklist-icon pps-explain-checklist-icon--img"><img src="/property-cards/title.jpeg" alt="" loading="lazy" /></div>
+                <div class="pps-explain-checklist-text">
+                  <div class="pps-explain-checklist-title">
+                    Land Registry Title &amp; Plan
+                  </div>
+                  <div class="pps-explain-checklist-sub">
+                    Verified ownership · boundary map
+                  </div>
+                </div>
+                <div class="pps-explain-checklist-tick">✓</div>
+              </div>
+              <div class="pps-explain-checklist-item">
+                <div class="pps-explain-checklist-icon pps-explain-checklist-icon--img"><img src="/property-cards/energy.jpeg" alt="" loading="lazy" /></div>
+                <div class="pps-explain-checklist-text">
+                  <div class="pps-explain-checklist-title">
+                    Gas, Electrical &amp; EPC
+                  </div>
+                  <div class="pps-explain-checklist-sub">
+                    All certificates verified
+                  </div>
+                </div>
+                <div class="pps-explain-checklist-tick">✓</div>
+              </div>
+              <div class="pps-explain-checklist-item">
+                <div class="pps-explain-checklist-icon pps-explain-checklist-icon--img"><img src="/property-cards/planning.jpeg" alt="" loading="lazy" /></div>
+                <div class="pps-explain-checklist-text">
+                  <div class="pps-explain-checklist-title">
+                    Planning History
+                  </div>
+                  <div class="pps-explain-checklist-sub">
+                    Extensions, permissions, works
+                  </div>
+                </div>
+                <div class="pps-explain-checklist-tick">✓</div>
+              </div>
+            </div>
+
+            <div class="pps-explain-footer">
+              The way people buy homes is changing — and we're building that
+              future with government.
+            </div>
+            <button class="pps-sheet-cancel" @click="closeSheet">Got it</button>
+          </template>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- ── Toast (restored — was orphaned import, never mounted) ────────── -->
+    <Toast
+      :is-visible="toastState.isVisible"
+      :message="toastState.message"
+      :icon="toastState.icon"
+      :icon-emoji="toastState.iconEmoji"
+      :duration="toastState.duration"
+      @close="hideToast"
+    />
+
+    <!-- ── Unpublished-passport modal (restored) ─────────────────────────
+         Fires when a buyer taps an in-progress passport — gives them a clear
+         "we'll notify you" path instead of the silent no-op the rebuild had. -->
+    <Teleport to="body">
+      <Transition name="fade">
+        <div
+          v-if="showUnpublishedModal"
+          class="unpub-overlay"
+          @click.self="showUnpublishedModal = false"
+        >
+          <div class="unpub-modal">
+            <button class="unpub-close" @click="showUnpublishedModal = false">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.4"
+                stroke-linecap="round"
+              >
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+            <div class="unpub-icon unpub-icon--img"><img src="/property-cards/passportProgress.png" alt="" loading="lazy" /></div>
+            <div class="unpub-eyebrow">
+              <span style="color: #00a19a">●</span> Property Passport — In
+              Progress
+            </div>
+            <h3 class="unpub-title">This home's Passport is being built</h3>
+            <p class="unpub-body">
+              You're seeing public EPC data for now — we'll alert you when the
+              full record is published.
+            </p>
+            <button class="unpub-cta" @click="openRegisterInterest">
+              <svg class="pps-cta-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 9a6 6 0 1 0-12 0c0 5-2 6.5-2 6.5h16S18 14 18 9ZM10.5 20a2 2 0 0 0 3 0"/></svg> Notify me when it's published
+            </button>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, watch, onMounted, nextTick, onBeforeUnmount } from 'vue'
+import RegisterInterestContent from '~/components/property/RegisterInterestContent.vue'
+// Owner-claim runs through /claim/[id] (KYC + Land Registry + passport
+// issue). ClaimPassportDrawer below is ONLY for the buyer-unlock (£99
+// Stripe) path on a published Passport.
+import ClaimPassportDrawer from '~/components/property/ClaimPassportDrawer.vue'
+import WatchPropertyDrawer from '~/components/property/WatchPropertyDrawer.vue'
+import BaseDrawer from '~/components/ui/BaseDrawer.vue'
+import ImageSlider from '~/components/ui/ImageSlider.vue'
+import PropertyImage from '~/components/property/PropertyImage.vue'
+import PassportEcosystemDrawer from '~/components/property/PassportEcosystemDrawer.vue'
+import Toast from '~/components/ui/Toast.vue'
+import ShareContent from '~/components/property/ShareContent.vue'
+import LlcChargesCard from '~/components/property/LlcChargesCard.vue'
+import { useAppToast } from '~/composables/useCustomToast'
+import { usePropertySearch } from '~/composables/usePropertySearch'
+import { usePassportClaim } from '~/composables/usePassportClaim'
+import { usePropertyActions } from '~/composables/usePropertyActions'
+import { toTitleCase } from '~/utils/form-helpres'
+
+// Deliberately PUBLIC - no auth middleware. This is the page a guest lands on
+// after searching from Explore, and letting them see a property before asking
+// for an account is the whole point of that entry path.
+//
+// Every authenticated call below already degrades on its own rather than
+// assuming a token: fetchActions() early-returns, getPassportStatus() catches
+// to a safe default, and the enrichment / HomeScore / register-interest calls
+// all send the Authorization header conditionally.
+definePageMeta({})
+
+const route = useRoute()
+const router = useRouter()
+// Mirrors WebTopNav: /explore is a pre-login entry point, so the primary nav
+// offers it to guests and offers Dashboard to members instead. Resolved after
+// mount because localStorage does not exist during SSR; false until then,
+// which shows the public link on first paint rather than an auth-gated one.
+const signedIn = ref(false)
+onMounted(() => {
+  signedIn.value =
+    typeof localStorage !== 'undefined' && !!localStorage.getItem('token')
+})
+const propertyId = route.params.id as string
+
+const { getPropertyDetails, formatPrice } = usePropertySearch()
+const { getPassportStatus } = usePassportClaim()
+const { toastState, showToast, hideToast } = useAppToast()
+const { wishlisted, toggleWishlist, fetchActions } = usePropertyActions()
+const { recordExplored } = useRecentlyExplored()
+
+const config = useRuntimeConfig()
+const property = ref<any>(null)
+const passportStatus = ref<any>(null)
+// Set when the passport-status fetch rejects, so the passport-status card
+// can hide rather than assert "unclaimed" off information we never got.
+const passportStatusUnknown = ref(false)
+const enrichment = ref<any>(null)
+const pageLoading = ref(true)
+const loadError = ref('')
+const showRegisterInterest = ref(false)
+const showShare = ref(false)
+
+// Owner-claim is delegated to the global /claim/[id] page, which runs:
+//   1. KYC verification (skipped if the user is already approved)
+//   2. HM Land Registry ownership check (mandatory per property)
+//   3. Passport issuance + redirect to /passportview/{id}
+// Every "Claim" entry point on this page just pushes to that route — no
+// in-page drawer, no direct POST /passport/create.
+const goToClaim = () => router.push(`/claim/${propertyId}`)
+const showUnpublishedModal = ref(false)
+type LocTab =
+  | 'map'
+  | 'street'
+  | 'schools'
+  | 'trains'
+  | 'buses'
+  | 'airports'
+  | 'sales'
+  | 'coverage'
+  | 'flood'
+  | 'council'
+  | 'planning'
+const activeLocTab = ref<LocTab>('map')
+const salesTab = ref<'property' | 'nearby'>('property')
+const coverageTab = ref<'broadband' | 'mobile' | 'tv'>('broadband')
+const ctTab = ref<'property' | 'bands' | 'nearby'>('property')
+
+const homeScore = ref<{
+  total: number
+  rating: string
+  heating: number
+  structure: number
+  efficiency: number
+  electrics: number
+  plumbing: number
+} | null>(null)
+const homeScoreIsAuto = ref(false)
+
+// ── Display helpers ────────────────────────────────────────────────────────────
+const displayAddress = computed(
+  () =>
+    toTitleCase(property.value?.addressLine1) ||
+    property.value?.addressLine1 ||
+    '',
+)
+const displayArea = computed(
+  () => toTitleCase(property.value?.addressLine2) || '',
+)
+const displayCity = computed(
+  () =>
+    toTitleCase(property.value?.city) ||
+    toTitleCase(property.value?.county) ||
+    '',
+)
+
+const displayEstimatedPrice = computed(
+  () =>
+    enrichment.value?.landRegistryEstimate ??
+    property.value?.estimatedPrice ??
+    null,
+)
+const estimatedPriceSource = computed(() =>
+  enrichment.value?.landRegistryEstimate
+    ? (enrichment.value.landRegistrySource ?? 'Land Registry, HPI adjusted')
+    : 'Estimated',
+)
+
+// Merge DB property with live EPC data
+const prop = computed(() => {
+  if (!property.value) return null
+  const epc = enrichment.value?.epcCert
+  if (!epc) return property.value
+  return {
+    ...property.value,
+    epcRating: property.value.epcRating ?? epc.epcRating ?? null,
+    epcScore: property.value.epcScore ?? epc.epcScore ?? null,
+    floorAreaSqm: property.value.floorAreaSqm ?? epc.floorAreaSqm ?? null,
+    sqft: property.value.sqft ?? epc.sqft ?? null,
+    bedrooms: property.value.bedrooms ?? epc.bedrooms ?? null,
+    tenure: property.value.tenure ?? epc.tenure ?? null,
+    yearBuilt: property.value.yearBuilt ?? epc.yearBuilt ?? null,
+    heatingType: property.value.heatingType ?? epc.heatingType ?? null,
+    councilTaxBand: property.value.councilTaxBand ?? epc.councilTaxBand ?? null,
+  }
+})
+
+// ── HomeScore gauge ──────────────────────────────────────────────────────────
+const gaugeScore = computed(
+  () => homeScore.value?.total ?? prop.value?.epcScore ?? null,
+)
+
+const gaugeColor = computed(() => {
+  const s = gaugeScore.value ?? 0
+  if (s >= 80) return '#1f7a66'
+  if (s >= 60) return '#00a19a'
+  if (s >= 40) return '#92400e'
+  return '#dc2626'
+})
+
+const gaugeDashoffset = computed(() => {
+  const s = gaugeScore.value ?? 0
+  return (141.4 * (1 - s / 100)).toFixed(1)
+})
+
+const gaugeRatingText = computed(() => {
+  const s = gaugeScore.value ?? 0
+  if (s >= 80) return 'Excellent condition'
+  if (s >= 60) return 'Good condition'
+  if (s >= 40) return 'Room to improve'
+  return 'Plenty of opportunities'
+})
+
+const gaugeDesc = computed(() => {
+  const s = gaugeScore.value ?? 0
+  if (s >= 80)
+    return 'This property scores well across all key areas. A strong performer.'
+  if (s >= 60)
+    return 'Solid overall, with some areas where improvements could add value.'
+  if (s >= 40)
+    return "Many homes at this rating have been improved to a B or C — see what's possible."
+  return "Significant improvements could transform this property's efficiency and value."
+})
+
+const epcBadgeText = computed(() => {
+  const epc = prop.value?.epcRating ?? '?'
+  const score = prop.value?.epcScore ? ` (${prop.value.epcScore})` : ''
+  const year = prop.value?.yearBuilt ? ` · Built ${prop.value.yearBuilt}` : ''
+  const heat = prop.value?.heatingType ? ` · ${prop.value.heatingType}` : ''
+  return `EPC ${epc}${score}${year}${heat}`
+})
+
+const gaugeBadgeStyle = computed(() => {
+  const s = gaugeScore.value ?? 0
+  if (s >= 80) return 'background:#f0fdf4;border-color:#bbf7d0;'
+  if (s >= 60) return 'background:#f0fdfb;border-color:#99f6e4;'
+  if (s >= 40) return 'background:#fef9f0;border-color:#fef3c7;'
+  return 'background:#fef2f2;border-color:#fecaca;'
+})
+
+// ── EPC component bars ─────────────────────────────────────────────────────────
+function effToPercent(eff: string | null | undefined): number {
+  if (!eff) return 0
+  const map: Record<string, number> = {
+    'Very Good': 90,
+    Good: 72,
+    Average: 50,
+    Poor: 28,
+    'Very Poor': 15,
+  }
+  return map[eff] ?? 50
+}
+
+function epcCompClass(eff: string | null | undefined): string {
+  if (!eff) return 'pps-epc-comp-fill--na'
+  if (eff === 'Very Good' || eff === 'Good') return 'pps-epc-comp-fill--good'
+  if (eff === 'Average') return 'pps-epc-comp-fill--avg'
+  if (eff === 'Poor') return 'pps-epc-comp-fill--poor'
+  if (eff === 'Very Poor') return 'pps-epc-comp-fill--vpoor'
+  return 'pps-epc-comp-fill--na'
+}
+function epcCompColor(eff: string | null | undefined): string {
+  if (!eff) return '#9c98ad'
+  if (eff === 'Very Good' || eff === 'Good') return '#2eab55'
+  if (eff === 'Average') return '#e6a23c'
+  if (eff === 'Poor') return '#c73e36'
+  if (eff === 'Very Poor') return '#a82e26'
+  return '#9c98ad'
+}
+
+// Maps OS NGD school phase strings to a CSS class so each chip gets a
+// distinct colour. Unknown phases fall back to a neutral grey pill.
+function schoolPhaseClass(phase: string | null | undefined): string {
+  switch (phase) {
+    case 'Pre-Primary':
+      return 'pps-ds-phase-pill--prenursery'
+    case 'Primary':
+      return 'pps-ds-phase-pill--primary'
+    case 'Secondary':
+      return 'pps-ds-phase-pill--secondary'
+    case 'Further Education':
+      return 'pps-ds-phase-pill--further'
+    case 'Higher Education':
+      return 'pps-ds-phase-pill--higher'
+    case 'Specialist':
+      return 'pps-ds-phase-pill--specialist'
+    default:
+      return 'pps-ds-phase-pill--default'
+  }
+}
+
+function effToColor(pct: number): string {
+  if (pct >= 72) return '#1f7a66'
+  if (pct >= 50) return '#00a19a'
+  if (pct >= 28) return '#92400e'
+  return '#dc2626'
+}
+
+const epcComponents = computed(() => {
+  const epc = enrichment.value?.epcCert ?? prop.value
+  if (!epc) return []
+  const fields = [
+    { label: 'Walls', effKey: 'wallsEnergyEff', descKey: 'wallsDescription' },
+    { label: 'Roof', effKey: 'roofEnergyEff', descKey: 'roofDescription' },
+    {
+      label: 'Heating',
+      effKey: 'mainheatEnergyEff',
+      descKey: 'mainheatDescription',
+    },
+    {
+      label: 'Hot water',
+      effKey: 'hotWaterEnergyEff',
+      descKey: 'hotWaterDescription',
+    },
+    {
+      label: 'Windows',
+      effKey: 'windowsEnergyEff',
+      descKey: 'windowsDescription',
+    },
+    {
+      label: 'Lighting',
+      effKey: 'lightingEnergyEff',
+      descKey: 'lightingDescription',
+    },
+  ]
+  return fields
+    .filter((f) => epc[f.effKey])
+    .map((f) => {
+      const eff = epc[f.effKey] as string
+      const pct = effToPercent(eff)
+      return {
+        label: f.label,
+        eff,
+        pct,
+        color: effToColor(pct),
+        desc: epc[f.descKey] ?? eff,
+      }
+    })
+})
+
+// ── Running costs ──────────────────────────────────────────────────────────────
+const runningCosts = computed(() => {
+  const src = enrichment.value?.epcCert ?? property.value ?? {}
+  const heating = src.heatingCostCurrent ?? null
+  const hotWater = src.hotWaterCostCurrent ?? null
+  const lighting = src.lightingCostCurrent ?? null
+  const validCosts = [heating, hotWater, lighting].filter(
+    (v): v is number => v !== null,
+  )
+  const total = validCosts.length ? validCosts.reduce((a, b) => a + b, 0) : null
+  return { heating, hotWater, lighting, total }
+})
+const hasRunningCosts = computed(() => runningCosts.value.total !== null)
+
+function formatCost(val: number | null): string {
+  if (val === null) return '—'
+  return new Intl.NumberFormat('en-GB', {
+    style: 'currency',
+    currency: 'GBP',
+    maximumFractionDigits: 0,
+  }).format(val)
+}
+
+// ── EPC rating color ───────────────────────────────────────────────────────────
+const epcRatingColor = computed(() => {
+  const r = prop.value?.epcRating ?? ''
+  if (r === 'A' || r === 'B') return '#1f7a66'
+  if (r === 'C') return '#00a19a'
+  if (r === 'D') return '#92400e'
+  if (r === 'E') return '#ea580c'
+  return '#dc2626'
+})
+
+// ── Flood risk ─────────────────────────────────────────────────────────────────
+// Single source of truth: the EA RoFRS rating (Very Low / Low / Medium /
+// High / Severe). The flood sheet renders `property.floodRisk` directly; the
+// tile uses `floodRiskData.label`. Previously these read different fields
+// (zone severity vs. RoFRS rating) and diverged when a postcode was in a
+// high-risk RoFRS band but had no active warnings — the tile would say
+// "Low" while the sheet said "High". This computed now mirrors the same
+// rating both views show.
+const floodRiskData = computed(() => {
+  // Prefer enrichment (fresh) over property.floodRisk (DB column, may be
+  // stale). Both come from `fetchFloodDetail`'s `rating` so they should
+  // match, but enrichment is always the most recent fetch.
+  const raw = String(
+    (enrichment.value as any)?.floodRisk ?? property.value?.floodRisk ?? '',
+  ).trim()
+  const lower = raw.toLowerCase()
+  if (lower.includes('severe')) {
+    return {
+      label: 'Severe',
+      color: '#991b1b',
+      class: 'pp-badge-flood--high',
+      zone: 'Zone 3',
+      pill: 'background:#fee2e2;color:#991b1b;',
+      badgeClass: 'pp-badge-flood--high',
+    }
+  }
+  if (lower.includes('high')) {
+    return {
+      label: 'High',
+      color: '#dc2626',
+      class: 'pp-badge-flood--high',
+      zone: 'Zone 3',
+      pill: 'background:#fee2e2;color:#991b1b;',
+      badgeClass: 'pp-badge-flood--high',
+    }
+  }
+  if (lower.includes('medium')) {
+    return {
+      label: 'Medium',
+      color: '#ea580c',
+      class: 'pp-badge-flood--med',
+      zone: 'Zone 2',
+      pill: 'background:#fef3c7;color:#92400e;',
+      badgeClass: 'pp-badge-flood--med',
+    }
+  }
+  if (lower.includes('very low')) {
+    return {
+      label: 'Very Low',
+      color: '#1f7a66',
+      class: 'pp-badge-flood--low',
+      zone: 'Zone 1',
+      pill: 'background:#d1fae5;color:#1f7a66;',
+      badgeClass: 'pp-badge-flood--low',
+    }
+  }
+  if (lower.includes('low')) {
+    return {
+      label: 'Low',
+      color: '#1f7a66',
+      class: 'pp-badge-flood--low',
+      zone: 'Zone 1',
+      pill: 'background:#d1fae5;color:#1f7a66;',
+      badgeClass: 'pp-badge-flood--low',
+    }
+  }
+  // Truly unknown — render nothing (the tile is conditional on a label).
+  return {
+    label: '',
+    color: '#9c98ad',
+    class: 'pp-badge-flood--low',
+    zone: '',
+    pill: 'background:#f5f5f7;color:#6b6783;',
+    badgeClass: 'pp-badge-flood--low',
+  }
+})
+const floodRiskLabel = computed(() => floodRiskData.value.label)
+const floodRiskColor = computed(() => floodRiskData.value.color)
+const floodRiskClass = computed(() => floodRiskData.value.class)
+const floodZoneLabel = computed(() => floodRiskData.value.zone)
+const floodPillStyle = computed(() => floodRiskData.value.pill)
+
+const floodBadgeClass = computed(() => {
+  const r = enrichment.value?.floodRisk
+  if (!r) return 'pp-flood-badge--very-low'
+  return `pp-flood-badge--${r.toLowerCase().replace(/\s/g, '-')}`
+})
+
+const floodHeroClass = computed(() => {
+  const r = (enrichment.value?.floodRisk ?? '').toLowerCase()
+  if (r.includes('severe')) return 'pp-flood-hero--severe'
+  if (r.includes('high')) return 'pp-flood-hero--high'
+  if (r.includes('medium')) return 'pp-flood-hero--medium'
+  if (r.includes('low')) return 'pp-flood-hero--low'
+  return 'pp-flood-hero--low'
+})
+
+// Planning data (planning.data.gov.uk via /enrichment)
+const planningConstraints = computed(() => {
+  const list = (enrichment.value as any)?.planningHistory?.constraints ?? []
+  return Array.isArray(list) ? list : []
+})
+const planningApplications = computed(() => {
+  const list = (enrichment.value as any)?.planningHistory?.applications ?? []
+  if (!Array.isArray(list)) return []
+  return [...list].sort((a: any, b: any) => {
+    const da = a?.decisionDate ? new Date(a.decisionDate).getTime() : 0
+    const db = b?.decisionDate ? new Date(b.decisionDate).getTime() : 0
+    return db - da
+  })
+})
+// SVG path bodies (rendered through v-html into a shared .pps-ds-rowic svg)
+// rather than emoji, so constraint rows match the rest of the sheet.
+function constraintIcon(category: string) {
+  if (category === 'heritage')
+    return '<path d="M3 21h18M5 21V10M19 21V10M12 3 3 8h18l-9-5ZM9 21v-7M15 21v-7"/>'
+  if (category === 'environment')
+    return '<path d="M12 3 6.5 11h3L5 17h14l-4.5-6h3L12 3ZM12 17v4"/>'
+  if (category === 'development')
+    return '<path d="M4 21h16M6 21V9l7-4v16M13 9h5v12M9 12h1M9 15h1M16 13h.5M16 17h.5"/>'
+  return '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8zM14 3v5h5M9 13h6M9 17h4"/>'
+}
+
+// Risk breakdown helpers (real EA data)
+const nearestWatercourse = computed(() => {
+  const z = enrichment.value?.floodZones ?? []
+  for (const row of z) {
+    if (
+      row?.riverSea &&
+      typeof row.riverSea === 'string' &&
+      row.riverSea.trim()
+    )
+      return row.riverSea
+  }
+  return null
+})
+const floodZonesList = computed(() => {
+  const z = enrichment.value?.floodZones ?? []
+  return z
+    .filter((x: any) => x && x.name && x.severity)
+    .slice(0, 3)
+    .map((x: any) => ({ name: String(x.name), severity: String(x.severity) }))
+})
+function floodBreakdownClass(value: any) {
+  const v = String(value ?? '').toLowerCase()
+  if (!v) return ''
+  if (v.includes('severe') || v.includes('high')) return 'pps-ds-v--red'
+  if (v.includes('medium') || v.includes('alert')) return 'pps-ds-v--amber'
+  if (v.includes('very low') || v.includes('low') || v.includes('no current'))
+    return 'pps-ds-v--green'
+  return ''
+}
+
+const floodRiskDescription = computed(() => {
+  const r = enrichment.value?.floodRisk
+  if (r === 'Very Low')
+    return 'Not in an Environment Agency flood warning area.'
+  if (r === 'Low')
+    return 'Within an EA flood warning area — no active warnings. River or surface water flooding possible in extreme events.'
+  if (r === 'Medium')
+    return 'Flood alert active nearby. Some risk of flooding from rivers or sea.'
+  if (r === 'High')
+    return 'Flood warning issued nearby. Flooding of homes and businesses is expected.'
+  if (r === 'Severe')
+    return 'Severe flood warning — danger to life. Immediate action required.'
+  return 'Source: Environment Agency flood monitoring.'
+})
+
+// ── Passport button ────────────────────────────────────────────────────────────
+const passportBtnLabel = computed(() => {
+  const s = passportStatus.value
+  if (!s?.hasPassport) return 'Claim Passport'
+  if (s.isOwner || s.isCollaborator) return 'Open Passport'
+  if (s.isBuyer) return 'View Passport'
+  if (s.isPublished) return 'Access Passport'
+  return 'Passport Info'
+})
+
+const showPassportCta = computed(() => {
+  const s = passportStatus.value
+  return (
+    s?.hasPassport &&
+    s?.isPublished &&
+    !s?.isOwner &&
+    !s?.isCollaborator &&
+    !s?.isBuyer
+  )
+})
+
+const buyerModePassportId = computed(() => {
+  const s = passportStatus.value
+  if (
+    s?.hasPassport &&
+    s?.passportId &&
+    !s?.isOwner &&
+    !s?.isCollaborator &&
+    !s?.isBuyer
+  )
+    return s.passportId
+  return undefined
+})
+
+// ── Sales history ──────────────────────────────────────────────────────────────
+const thisSales = computed(
+  () => enrichment.value?.salesHistory?.thisProperty ?? [],
+)
+const nearbySales = computed(
+  () => enrichment.value?.salesHistory?.nearbySales ?? [],
+)
+
+// ── Price history timeline ─────────────────────────────────────────────────────
+interface PriceHistoryEntry {
+  price: number
+  dateStr: string
+  dateObj: Date | null
+  isEstimate: boolean
+  delta?: { amount: number; pct: number; positive: boolean } | null
+}
+
+const priceHistoryTimeline = computed<PriceHistoryEntry[]>(() => {
+  const entries: PriceHistoryEntry[] = []
+  // Sort oldest → newest for delta calculation
+  const sorted = [...thisSales.value]
+    .map((s: any) => ({
+      price: Number(s.price ?? s.amount ?? 0),
+      dateStr: s.date ?? s.transferDate ?? '',
+    }))
+    .filter((s) => s.price > 0)
+    .sort(
+      (a, b) => new Date(a.dateStr).getTime() - new Date(b.dateStr).getTime(),
+    )
+
+  let prev: number | null = null
+  for (const s of sorted) {
+    let delta: PriceHistoryEntry['delta'] = null
+    if (prev !== null && prev > 0) {
+      const amount = s.price - prev
+      const pct = (amount / prev) * 100
+      delta = { amount, pct, positive: amount >= 0 }
+    }
+    entries.push({
+      price: s.price,
+      dateStr: s.dateStr,
+      dateObj: s.dateStr ? new Date(s.dateStr) : null,
+      isEstimate: false,
+      delta,
+    })
+    prev = s.price
+  }
+
+  // Reverse so newest is top
+  entries.reverse()
+
+  // Prepend current estimate if we have one
+  if (displayEstimatedPrice.value) {
+    const last = sorted[sorted.length - 1]
+    let delta: PriceHistoryEntry['delta'] = null
+    if (last && last.price > 0) {
+      const amount = displayEstimatedPrice.value - last.price
+      const pct = (amount / last.price) * 100
+      delta = { amount, pct, positive: amount >= 0 }
+    }
+    entries.unshift({
+      price: displayEstimatedPrice.value,
+      dateStr: '',
+      dateObj: null,
+      isEstimate: true,
+      delta,
+    })
+  }
+
+  return entries
+})
+
+const priceHistoryCagr = computed(() => {
+  const sorted = [...thisSales.value]
+    .map((s: any) => ({
+      price: Number(s.price ?? s.amount ?? 0),
+      date: new Date(s.date ?? s.transferDate ?? ''),
+    }))
+    .filter((s) => s.price > 0 && !isNaN(s.date.getTime()))
+    .sort((a, b) => a.date.getTime() - b.date.getTime())
+
+  if (sorted.length < 1) return null
+  const earliest = sorted[0]
+  const latestPrice =
+    displayEstimatedPrice.value ?? sorted[sorted.length - 1].price
+  const latestDate = displayEstimatedPrice.value
+    ? new Date()
+    : sorted[sorted.length - 1].date
+
+  const years =
+    (latestDate.getTime() - earliest.date.getTime()) /
+    (1000 * 60 * 60 * 24 * 365.25)
+  if (years < 1) return null
+
+  const cagr = (Math.pow(latestPrice / earliest.price, 1 / years) - 1) * 100
+  if (!isFinite(cagr)) return null
+  return {
+    cagr,
+    years: Math.round(years),
+    fromYear: earliest.date.getFullYear(),
+  }
+})
+
+function formatDelta(amt: number): string {
+  const abs = Math.abs(Math.round(amt))
+  const sign = amt >= 0 ? '+' : '−'
+  const formatted = new Intl.NumberFormat('en-GB', {
+    style: 'currency',
+    currency: 'GBP',
+    maximumFractionDigits: 0,
+  }).format(abs)
+  return `${sign}${formatted}`
+}
+
+// ── Nearby places of interest (distance pills) ─────────────────────────────────
+const nearbyKeyPlaces = computed(() => {
+  const n = enrichment.value?.nearby ?? {}
+  const items: { icon: string; label: string; distance: string }[] = []
+  const station = (n.trains ?? [])[0]
+  if (station)
+    items.push({
+      icon: '🚆',
+      label: 'Station',
+      distance: station.distanceKm ? `${station.distanceKm} km` : '',
+    })
+  const school = (n.schools ?? [])[0]
+  if (school)
+    items.push({
+      icon: '🏫',
+      label: 'School',
+      distance: school.distanceKm ? `${school.distanceKm} km` : '',
+    })
+  const park = (n.parks ?? [])[0]
+  if (park)
+    items.push({
+      icon: '🌳',
+      label: 'Park',
+      distance: park.distanceKm ? `${park.distanceKm} km` : '',
+    })
+  const bus = (n.busStops ?? [])[0]
+  if (bus)
+    items.push({
+      icon: '🚌',
+      label: 'Bus',
+      distance: bus.distanceKm ? `${bus.distanceKm} km` : '',
+    })
+  return items.filter((i) => i.distance)
+})
+
+// ── EPC/Flood tile colours ─────────────────────────────────────────────────────
+const epcLetterChipStyle = computed(() => {
+  const r = prop.value?.epcRating ?? ''
+  if (r === 'A' || r === 'B') return 'background:#d1fae5;color:#1f7a66;'
+  if (r === 'C') return 'background:#ccfbf1;color:#115e59;'
+  if (r === 'D') return 'background:#fef3c7;color:#92400e;'
+  if (r === 'E') return 'background:#fed7aa;color:#92400e;'
+  if (r === 'F' || r === 'G') return 'background:#fee2e2;color:#991b1b;'
+  return 'background:#f1f5f9;color:#64748b;'
+})
+
+// ── Planning expand state ──────────────────────────────────────────────────────
+const planningExpanded = ref<Record<number, boolean>>({})
+function togglePlanning(i: number) {
+  planningExpanded.value = {
+    ...planningExpanded.value,
+    [i]: !planningExpanded.value[i],
+  }
+}
+
+// ── Signal bar visualization ───────────────────────────────────────────────────
+function signalBarCount(val: any): number {
+  if (val === null || val === undefined) return 0
+  const n = typeof val === 'boolean' ? (val ? 3 : 0) : Number(val)
+  if (n >= 3) return 3
+  if (n >= 1) return 2
+  if (n > 0) return 1
+  return 0
+}
+function signalStrengthClass(val: any): string {
+  const c = signalBarCount(val)
+  if (c === 3) return 'pp-signal--good'
+  if (c === 2) return 'pp-signal--ok'
+  if (c === 1) return 'pp-signal--weak'
+  return 'pp-signal--none'
+}
+
+function sdltBarColor(idx: number): string {
+  const palette = ['#00a19a', '#0891b2', '#4f46e5', '#9333ea', '#c026d3']
+  return palette[idx % palette.length]
+}
+
+// ── Nearby places ──────────────────────────────────────────────────────────────
+const nearbySchools = computed(() => enrichment.value?.nearby?.schools ?? [])
+const nearbyTransport = computed(() => {
+  const n = enrichment.value?.nearby ?? {}
+  const items: any[] = []
+  for (const t of n.trains ?? [])
+    items.push({
+      name: t.name,
+      meta: t.distanceKm ? t.distanceKm + ' km' : '',
+      emoji: '🚂',
+      type: 'Rail',
+      iconClass: 'pp-nearby-icon--purple',
+      badgeClass: 'pp-transport-badge--purple',
+    })
+  for (const b of n.busStops ?? [])
+    items.push({
+      name: b.name,
+      meta: b.distanceKm ? b.distanceKm + ' km' : '',
+      emoji: '🚌',
+      type: 'Bus',
+      iconClass: 'pp-nearby-icon--amber',
+      badgeClass: 'pp-transport-badge--amber',
+    })
+  for (const a of n.airports ?? [])
+    items.push({
+      name: a.name,
+      meta: a.distanceKm ? a.distanceKm + ' km drive' : '',
+      emoji: '✈️',
+      type: 'Airport',
+      iconClass: 'pp-nearby-icon--sky',
+      badgeClass: 'pp-transport-badge--sky',
+    })
+  return items
+})
+
+function ofstedClass(ofsted: string) {
+  if (ofsted === 'Outstanding') return 'pp-ofsted--outstanding'
+  if (ofsted === 'Good') return 'pp-ofsted--good'
+  return 'pp-ofsted--other'
+}
+
+// ── Mobile coverage ────────────────────────────────────────────────────────────
+const mobileOperators = [
+  { key: 'EE', label: 'EE' },
+  { key: 'O2', label: 'O2' },
+  { key: 'Three', label: 'Three' },
+  { key: 'Vodafone', label: 'Vodafone' },
+]
+
+function signalClass(val: any) {
+  if (val === null || val === undefined) return 'pp-mobile-dot--none'
+  const n = typeof val === 'boolean' ? (val ? 4 : 0) : Number(val)
+  if (n >= 3) return 'pp-mobile-dot--good'
+  if (n >= 1) return 'pp-mobile-dot--limited'
+  return 'pp-mobile-dot--none'
+}
+
+// ── Council tax reference ──────────────────────────────────────────────────────
+const ctBandReference = [
+  { band: 'A', range: 'Up to £40,000', estimate: 1377 },
+  { band: 'B', range: 'More than £40,000 up to £52,000', estimate: 1606 },
+  { band: 'C', range: 'More than £52,000 up to £68,000', estimate: 1835 },
+  { band: 'D', range: 'More than £68,000 up to £88,000', estimate: 2065 },
+  { band: 'E', range: 'More than £88,000 up to £120,000', estimate: 2523 },
+  { band: 'F', range: 'More than £120,000 up to £160,000', estimate: 2982 },
+  { band: 'G', range: 'More than £160,000 up to £320,000', estimate: 3440 },
+  { band: 'H', range: 'More than £320,000', estimate: 4130 },
+]
+
+function ctBandLadderOffset(band: string): string {
+  const idx = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'].indexOf(band)
+  if (idx === -1) return '50%'
+  return `calc(${(idx / 8) * 100}% + ${100 / 16}%)`
+}
+function bandEstimate(band: string): number {
+  const found = ctBandReference.find((b) => b.band === band)
+  return found?.estimate ?? 0
+}
+
+// ── Planning helpers ───────────────────────────────────────────────────────────
+function planningDecisionClass(decision: string) {
+  const d = (decision ?? '').toLowerCase()
+  if (d.includes('grant') || d.includes('approv') || d.includes('permit'))
+    return 'pp-planning-decision--approved'
+  if (d.includes('refus') || d.includes('reject'))
+    return 'pp-planning-decision--refused'
+  return 'pp-planning-decision--pending'
+}
+
+// ── SDLT calculator ────────────────────────────────────────────────────────────
+const sdltBuyerType = ref<'standard' | 'firsttime' | 'additional'>('standard')
+const sdltPriceInput = ref(0)
+const sdltPriceRaw = ref('')
+
+watch(
+  displayEstimatedPrice,
+  (p) => {
+    if (p && sdltPriceInput.value === 0) {
+      sdltPriceInput.value = Math.round(p)
+      sdltPriceRaw.value = Math.round(p).toLocaleString('en-GB')
+    }
+  },
+  { immediate: true },
+)
+
+function onSdltInput(e: Event) {
+  const raw = (e.target as HTMLInputElement).value.replace(/[^0-9]/g, '')
+  sdltPriceInput.value = raw ? parseInt(raw, 10) : 0
+  sdltPriceRaw.value = sdltPriceInput.value
+    ? sdltPriceInput.value.toLocaleString('en-GB')
+    : ''
+}
+
+interface SdltBand {
+  label: string
+  rate: number
+  tax: number
+}
+
+function standardBands() {
+  return [
+    { from: 0, to: 250000, rate: 0 },
+    { from: 250000, to: 925000, rate: 5 },
+    { from: 925000, to: 1500000, rate: 10 },
+    { from: 1500000, to: Infinity, rate: 12 },
+  ]
+}
+
+const sdltBreakdown = computed((): { bands: SdltBand[]; total: number } => {
+  const price = sdltPriceInput.value
+  const type = sdltBuyerType.value
+  let rawBands: { from: number; to: number; rate: number }[]
+
+  if (type === 'firsttime') {
+    if (price > 625000) rawBands = standardBands()
+    else
+      rawBands = [
+        { from: 0, to: 425000, rate: 0 },
+        { from: 425000, to: 625000, rate: 5 },
+      ]
+  } else if (type === 'additional') {
+    rawBands = standardBands().map((b) => ({ ...b, rate: b.rate + 5 }))
+  } else {
+    rawBands = standardBands()
+  }
+
+  let total = 0
+  const bands: SdltBand[] = []
+  for (const b of rawBands) {
+    if (price <= b.from) break
+    const taxable = Math.min(price, b.to) - b.from
+    const tax = Math.round((taxable * b.rate) / 100)
+    total += tax
+    if (taxable > 0) {
+      bands.push({
+        label: `£${(b.from / 1000).toFixed(0)}k – ${b.to === Infinity ? 'above' : '£' + (b.to / 1000).toFixed(0) + 'k'}`,
+        rate: b.rate,
+        tax,
+      })
+    }
+  }
+  return { bands, total }
+})
+
+// ── Images ─────────────────────────────────────────────────────────────────────
+// Only show real photos the owner has uploaded (or a property.imageUrl set
+// elsewhere in the system). When none are available, return [] so the
+// ImageSlider falls through to its branded UMU "No image available"
+// placeholder. We deliberately don't fall back to a Google Street View
+// snapshot — that gave the impression of a stock image and confused users.
+const propertyImages = computed(() => {
+  const images: string[] = []
+  const uploaded = (property.value?.images as string[] | null) ?? []
+  images.push(...uploaded.filter((u) => typeof u === 'string' && u.trim()))
+  const imgUrl = property.value?.imageUrl
+  if (imgUrl && imgUrl.trim() && !images.includes(imgUrl)) {
+    images.push(imgUrl)
+  }
+  return images
+})
+
+// ─── Prototype-states page model ─────────────────────────────────────────────
+// All computeds below feed the new `pps-*` template. They prefer real backend
+// data and fall back gracefully when fields are missing.
+
+// Hero image preference order:
+//   1. an uploaded property image (property.images / property.imageUrl)
+//   2. the Google Street View static-API URL from /enrichment (already
+//      generated server-side for any property with lat/lng)
+//   3. null — falls through to the SVG house silhouette
+const heroImage = computed<string | null>(() => {
+  const uploaded = propertyImages.value[0]
+  if (uploaded) return uploaded
+  const sv = (enrichment.value as any)?.streetViewUrl
+  if (typeof sv === 'string' && sv.trim()) return sv
+  return null
+})
+
+const pageState = computed<'unclaimed' | 'progress' | 'published'>(() => {
+  const s = passportStatus.value
+  if (s?.passportPublished || property.value?.passportPublished)
+    return 'published'
+  if (s?.hasPassport || property.value?.hasPassport) return 'progress'
+  return 'unclaimed'
+})
+
+const shareUrl = computed(() => {
+  if (typeof window === 'undefined') return ''
+  return `${window.location.origin}/property/${propertyId}`
+})
+
+const estimatedPrice = computed<number | null>(() => {
+  const p = property.value
+  if (!p) return null
+  const v = Number(p.estimatedPrice ?? p.lastSoldPrice ?? 0)
+  return Number.isFinite(v) && v > 0 ? v : null
+})
+
+const priceSourceLabel = computed<string>(() => {
+  const p = property.value
+  if (p?.estimatedPrice) return 'HPI-adjusted estimate'
+  if (p?.lastSoldPrice && p?.lastSoldDate) {
+    const year = new Date(p.lastSoldDate).getFullYear()
+    return `Land Registry · ${year} · HPI adjusted`
+  }
+  if (p?.lastSoldPrice) return 'Land Registry · HPI adjusted'
+  return 'Estimate not available'
+})
+
+const floodBadgeLabel = computed<string | null>(() => {
+  // Same precedence the "Flood & risk" explore tile uses: the enrichment
+  // value first, then the column. Reading only the column meant the hero
+  // pill hid itself as "Unknown" on properties whose tile was already
+  // showing a real Environment Agency rating.
+  const f = String(
+    (enrichment.value as any)?.floodRisk || property.value?.floodRisk || '',
+  ).trim()
+  if (!f || f.toLowerCase() === 'unknown') return null
+  return `Flood · ${f}`
+})
+
+const homescore = computed<number>(() => {
+  const v = Number(property.value?.epcScore ?? 0)
+  return Number.isFinite(v) && v > 0 ? Math.min(100, Math.round(v)) : 0
+})
+
+const scoreVerdict = computed<string>(() => {
+  const s = homescore.value
+  if (s >= 80) return 'Highly efficient'
+  if (s >= 65) return 'Above average'
+  if (s >= 50) return 'Average'
+  if (s >= 35) return 'Room to improve'
+  if (s > 0) return 'Plenty of opportunities'
+  return 'Score unavailable'
+})
+
+const scoreDesc = computed<string>(() => {
+  if (pageState.value === 'published') {
+    return 'Refined by the owner. Tap to explore the full Passport.'
+  }
+  if (pageState.value === 'progress') {
+    return 'Owner is building a verified Passport — this score will sharpen as data lands.'
+  }
+  return 'Scored from public EPC data. The owner can run a full HomeScore — bills, energy and value against the street — for a verified picture.'
+})
+
+// "Above average for CV5" — verdict anchored to the outcode when we have one.
+const scoreVerdictLine = computed<string>(() => {
+  const outcode = (property.value?.postcode || '').trim().split(/\s+/)[0]
+  if (!outcode || scoreVerdict.value === 'Score unavailable')
+    return scoreVerdict.value
+  return `${scoreVerdict.value} for ${outcode}`
+})
+
+const epcDotColor = computed<string>(() => {
+  const rating = (property.value?.epcRating || '').toUpperCase()
+  const map: Record<string, string> = {
+    A: '#00B050',
+    B: '#33B800',
+    C: '#92D050',
+    D: '#FFD700',
+    E: '#FF9933',
+    F: '#FF6600',
+    G: '#E64A19',
+  }
+  return map[rating] || '#E6A23C'
+})
+
+// Map an EPC efficiency string ("Very Good"/"Good"/"Average"/"Poor"/"Very Poor")
+// to a 0–100 bar width and a brand colour.
+const EFF_TO_PCT: Record<string, number> = {
+  'very good': 92,
+  good: 70,
+  average: 50,
+  poor: 30,
+  'very poor': 12,
+}
+function effPct(value: string | null | undefined): number {
+  if (!value) return 0
+  return EFF_TO_PCT[String(value).toLowerCase()] || 0
+}
+function effColor(value: string | null | undefined): string {
+  const pct = effPct(value)
+  if (pct >= 70) return '#00a19a'
+  if (pct >= 50) return '#92D050'
+  if (pct >= 30) return '#E6A23C'
+  if (pct > 0) return '#C73E36'
+  return '#ECECEF'
+}
+function effRating(value: string | null | undefined, fallback = 'N/A'): string {
+  if (!value) return fallback
+  // Capitalise and shorten "Very Good" → "Very good" style
+  return String(value)
+    .toLowerCase()
+    .replace(/\b\w/g, (c) => c.toUpperCase())
+}
+
+const epcBars = computed(() => {
+  const p = property.value
+  if (!p)
+    return [] as Array<{
+      label: string
+      pct: number
+      color: string
+      rating: string
+    }>
+  const rows = [
+    { label: 'Walls', eff: p.wallsEnergyEff },
+    { label: 'Roof', eff: p.roofEnergyEff },
+    { label: 'Heating', eff: p.mainheatEnergyEff },
+    { label: 'Windows', eff: p.windowsEnergyEff },
+  ]
+  return rows
+    .filter((r) => !!r.eff)
+    .map((r) => ({
+      label: r.label,
+      pct: effPct(r.eff),
+      color: effColor(r.eff),
+      rating: effRating(r.eff),
+    }))
+})
+
+const progressPct = computed<number>(() => {
+  // Prefer the real-time passport progress returned by /passport-status.
+  // Falls back to the EPC-signals proxy only when no passport exists yet
+  // (so the "Unclaimed" state still shows a meaningful progress bar).
+  const realPct = passportStatus.value?.passportProgress?.completionPct
+  if (typeof realPct === 'number') return realPct
+  const p = property.value
+  if (!p) return 0
+  let done = 0
+  const total = 8
+  if (p.epcRating) done++
+  if (p.wallsEnergyEff) done++
+  if (p.mainheatEnergyEff) done++
+  if (p.windowsEnergyEff) done++
+  if (p.tenure) done++
+  if (p.yearBuilt) done++
+  if (passportStatus.value?.hasPassport) done += 2
+  return Math.min(100, Math.round((done / total) * 100))
+})
+
+// ── Hero (web) helpers ────────────────────────────────────────
+// State-aware pill shown top-left of the navy hero card.
+// Same vocabulary as the passport-status card below (claimCardState), so the
+// two don't describe one fact in two languages: the pill used to say
+// "Passport in progress" while the card said "claimed · Private" a few
+// hundred pixels further down. Reads claimCardState, which is declared
+// further down this file - fine, because a computed's getter only runs on
+// access, which is after setup has finished.
+const heroStatePill = computed<{ label: string; dot: string }>(() => {
+  switch (claimCardState.value) {
+    case 'public':
+      return { label: 'Passport · Public', dot: '#00b6ae' }
+    case 'partiallyPublic':
+      return { label: 'Passport · Partially Public', dot: '#e6a23c' }
+    case 'private':
+      // Claimed, but nothing published yet - neutral rather than a warning.
+      return { label: 'Passport · Private', dot: '#9aa7b8' }
+    default:
+      return { label: 'Passport unclaimed', dot: '#f0a500' }
+  }
+})
+const HERO_SECTIONS_TOTAL = 17
+const heroSectionsStarted = computed<number>(() =>
+  pageState.value === 'unclaimed'
+    ? 0
+    : Math.round((progressPct.value / 100) * HERO_SECTIONS_TOTAL),
+)
+// Hint line inside the white passport-preview card.
+const heroPreviewHint = computed<string>(() => {
+  if (pageState.value === 'published')
+    return 'Passport published — view the full record'
+  if (pageState.value === 'progress')
+    return `Passport in progress — ${progressPct.value}% complete`
+  return 'Be the first — no Passport on this address yet'
+})
+// Primary hero CTA label, state-aware.
+const heroPrimaryCta = computed<string>(() => {
+  if (pageState.value === 'published') return 'Get the full Passport →'
+  if (pageState.value === 'progress') return "Preview what's being built →"
+  return "Claim this property — it's free →"
+})
+function onHeroPrimaryClick() {
+  if (pageState.value === 'unclaimed') onClaimClick()
+  else onAccessPassport()
+}
+function onSampleClick() {
+  navigateTo('/passport/sample')
+}
+
+// Real-time per-section status from the backend. Used by the "Passport
+// being built" card to render which sections are actually verified instead
+// of the hard-coded placeholder list.
+const realPassportSections = computed<Array<any>>(
+  () => passportStatus.value?.passportProgress?.sections ?? [],
+)
+
+const passportFeatures = computed(() => {
+  const p = property.value
+  const realSections = realPassportSections.value
+  // Prefer real backend section data when present — buyer sees actual
+  // verified state, not a hardcoded placeholder list.
+  if (realSections.length > 0) {
+    return realSections.map((s: any) => ({
+      title: s.title || s.key,
+      sub:
+        s.totalTasks > 0
+          ? `${s.completedTasks} of ${s.totalTasks} task${s.totalTasks === 1 ? '' : 's'} complete`
+          : 'No tasks',
+      // A section counts as "verified" once every task on it is complete.
+      verified: s.totalTasks > 0 && s.completedTasks === s.totalTasks,
+      partial: s.completedTasks > 0 && s.completedTasks < s.totalTasks,
+    }))
+  }
+  // Fallback (no passport yet) — keep the marketing-style list so the
+  // unclaimed state still has something to show.
+  return [
+    {
+      title: 'EPC Certificate',
+      sub: p?.lodgementDate
+        ? `Lodged ${new Date(p.lodgementDate).getFullYear()} · Grade ${p.epcRating}`
+        : 'Energy Performance Certificate',
+      verified: !!p?.epcRating,
+    },
+    {
+      title: 'Land Registry Title',
+      sub: p?.tenure ? `${p.tenure} confirmed` : 'Tenure on file',
+      verified: !!p?.tenure,
+    },
+    {
+      title: 'Title Plan',
+      sub: 'Boundary map · HMLR verified',
+      verified: !!p?.titleNumber,
+    },
+    {
+      title: 'TA6 — Property Information',
+      sub: 'Boundaries, disputes, utilities',
+      verified: false,
+    },
+    {
+      title: 'TA10 — Fittings & Contents',
+      sub: "What's included in the sale",
+      verified: false,
+    },
+    { title: 'Gas Safety Record', sub: 'Not yet uploaded', verified: false },
+    {
+      title: 'Electrical Certificate (EICR)',
+      sub: 'Not yet uploaded',
+      verified: false,
+    },
+    {
+      title: 'TA7 — Leasehold Information',
+      sub: 'Service charges, lease terms',
+      verified: false,
+    },
+  ]
+})
+
+const publishedFeatures = computed(() => {
+  // For now we mirror the in-progress list but mark everything verified.
+  return passportFeatures.value.map((f) => ({ ...f, verified: true }))
+})
+
+// ── Explain-Progress sheet data ───────────────────────────────────────────────
+const passportProgressTotal = computed<number>(
+  () => passportFeatures.value.length,
+)
+const passportProgressVerified = computed<number>(
+  () => passportFeatures.value.filter((f) => f.verified).length,
+)
+const passportProgressPct = computed<number>(() => {
+  const total = passportProgressTotal.value
+  if (!total) return 0
+  return Math.round((passportProgressVerified.value / total) * 100)
+})
+const passportVerifiedItems = computed(() => {
+  // Illustrated artwork per document type (the same set the passport pages
+  // use, copied into /property-cards so this page stays self-contained).
+  const iconMap: Record<string, string> = {
+    'EPC Certificate': 'epcRating.png',
+    'Land Registry Title': 'titleNumber.png',
+    'Title Plan': 'titleDeedsAndPlan.png',
+    'TA6 — Property Information': 'transactionInformation.png',
+    'TA10 — Fittings & Contents': 'fixturesAndFittings.png',
+    'Gas Safety Record': 'gasSafetyCertificate.png',
+    'Electrical Certificate (EICR)': 'electricalSafety.png',
+    'TA7 — Leasehold Information': 'tenure.png',
+  }
+  return passportFeatures.value
+    .filter((f) => f.verified)
+    .map((f) => ({
+      title: f.title,
+      sub: f.sub,
+      img: `/property-cards/${iconMap[f.title] ?? 'legal.jpeg'}`,
+    }))
+})
+
+const exploreTiles = computed(() => {
+  const p = property.value
+  if (!p) return []
+  const tiles: Array<any> = []
+  // Property details - first tile, matching the reference app. Replaces the
+  // sidebar card of the same name so the data lives with every other
+  // data-source drawer instead of in a panel of its own.
+  const detailsValue = p.epcRating
+    ? `EPC ${p.epcRating}${p.epcScore ? ` · ${p.epcScore}` : ''}`
+    : p.propertyType || '-'
+  tiles.push({
+    key: 'property-details',
+    icon: '',
+    iconBg: '#EEF3F7',
+    iconImage: '/op-icons/property/type.jpeg',
+    title: 'Property details',
+    value: detailsValue,
+    sub: p.uprn ? `UPRN ${p.uprn}` : 'Type · EPC · UPRN',
+  })
+  // Property history (Land Registry sold history)
+  tiles.push({
+    key: 'history',
+    icon: '🏠',
+    iconBg: '#FFF3E0',
+    title: 'Property history',
+    value: p.lastSoldPrice
+      ? `£${Number(p.lastSoldPrice).toLocaleString()}`
+      : 'No sales',
+    sub: p.lastSoldDate
+      ? `Last sold ${new Date(p.lastSoldDate).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}`
+      : 'Land Registry record',
+  })
+  // Street data
+  tiles.push({
+    key: 'street',
+    icon: '🏘️',
+    iconBg: '#E8F5E9',
+    title: 'Street data',
+    value: p.postcode ? p.postcode.split(' ')[0] : '—',
+    sub: 'Neighbourhood comparison',
+  })
+  // Schools — live count from enrichment
+  const schoolsCount = enrichmentSchools.value.length
+  const nearestSchool = enrichmentSchools.value[0]
+  tiles.push({
+    key: 'schools',
+    icon: '🎓',
+    iconBg: '#E3F2FD',
+    title: 'Schools',
+    value: schoolsCount > 0 ? `${schoolsCount} nearby` : '—',
+    sub: nearestSchool
+      ? `Nearest ${nearestSchool.distanceKm.toFixed(1)} km`
+      : 'Tap for distance',
+  })
+  // Transport (trains / buses / airports) — each one falls back through
+  // three states: real data → "looking up" while enrichment is pending →
+  // "sources unreachable" when Overpass mirrors all failed. Trains and
+  // buses share `transportLookupFailed`; airports use their own batch
+  // (150 km radius is too heavy to fold into the station/bus query) and
+  // therefore have a separate `airportsLookupFailed` flag — a failed
+  // airports lookup must NOT mark trains/buses as unavailable.
+  const enrichmentPending = !enrichment.value
+  const tFailed = transportLookupFailed.value
+  const aFailed = airportsLookupFailed.value
+  // Trains
+  const nearestTrain = enrichmentTrains.value[0]
+  tiles.push({
+    key: 'trains',
+    icon: '🚂',
+    iconBg: '#F3E5F5',
+    title: 'Train stations',
+    value: nearestTrain
+      ? `${nearestTrain.distanceKm.toFixed(1)} km`
+      : enrichmentPending
+        ? 'Looking up…'
+        : tFailed
+          ? 'Unavailable'
+          : 'No data',
+    sub: nearestTrain
+      ? nearestTrain.name
+      : enrichmentPending
+        ? 'Searching OpenStreetMap'
+        : tFailed
+          ? 'Map sources unreachable — tap to retry'
+          : 'No stations found nearby',
+  })
+  // Bus stops
+  const nearestBus = enrichmentBuses.value[0]
+  tiles.push({
+    key: 'buses',
+    icon: '🚌',
+    iconBg: '#FFF3E0',
+    title: 'Bus stops',
+    value: nearestBus
+      ? `${nearestBus.distanceKm.toFixed(2)} km`
+      : enrichmentPending
+        ? 'Looking up…'
+        : tFailed
+          ? 'Unavailable'
+          : 'No data',
+    sub: nearestBus
+      ? nearestBus.name || 'Nearest bus stop'
+      : enrichmentPending
+        ? 'Searching OpenStreetMap'
+        : tFailed
+          ? 'Map sources unreachable — tap to retry'
+          : 'No stops found within 700 m',
+  })
+  // Airports — independent failure flag
+  const nearestAirport = enrichmentAirports.value[0]
+  tiles.push({
+    key: 'airports',
+    icon: '✈️',
+    iconBg: '#E1F5FE',
+    title: 'Airports',
+    value: nearestAirport
+      ? `${nearestAirport.distanceKm.toFixed(0)} km`
+      : enrichmentPending
+        ? 'Looking up…'
+        : aFailed
+          ? 'Unavailable'
+          : 'No data',
+    sub: nearestAirport
+      ? nearestAirport.name
+      : enrichmentPending
+        ? 'Searching OpenStreetMap'
+        : aFailed
+          ? 'Map sources unreachable — tap to retry'
+          : 'No airports within 150 km',
+  })
+  // Location & map
+  tiles.push({
+    key: 'map',
+    icon: '📍',
+    iconBg: '#E8F5E9',
+    title: 'Location & map',
+    value: p.postcode || '—',
+    sub: p.city || 'View on map',
+  })
+  // Flood risk — always show, prefer live enrichment value
+  {
+    const flood = String(
+      (enrichment.value as any)?.floodRisk || p.floodRisk || '',
+    ).trim()
+    const value = flood || 'Very Low'
+    const isHigh = /high|severe/i.test(value)
+    const isMed = /medium/i.test(value)
+    tiles.push({
+      key: 'flood',
+      icon: '💧',
+      iconBg: '#FFF8E1',
+      title: 'Flood & risk',
+      pip: isHigh ? '!' : null,
+      value,
+      sub: 'Environment Agency',
+      valueStyle: isHigh
+        ? { color: '#C73E36' }
+        : isMed
+          ? { color: '#D9772A' }
+          : undefined,
+    })
+  }
+  // Planning — show real constraint count
+  {
+    const constraints =
+      (enrichment.value as any)?.planningHistory?.constraints ?? []
+    const apps = (enrichment.value as any)?.planningHistory?.applications ?? []
+    const count = constraints.length + apps.length
+    tiles.push({
+      key: 'planning',
+      icon: '📋',
+      iconBg: '#FAFAFA',
+      title: 'Planning',
+      pip: count > 0 ? null : 'New',
+      value: count > 0 ? `${count} on file` : '—',
+      sub:
+        constraints.length > 0
+          ? `${constraints.length} constraint${constraints.length === 1 ? '' : 's'}`
+          : 'Applications on file',
+    })
+  }
+  // Local Land Charges — indicative HMLR check. The tile value + sub are
+  // static because the real outcome (charges vs not-migrated vs clean) is only
+  // known once the sheet has fetched; "HM Land Registry" tells the user the
+  // provenance before they tap.
+  tiles.push({
+    key: 'llc',
+    icon: '',
+    iconBg: '#F3EFFB',
+    title: 'Land charges',
+    value: 'Check LLC',
+    sub: 'HM Land Registry',
+  })
+  // Council tax — prefer EPC-sourced band when DB column empty
+  {
+    const band =
+      p.councilTaxBand ||
+      (enrichment.value as any)?.epcCert?.councilTaxBand ||
+      (enrichment.value as any)?.councilTax?.band ||
+      null
+    if (band) {
+      tiles.push({
+        key: 'council',
+        icon: '🏛️',
+        iconBg: '#E8F5E9',
+        title: 'Council tax',
+        value: `Band ${band}`,
+        sub: 'Local authority',
+      })
+    }
+  }
+  // Broadband
+  tiles.push({
+    key: 'broadband',
+    icon: '📶',
+    iconBg: '#E3F2FD',
+    title: 'Broadband',
+    value: 'Check speeds',
+    sub: 'Full fibre availability',
+  })
+  // Stamp duty
+  if (estimatedPrice.value) {
+    tiles.push({
+      key: 'stamp-duty',
+      icon: '🏛️',
+      iconBg: '#FCE4EC',
+      title: 'Stamp duty',
+      value: `${formatPrice(stampDutyEstimate.value)}`,
+      sub: 'On estimated value',
+    })
+  }
+  // Listed buildings + heritage (data was being fetched but never surfaced).
+  if (enrichmentListedBuildings.value.length > 0) {
+    tiles.push({
+      key: 'listed',
+      icon: '🏛️',
+      iconBg: '#FBEFD9',
+      title: 'Heritage sites',
+      value: `${enrichmentListedBuildings.value.length} nearby`,
+      sub: 'Listed buildings & monuments',
+    })
+  }
+  // Safety / crime stats (data.police.uk — free, no key). Tile always
+  // renders even if the backend hasn't responded yet so the slot doesn't
+  // disappear-reappear as enrichment lands; the sheet renders the empty
+  // state gracefully when there's no data.
+  {
+    const total = enrichmentCrime.value?.totalLast12m
+    const hasData = typeof total === 'number'
+    tiles.push({
+      key: 'crime',
+      icon: '🛡️',
+      iconBg: '#EEEDF5',
+      title: 'Safety',
+      value: hasData
+        ? total > 0
+          ? `${total.toLocaleString()} crimes`
+          : 'None reported'
+        : 'Tap to check',
+      sub: 'Last 12 months · 1 mile radius',
+    })
+  }
+  return tiles
+})
+
+// Line-art icon + colour per explore tile (replaces the old emoji glyphs).
+const TILE_ICON: Record<string, { svg: string; bg: string; color: string }> = {
+  history: {
+    svg: '<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/>',
+    bg: '#e3f4ee',
+    color: '#0f857c',
+  },
+  street: {
+    svg: '<path d="M8 3 4 21M16 3l4 18M12 5.5v3M12 12v3M12 18.5v1"/>',
+    bg: '#eef3fb',
+    color: '#43597a',
+  },
+  schools: {
+    svg: '<path d="m2 8 10-4 10 4-10 4L2 8z"/><path d="M6 10v5c0 1.4 2.7 2.6 6 2.6s6-1.2 6-2.6v-5"/>',
+    bg: '#efeafb',
+    color: '#7a5cd0',
+  },
+  trains: {
+    svg: '<rect x="5" y="3" width="14" height="13" rx="3.5"/><path d="M5 11h14M8.5 16l-2 3M15.5 16l2 3"/><circle cx="9" cy="7.5" r="1"/><circle cx="15" cy="7.5" r="1"/>',
+    bg: '#fbe9ea',
+    color: '#cf5a5a',
+  },
+  buses: {
+    svg: '<rect x="4" y="3.5" width="16" height="13" rx="2.5"/><path d="M4 11h16M8 16.5v2.5M16 16.5v2.5"/><circle cx="8" cy="13.7" r="1"/><circle cx="16" cy="13.7" r="1"/>',
+    bg: '#fdf1dc',
+    color: '#c8912f',
+  },
+  airports: {
+    svg: '<path d="M21.5 2.5 11 13"/><path d="M21.5 2.5 15 21l-3.8-8.2L3 9l18.5-6.5z"/>',
+    bg: '#e6f0fb',
+    color: '#3f7fd0',
+  },
+  map: {
+    svg: '<path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.6"/>',
+    bg: '#e3f4ee',
+    color: '#0f857c',
+  },
+  flood: {
+    svg: '<path d="M12 3s6 6.4 6 10.5a6 6 0 0 1-12 0C6 9.4 12 3 12 3z"/>',
+    bg: '#e9f2fb',
+    color: '#3f7fd0',
+  },
+  planning: {
+    svg: '<rect x="5" y="3" width="14" height="18" rx="2.5"/><path d="M9 8h6M9 12h6M9 16h4"/>',
+    bg: '#efeafb',
+    color: '#7a5cd0',
+  },
+  council: {
+    svg: '<path d="M3 10 12 4l9 6M5 10v8M9 10v8M15 10v8M19 10v8M3 21h18"/>',
+    bg: '#e3f4ee',
+    color: '#0f857c',
+  },
+  broadband: {
+    svg: '<path d="M2 8.5a15 15 0 0 1 20 0M5 12a10 10 0 0 1 14 0M8.5 15.4a5 5 0 0 1 7 0"/><circle cx="12" cy="19" r="1"/>',
+    bg: '#e3f4ee',
+    color: '#0f857c',
+  },
+  'stamp-duty': {
+    svg: '<path d="M3 10 12 4l9 6M5 10v8M9 10v8M15 10v8M19 10v8M3 21h18"/>',
+    bg: '#fdf1dc',
+    color: '#c8912f',
+  },
+  listed: {
+    svg: '<path d="M3 10 12 4l9 6M5 10v8M9 10v8M15 10v8M19 10v8M3 21h18"/>',
+    bg: '#fdf1dc',
+    color: '#c8912f',
+  },
+  crime: {
+    svg: '<path d="M12 3 5 6v5c0 4.5 3 7.6 7 9 4-1.4 7-4.5 7-9V6l-7-3z"/><path d="m9.3 11.8 1.9 1.9 3.4-3.6"/>',
+    bg: '#fbe9ea',
+    color: '#cf5a5a',
+  },
+}
+const TILE_ICON_FALLBACK = {
+  svg: '<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 9h8M8 13h5"/>',
+  bg: '#eef3fb',
+  color: '#43597a',
+}
+function tileIcon(key: string) {
+  return TILE_ICON[key] || TILE_ICON_FALLBACK
+}
+
+// Illustrated card artwork (public/property-cards/*). When a tile key has a
+// matching image it replaces the flat line-art glyph; keys without artwork
+// fall back to the SVG above. Paths are pre-encoded for the spaces/ampersands
+// in the original filenames.
+const TILE_IMAGE: Record<string, string> = {
+  history: '/property-cards/propertyHistory.jpeg',
+  street: '/property-cards/streetData.jpeg',
+  schools: '/property-cards/schools.jpeg',
+  trains: '/property-cards/trainstations.jpeg',
+  buses: '/property-cards/busStops.jpeg',
+  airports: '/property-cards/airports.jpeg',
+  map: '/property-cards/locationAndMap.jpeg',
+  flood: '/property-cards/floodAndRisj.jpeg',
+  planning: '/property-cards/planning.jpeg',
+  llc: '/property-cards/landCharges.jpeg',
+  council: '/property-cards/councilTax.jpeg',
+  broadband: '/property-cards/broadband.jpeg',
+  'stamp-duty': '/property-cards/stampDuty.jpeg',
+  listed: '/property-cards/listedBuildings.jpeg',
+  crime: '/property-cards/crime.jpeg',
+}
+function tileImage(key: string): string | null {
+  return TILE_IMAGE[key] || null
+}
+
+// Artwork for one explore tile. A tile may carry its own `iconImage` (the
+// "Property details" tile does, and it is the one key with no entry in
+// TILE_IMAGE) - honouring that first is what stopped it rendering the flat
+// fallback glyph while every neighbour showed illustrated artwork.
+function tileArt(tile: { key: string; iconImage?: string }): string | null {
+  return tile.iconImage || tileImage(tile.key)
+}
+
+// Columns the explore grid runs at desktop width. The row-closing CTA tile
+// spans exactly the leftover cells so the last row is never ragged; at
+// narrower breakpoints the CSS overrides it to a full row.
+const EXPLORE_COLUMNS = 4
+const exploreFillSpan = computed<number>(
+  () => EXPLORE_COLUMNS - (exploreTiles.value.length % EXPLORE_COLUMNS),
+)
+
+const stampDutyEstimate = computed<number>(() => {
+  const price = estimatedPrice.value || 0
+  if (price <= 250000) return 0
+  if (price <= 925000) return Math.round((price - 250000) * 0.05)
+  if (price <= 1500000) return Math.round(33750 + (price - 925000) * 0.1)
+  return Math.round(91250 + (price - 1500000) * 0.12)
+})
+
+// `runningCosts` (and `hasRunningCosts`) are already declared earlier in this
+// file from the previous template — reuse them here. `total` may be null when
+// no EPC cost fields are on file, so guard before rendering the boxes.
+const costsBoxes = computed(() => {
+  const rc = runningCosts.value
+  if (!rc || rc.total == null) return []
+  const heat = Math.round(rc.heating ?? 0)
+  const water = Math.round(rc.hotWater ?? 0)
+  const light = Math.round(rc.lighting ?? 0)
+  return [
+    { label: 'Heating', value: heat, highlight: false },
+    { label: 'Hot water', value: water, highlight: false },
+    { label: 'Lighting', value: light, highlight: false },
+    { label: 'Total / year', value: Math.round(rc.total), highlight: true },
+  ]
+})
+
+// FOMO signal-bar copy
+const signalLeftLabel = computed<string>(() => {
+  if (pageState.value === 'unclaimed')
+    return "No Passport on this address yet — the record starts when it's claimed"
+  if (pageState.value === 'progress') return 'Owner building a Passport'
+  return 'Passport live · verified data'
+})
+const signalCountLabel = computed<string>(() => {
+  // We don't have live stats wired here yet — show a generic searches line.
+  return 'View live activity →'
+})
+
+// ── Handlers wired to existing drawers/refs ───────────────────────────────────
+async function onWishlistToggle() {
+  try {
+    await toggleWishlist(propertyId)
+  } catch {}
+}
+
+function onClaimClick() {
+  // Send the owner through the global KYC + Land Registry claim flow.
+  goToClaim()
+}
+
+// Single source of truth for "tap to do the right thing with the Passport"
+// — used by every Passport CTA on this page. Branches on the (ownership ×
+// passport state) matrix:
+//
+//                      | unclaimed       | in-progress           | published
+//   ------------------ + --------------- + --------------------- + ----------------
+//   owner / collab     | /claim/[id]     | /passportview/[id]    | /passportview/[id]
+//   buyer (unlocked)   | /claim/[id]     | /buyer-passport/[id]  | /buyer-passport/[id]
+//   non-owner          | /claim/[id]     | preview sheet (read)  | £99 unlock drawer
+//
+// "preview sheet" = the in-page Passport bottom sheet whose progress
+// variant already lists the completed sections — that's the "example of
+// what's been built" surface.
+function routeForPassportState() {
+  const s = passportStatus.value
+  // 1. No passport at all → claim flow (KYC + Land Registry, free)
+  if (!s?.hasPassport) {
+    goToClaim()
+    return
+  }
+  // 2. Owner or collaborator — straight to their passport, any state
+  if (s.isOwner || s.isCollaborator) {
+    if (s.passportId) {
+      router.push(`/passportview/${s.passportId}`)
+    } else {
+      goToClaim()
+    }
+    return
+  }
+  // 3. Buyer who has already unlocked — view in buyer mode
+  if (s.isBuyer && s.passportId) {
+    router.push(`/buyer-passport/${s.passportId}`)
+    return
+  }
+  // 4. Non-owner + published — open the £99 unlock payment drawer
+  if (s.isPublished) {
+    if (!s.passportId) {
+      showToast({
+        message: 'No published Passport to unlock for this property yet.',
+        iconEmoji: 'ℹ️',
+      })
+      return
+    }
+    showUnlockDrawer.value = true
+    return
+  }
+  // 5. Non-owner + in-progress — show the preview sheet so they can see
+  //    what's been built so far without unlocking anything.
+  openSheet('passport')
+}
+
+function onAccessPassport() {
+  routeForPassportState()
+}
+
+// Opens the buyer "Watch this property" drawer (notification-preferences flow).
+const watchDrawerOpen = ref(false)
+function onWatchClick() {
+  watchDrawerOpen.value = true
+}
+
+// Save the chosen notification preferences to the buyer profile via the existing
+// register-interest endpoint. The toggle map arrives from WatchPropertyDrawer.
+async function onWatchDrawerSubmit(prefs: Record<string, boolean>) {
+  watchSubmitting.value = true
+  try {
+    const token =
+      typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null
+    const enabled = Object.entries(prefs)
+      .filter(([, v]) => v)
+      .map(([k]) => k)
+    const res = await fetch(
+      `${config.public.apiBase}/property/${propertyId}/register-interest`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          interestLevel: 'Watching',
+          notes: `Notify me about: ${enabled.join(', ') || 'nothing selected'}`,
+        }),
+      },
+    )
+    if (!res.ok) throw new Error('save-failed')
+    watchDrawerOpen.value = false
+    showToast({ message: "Saved to your buyer profile — we'll keep you posted", iconEmoji: '🔔' })
+  } catch {
+    showToast({ message: "Couldn't save right now — please try again", iconEmoji: '⚠️' })
+  } finally {
+    watchSubmitting.value = false
+  }
+}
+
+// True when the logged-in user owns or collaborates on the passport for this
+// property. Used to swap "Get notified when published" → "Continue building".
+const isPassportOwnerOrCollab = computed<boolean>(() => {
+  const s = passportStatus.value
+  return !!(s?.isOwner || s?.isCollaborator)
+})
+
+// Owner/collaborator → open the passport so they can keep filling sections.
+// Everyone else → open the Watch sheet (notify-me flow). Single click handler
+// so the button copy can branch but the wiring stays simple.
+function onProgressCtaClick() {
+  const s = passportStatus.value
+  if (isPassportOwnerOrCollab.value && s?.passportId) {
+    router.push(`/passportview/${s.passportId}`)
+    return
+  }
+  onWatchClick()
+}
+
+function onContactClick() {
+  openSheet('owner')
+}
+
+function onScoreCardTap() {
+  router.push(`/homescore/${propertyId}`)
+}
+
+// ─── Bottom-sheet system (prototype's openSheet/closeSheet) ────────────────
+type SheetKey =
+  | 'property-details'
+  | 'history'
+  | 'street'
+  | 'schools'
+  | 'transport'
+  | 'trains'
+  | 'buses'
+  | 'airports'
+  | 'map'
+  | 'flood'
+  | 'planning'
+  | 'llc'
+  | 'council'
+  | 'broadband'
+  | 'stamp-duty'
+  | 'listed'
+  | 'crime'
+  | 'watch'
+  | 'owner'
+  | 'passport'
+  | 'explain-unclaimed'
+  | 'explain-progress'
+  | 'explain-published'
+  | 'price-info'
+const activeSheet = ref<SheetKey | null>(null)
+const sheetEl = ref<HTMLElement | null>(null)
+
+function openSheet(k: SheetKey) {
+  activeSheet.value = k
+}
+function closeSheet() {
+  activeSheet.value = null
+}
+
+// Passport-item row glyphs — verified vs still-pending. Kept as SVG path
+// bodies (fed through v-html) so they inherit the row's colour instead of
+// baking in an emoji's own palette.
+const PSI_CHECK =
+  '<circle cx="12" cy="12" r="9"/><path d="m8.5 12.2 2.4 2.4 4.6-4.8"/>'
+const PSI_CLOCK = '<circle cx="12" cy="12" r="9"/><path d="M12 7v5.3l3.2 2"/>'
+
+// ── Sheet chrome: scroll lock + Escape ─────────────────────────────────────
+// Without this the page behind an open sheet kept scrolling under the
+// wheel/touch (and the sheet appeared to "stick" to a background that had
+// moved on). Lock <body> for as long as a sheet is up, compensating for the
+// scrollbar so the layout doesn't jump sideways when it disappears.
+// Mirrors BaseDrawer.lockScroll so the two never disagree about the
+// "unlocked" value; the scrollbar-gap padding is the one addition, and it
+// keeps the page from jolting sideways as the scrollbar is removed.
+function lockBodyScroll(lock: boolean) {
+  if (!import.meta.client || !document.body) return
+  const container = document.querySelector('.mobile-container') as HTMLElement | null
+  if (container) container.style.overflow = lock ? 'hidden' : ''
+  const gap = lock ? window.innerWidth - document.documentElement.clientWidth : 0
+  document.body.style.overflow = lock ? 'hidden' : ''
+  document.body.style.paddingRight = gap > 0 ? `${gap}px` : ''
+}
+
+watch(activeSheet, (s) => {
+  lockBodyScroll(!!s)
+  // Move focus into the dialog so Escape/tab land somewhere sensible and
+  // screen readers announce the sheet instead of staying on the page behind.
+  if (s) void nextTick(() => sheetEl.value?.focus?.())
+})
+
+function onSheetKeydown(e: KeyboardEvent) {
+  if (e.key === 'Escape' && activeSheet.value) {
+    e.stopPropagation()
+    closeSheet()
+  }
+}
+onMounted(() => window.addEventListener('keydown', onSheetKeydown))
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', onSheetKeydown)
+  lockBodyScroll(false)
+})
+
+function onExploreTileClick(key: string) {
+  // Every explore tile now opens its matching bottom sheet (prototype parity).
+  const map: Record<string, SheetKey | null> = {
+    'property-details': 'property-details',
+    history: 'history',
+    street: 'street',
+    schools: 'schools',
+    transport: 'transport',
+    trains: 'trains',
+    buses: 'buses',
+    airports: 'airports',
+    map: 'map',
+    flood: 'flood',
+    planning: 'planning',
+    llc: 'llc',
+    council: 'council',
+    broadband: 'broadband',
+    'stamp-duty': 'stamp-duty',
+    listed: 'listed',
+    crime: 'crime',
+  }
+  const sheet = map[key]
+  if (sheet) openSheet(sheet)
+}
+
+// ─── Stamp duty (live calculator inside the Stamp Duty sheet) ──────────────
+const sdInput = ref<number>(estimatedPrice.value || 350000)
+watch(estimatedPrice, (v) => {
+  if (v && !sdTouched.value) sdInput.value = v
+})
+const sdTouched = ref(false)
+type SdType = 'standard' | 'first' | 'additional'
+const sdType = ref<SdType>('standard')
+
+// 2026 SDLT bands (England & NI). Source: HMRC current rates.
+const SD_BANDS_STANDARD: Array<{ from: number; to: number; rate: number }> = [
+  { from: 0, to: 250000, rate: 0 },
+  { from: 250000, to: 925000, rate: 0.05 },
+  { from: 925000, to: 1500000, rate: 0.1 },
+  { from: 1500000, to: Infinity, rate: 0.12 },
+]
+const SD_BANDS_FIRST: Array<{ from: number; to: number; rate: number }> = [
+  { from: 0, to: 425000, rate: 0 },
+  { from: 425000, to: 625000, rate: 0.05 },
+  // First-time relief is lost above £625k — falls back to standard.
+]
+const SD_BANDS_ADDITIONAL: Array<{ from: number; to: number; rate: number }> = [
+  // Additional dwelling surcharge: standard rates + 5%.
+  { from: 0, to: 250000, rate: 0.05 },
+  { from: 250000, to: 925000, rate: 0.1 },
+  { from: 925000, to: 1500000, rate: 0.15 },
+  { from: 1500000, to: Infinity, rate: 0.17 },
+]
+function computeStampDuty(
+  price: number,
+  type: SdType,
+): {
+  total: number
+  bands: Array<{
+    from: number
+    to: number
+    rate: number
+    amount: number
+    range: string
+  }>
+} {
+  if (price <= 0) return { total: 0, bands: [] }
+  let bands = SD_BANDS_STANDARD
+  if (type === 'first' && price <= 625000) bands = SD_BANDS_FIRST
+  else if (type === 'first') bands = SD_BANDS_STANDARD
+  else if (type === 'additional') bands = SD_BANDS_ADDITIONAL
+  const rows = bands.map((b) => {
+    const top = Math.min(price, b.to)
+    const slice = Math.max(0, top - b.from)
+    const amount = Math.round(slice * b.rate)
+    const fmt = (n: number) =>
+      n === Infinity ? '∞' : `£${Math.round(n).toLocaleString()}`
+    return {
+      ...b,
+      amount,
+      range: `${fmt(b.from)} – ${fmt(b.to)}`,
+    }
+  })
+  const total = rows.reduce((s, r) => s + r.amount, 0)
+  return { total, bands: rows }
+}
+const stampDuty = computed(() =>
+  computeStampDuty(sdInput.value || 0, sdType.value),
+)
+function onSdInput(e: Event) {
+  const v = parseInt((e.target as HTMLInputElement).value || '0', 10)
+  sdInput.value = Number.isFinite(v) ? v : 0
+  sdTouched.value = true
+}
+
+// ─── Sheet: history — fetch sold history when the sheet opens ──────────────
+const soldHistory = ref<any[]>([])
+const soldHistoryLoaded = ref(false)
+
+// Last sale (most recent record on this property)
+const lastSale = computed<{ price: number; date: string } | null>(() => {
+  const arr = soldHistory.value
+  if (!arr.length) return null
+  const sorted = [...arr]
+    .filter((s) => s?.price && s?.date)
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+  return sorted[0] ?? null
+})
+
+// Delta between current HPI-adjusted estimate and most recent sale
+const deltaSinceSold = computed<{
+  abs: number
+  pct: number
+  positive: boolean
+} | null>(() => {
+  const ls = lastSale.value
+  const cur = estimatedPrice.value
+  if (!ls?.price || !cur) return null
+  const abs = cur - ls.price
+  const pct = (abs / ls.price) * 100
+  return { abs, pct, positive: abs >= 0 }
+})
+
+// Compound annual growth rate from most recent sale → current estimate
+const compoundGrowth = computed<{ pct: number; sinceYear: number } | null>(
+  () => {
+    const ls = lastSale.value
+    const cur = estimatedPrice.value
+    if (!ls?.price || !cur) return null
+    const sinceYear = new Date(ls.date).getFullYear()
+    if (!sinceYear || Number.isNaN(sinceYear)) return null
+    const years = new Date().getFullYear() - sinceYear
+    if (years <= 0) return null
+    const cagr = (Math.pow(cur / ls.price, 1 / years) - 1) * 100
+    return { pct: cagr, sinceYear }
+  },
+)
+async function loadSoldHistory() {
+  if (soldHistoryLoaded.value) return
+  soldHistoryLoaded.value = true
+  try {
+    const res = await fetch(
+      `${config.public.apiBase}/property/${propertyId}/sold-history`,
+    )
+    if (!res.ok) return
+    const data = await res.json()
+    soldHistory.value = Array.isArray(data?.thisProperty)
+      ? data.thisProperty
+      : []
+  } catch {
+    /* keep empty */
+  }
+}
+
+// Lazy-loaders triggered when a sheet opens.
+watch(activeSheet, (s) => {
+  if (s === 'history') void loadSoldHistory()
+  if (s === 'street') void loadStreetEnergyRank()
+})
+
+// Live street-energy rank — reuses the helper added on the homescore page.
+const streetEnergyRank = ref<{
+  rank: number | null
+  total: number
+  bestCost: number | null
+  averageCost: number | null
+  yourCost: number | null
+  yourEpcRating?: string | null
+  epcDistribution?: { letter: string; count: number }[]
+  avgEpcScore?: number | null
+} | null>(null)
+
+const epcBarMaxCount = computed(() => {
+  const list = streetEnergyRank.value?.epcDistribution ?? []
+  return list.reduce((m, b) => Math.max(m, b.count), 0)
+})
+function epcBarColor(letter: string) {
+  const map: Record<string, string> = {
+    A: '#1a9447',
+    B: '#2eab55',
+    C: '#7dc459',
+    D: '#e6a23c',
+    E: '#d9772a',
+    F: '#c73e36',
+    G: '#a72d27',
+  }
+  return map[letter] || '#9c98ad'
+}
+async function loadStreetEnergyRank() {
+  try {
+    const res = await fetch(
+      `${config.public.apiBase}/property/${propertyId}/street-energy-rank`,
+    )
+    if (!res.ok) return
+    streetEnergyRank.value = await res.json()
+  } catch {
+    /* leave null */
+  }
+}
+
+// Council tax — band → 2024/25 England average annual £ table.
+const COUNCIL_BAND_AVG: Record<string, number> = {
+  A: 1340,
+  B: 1563,
+  C: 1787,
+  D: 2010,
+  E: 2457,
+  F: 2904,
+  G: 3350,
+  H: 4020,
+}
+const councilTaxAnnual = computed<number | null>(() => {
+  const b = (property.value?.councilTaxBand || '').toUpperCase()
+  return COUNCIL_BAND_AVG[b] ?? null
+})
+const councilTaxBands = computed(() => {
+  const max = Math.max(...Object.values(COUNCIL_BAND_AVG))
+  const mine = (property.value?.councilTaxBand || '').toUpperCase()
+  return Object.entries(COUNCIL_BAND_AVG).map(([letter, amount]) => ({
+    letter,
+    amount,
+    pct: Math.round((amount / max) * 100),
+    active: letter === mine,
+  }))
+})
+
+// CO₂ proxy for tile / explain sheets — use real EPC potential when known.
+const co2NowTonnes = computed<number | null>(() => {
+  const v = Number(property.value?.co2Emissions ?? 0)
+  return v > 0 ? Math.round(v * 10) / 10 : null
+})
+
+// Council-tax extras (restored — these fields were fetched but unused).
+const councilTaxCouncilName = computed<string | null>(() => {
+  const ct = (enrichment.value as any)?.councilTax
+  return (
+    ct?.councilName ||
+    (property.value?.city ? `${property.value.city} Council` : null)
+  )
+})
+const councilTaxSource = computed<string | null>(
+  () => (enrichment.value as any)?.councilTax?.dataSource || 'VOA',
+)
+const councilTaxNearby = computed<any[]>(() => {
+  const arr = (enrichment.value as any)?.councilTax?.nearby
+  return Array.isArray(arr) ? arr : []
+})
+
+// EPC "potential" rating (restored). Drives the small efficiency-upside row
+// on the running-costs card; pulled from EPC API by the backend enrichment.
+const epcPotentialRating = computed<string | null>(
+  () => (enrichment.value as any)?.epcPotentialRating ?? null,
+)
+const epcPotentialScore = computed<number | null>(
+  () => (enrichment.value as any)?.epcPotentialScore ?? null,
+)
+const enrichmentListedBuildings = computed<any[]>(
+  () => (enrichment.value as any)?.listedBuildings ?? [],
+)
+
+// data.police.uk — 12-month crime stats within 1 mile (no API key needed).
+const enrichmentCrime = computed<any | null>(
+  () => (enrichment.value as any)?.crime ?? null,
+)
+
+// True when OpenStreetMap's Overpass servers couldn't be reached server-side
+// (e.g. non-UK dev machine where all mirrors block). Used to distinguish
+// "we couldn't fetch" from "there genuinely are no stations" in transport
+// empty states. UK/EU production deployment usually resolves this.
+const transportLookupFailed = computed<boolean>(
+  () => (enrichment.value as any)?.nearby?.transportLookupFailed === true,
+)
+// Airports run as their own Overpass batch on the backend (150 km radius
+// is too heavy to fold into the same query as 4 km station/bus searches).
+// A failed airports lookup must NOT mark trains and buses as unavailable.
+const airportsLookupFailed = computed<boolean>(
+  () => (enrichment.value as any)?.nearby?.airportsLookupFailed === true,
+)
+
+// ─── New CTAs wired from the prototype passport card + secondary row ───────
+// Override the earlier stubs so the buttons + tiles open the right sheet.
+function onWatchClickSheet() {
+  openSheet('watch')
+}
+function onContactClickSheet() {
+  openSheet('owner')
+}
+function onAccessPassportSheet() {
+  // Owner with claimed passport → route to the live passport view.
+  const s = passportStatus.value
+  if (s?.hasPassport && s?.passportId) {
+    router.push(`/passportview/${s.passportId}`)
+    return
+  }
+  // Otherwise show the £99 unlock sheet (matches prototype's sheetPassport).
+  openSheet('passport')
+}
+function onClaimExplain() {
+  // Tap the "?" button on a passport card → state-matching explainer.
+  if (pageState.value === 'published') openSheet('explain-published')
+  else if (pageState.value === 'progress') openSheet('explain-progress')
+  else openSheet('explain-unclaimed')
+}
+
+// Sheet shell helpers
+const TALL_SHEETS = new Set<SheetKey>([
+  'history',
+  'street',
+  'schools',
+  'transport',
+  'map',
+  'flood',
+  'planning',
+  'llc',
+  'stamp-duty',
+  'passport',
+  'explain-unclaimed',
+  'explain-progress',
+  'explain-published',
+])
+const isTallSheet = computed(() =>
+  activeSheet.value ? TALL_SHEETS.has(activeSheet.value) : false,
+)
+
+function formatSoldDate(d: string): string {
+  if (!d) return ''
+  const date = new Date(d)
+  if (isNaN(date.getTime())) return d
+  return date.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })
+}
+
+function ordinalSuffix(n: number): string {
+  const lastTwo = n % 100
+  if (lastTwo >= 11 && lastTwo <= 13) return 'th'
+  switch (n % 10) {
+    case 1:
+      return 'st'
+    case 2:
+      return 'nd'
+    case 3:
+      return 'rd'
+    default:
+      return 'th'
+  }
+}
+
+// Buyer-unlock (£99) — opens the Stripe payment drawer. The drawer handles
+// the create-intent → confirm-card → unlock-passport sequence and emits
+// `@claimed` with the passport id on success.
+const showUnlockDrawer = ref(false)
+function onPassportUnlock() {
+  if (!passportStatus.value?.passportId) {
+    showToast({
+      message: 'No published Passport to unlock for this property yet.',
+      iconEmoji: 'ℹ️',
+    })
+    return
+  }
+  closeSheet()
+  showUnlockDrawer.value = true
+}
+function onPassportUnlocked(passportId: string) {
+  showUnlockDrawer.value = false
+  router.push(`/buyer-passport/${passportId}`)
+}
+
+// ─── Make Contact form state ───────────────────────────────────────────────
+type ContactRole = 'Potential buyer' | 'Neighbour' | 'Agent'
+type ContactReplyPref = 'Email' | 'Phone' | 'Either'
+const contactRole = ref<ContactRole>('Potential buyer')
+const contactName = ref('')
+const contactMessage = ref('')
+const contactReplyPref = ref<ContactReplyPref>('Email')
+const contactSubmitting = ref(false)
+const contactError = ref('')
+
+// Message placeholder swaps based on the picked role so the textarea gives a
+// natural starting point ("Hi — I've been following this road…" for buyers,
+// "Hi — your hedge is hanging over my driveway…" for neighbours, etc.).
+const contactPlaceholder = computed(() => {
+  switch (contactRole.value) {
+    case 'Neighbour':
+      return "Hi — I'm at number 23. Just wanted to introduce myself / mention the front hedge / ask if you'd consider repainting the shared fence."
+    case 'Agent':
+      return "Hi — I represent buyers looking on this road. I'd be happy to have a no-pressure conversation about a future sale."
+    case 'Potential buyer':
+    default:
+      return "Hi — I've been following this road for a while and would love to know if you'd ever consider selling. No pressure at all."
+  }
+})
+
+// Reset the form whenever the sheet is closed so we don't re-show stale state.
+watch(activeSheet, (s) => {
+  if (s !== 'owner') {
+    contactError.value = ''
+    contactSubmitting.value = false
+  }
+})
+
+// ─── Watch / Register Interest form ────────────────────────────────────────
+const watchName = ref('')
+const watchEmail = ref('')
+const watchReason = ref<'Potential buyer' | 'I love the road' | 'Investor'>(
+  'Potential buyer',
+)
+const watchTrigger = ref<'Listed for sale' | 'Passport live' | 'Any update'>(
+  'Listed for sale',
+)
+const watchSubmitting = ref(false)
+const watchError = ref('')
+
+watch(activeSheet, (s) => {
+  if (s !== 'watch') {
+    watchError.value = ''
+    watchSubmitting.value = false
+  }
+})
+
+async function submitWatch() {
+  watchError.value = ''
+  if (!watchEmail.value.trim() || !/.+@.+\..+/.test(watchEmail.value)) {
+    watchError.value = 'Add a valid email so we can alert you.'
+    return
+  }
+  watchSubmitting.value = true
+  try {
+    const token =
+      typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null
+    // POST to the existing /register-interest endpoint (used by the legacy
+    // RegisterInterestContent). Guests can submit too — the endpoint accepts
+    // an unauthenticated body with name + email.
+    const res = await fetch(
+      `${config.public.apiBase}/property/${propertyId}/register-interest`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          interestLevel: watchReason.value,
+          name: watchName.value.trim() || undefined,
+          userEmail: watchEmail.value.trim(),
+          // The trigger preference flows through as part of the notes field
+          // until the schema explicitly captures it.
+          notes: `Alert me when: ${watchTrigger.value}`,
+        }),
+      },
+    )
+    if (!res.ok) {
+      watchError.value = "Couldn't save right now — please try again."
+      return
+    }
+    closeSheet()
+    showToast({ message: "Saved — we'll keep you posted", iconEmoji: '🔔' })
+    watchName.value = ''
+    watchEmail.value = ''
+  } catch {
+    watchError.value = 'Network error — please try again.'
+  } finally {
+    watchSubmitting.value = false
+  }
+}
+
+async function submitOwnerContact() {
+  contactError.value = ''
+  if (!contactMessage.value.trim()) {
+    contactError.value = 'Add a short message before sending.'
+    return
+  }
+  const token =
+    typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null
+  // The /tap-owner endpoint requires JWT — auth-gate guests with a
+  // redirect back to this page so they can resume the conversation.
+  if (!token) {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(
+        'redirectAfterLogin',
+        `/property/${propertyId}?openSheet=owner`,
+      )
+    }
+    closeSheet()
+    router.push('/onboarding/signin')
+    return
+  }
+  contactSubmitting.value = true
+  try {
+    const fullMessage = [
+      `Role: ${contactRole.value}`,
+      contactName.value.trim() ? `From: ${contactName.value.trim()}` : null,
+      `Reply preference: ${contactReplyPref.value}`,
+      '',
+      contactMessage.value.trim(),
+    ]
+      .filter((l) => l !== null)
+      .join('\n')
+    const res = await fetch(
+      `${config.public.apiBase}/property/${propertyId}/tap-owner`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          message: fullMessage,
+          sharePhone: contactReplyPref.value !== 'Email',
+        }),
+      },
+    )
+    if (!res.ok) {
+      const data = await res.json().catch(() => null)
+      contactError.value =
+        data?.message ||
+        "Couldn't send the message. Please try again in a moment."
+      return
+    }
+    closeSheet()
+    contactMessage.value = ''
+    showToast({ message: 'Message sent to the owner', iconEmoji: '✉️' })
+  } catch {
+    contactError.value = 'Network error — please try again.'
+  } finally {
+    contactSubmitting.value = false
+  }
+}
+
+// ─── Sheet content sourced from the enrichment endpoint ───────────────────
+// `enrichment.value` is hydrated on mount from `/property/:id/enrichment`,
+// which already aggregates OS NGD schools, Overpass trains/buses/parks/
+// airports, Ofcom broadband + mobile signal, EA flood zones, etc.
+
+const enrichmentSchools = computed<any[]>(
+  () => enrichment.value?.nearby?.schools ?? [],
+)
+const enrichmentTrains = computed<any[]>(
+  () => enrichment.value?.nearby?.trains ?? [],
+)
+const enrichmentBuses = computed<any[]>(
+  () => enrichment.value?.nearby?.busStops ?? [],
+)
+const enrichmentAirports = computed<any[]>(
+  () => enrichment.value?.nearby?.airports ?? [],
+)
+const enrichmentParks = computed<any[]>(
+  () => enrichment.value?.nearby?.parks ?? [],
+)
+const enrichmentAmenities = computed<any[]>(
+  () => enrichment.value?.nearby?.amenities ?? [],
+)
+// Amenity rows are keyed off the category the enrichment API sends. The API
+// also ships an emoji per row; we draw our own glyph instead so the list
+// matches the rest of the page and doesn't depend on platform emoji fonts.
+// Anything we don't recognise falls back to a map pin rather than being
+// dropped or guessed at.
+function amenityIcon(category: string): string {
+  const c = (category ?? '').toLowerCase()
+  if (/superm|grocer|shop|retail|conven/.test(c))
+    return '<path d="M4 8h16l-1.2 11.2a2 2 0 0 1-2 1.8H7.2a2 2 0 0 1-2-1.8L4 8ZM8.5 8V6a3.5 3.5 0 0 1 7 0v2"/>'
+  if (/pharm|health|doctor|gp|hospital|clinic|dentist/.test(c))
+    return '<path d="M12 7v10M7 12h10"/><rect x="3" y="3" width="18" height="18" rx="4"/>'
+  if (/pub|bar|restaur|cafe|coffee|food|takeaway/.test(c))
+    return '<path d="M6 3h9l-.8 6.2A4.2 4.2 0 0 1 6 9.2V3ZM15 4h1.8a2.7 2.7 0 0 1 0 5.4H15M10.5 13.4V21M7 21h7"/>'
+  if (/gym|leisure|sport|fitness|pool/.test(c))
+    return '<path d="M4 9v6M20 9v6M7 6v12M17 6v12M7 12h10"/>'
+  if (/school|nursery|college|educat/.test(c))
+    return '<path d="m12 3 10 5-10 5L2 8l10-5Z"/><path d="M6 10.5V16c0 1.7 2.7 3 6 3s6-1.3 6-3v-5.5"/>'
+  if (/park|green|garden|recreation/.test(c))
+    return '<path d="M12 3 6.5 11h3L5 17h14l-4.5-6h3L12 3ZM12 17v4"/>'
+  if (/bank|atm|post|financ/.test(c))
+    return '<path d="M3 21h18M4 10h16M5 10V8l7-4 7 4v2M6 10v11M10 10v11M14 10v11M18 10v11"/>'
+  if (/petrol|fuel|charg|garage/.test(c))
+    return '<path d="M4 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16M3 21h13M7 8h4M16 8l3 2.5V17a2 2 0 0 1-4 0v-3"/>'
+  return '<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>'
+}
+
+// Group amenities by category, then pick the nearest 1-2 of each for the list
+const amenitiesByCategory = computed<Record<string, any[]>>(() => {
+  const groups: Record<string, any[]> = {}
+  for (const a of enrichmentAmenities.value) {
+    const key = a.category || 'Other'
+    if (!groups[key]) groups[key] = []
+    groups[key].push(a)
+  }
+  return groups
+})
+const enrichmentBroadband = computed<any | null>(
+  () => enrichment.value?.broadband ?? null,
+)
+const enrichmentMobile = computed<any | null>(
+  () => enrichment.value?.mobileSignal ?? null,
+)
+
+// Human-readable placeholder copy keyed off the failure reason the backend
+// returns. Falls back to the generic "data unavailable" line when the shape
+// is older / unknown.
+const broadbandPlaceholder = computed<{ title: string; sub: string }>(() => {
+  const bb = enrichmentBroadband.value
+  const reason = bb && bb.available === false ? bb.reason : null
+  switch (reason) {
+    case 'no_key':
+      return {
+        title: 'Broadband lookup not configured',
+        sub: 'The Ofcom API key is missing on this server. Register at developer.ofcom.org.uk and add OFCOM_API_KEY to .env.',
+      }
+    case 'unauthorized':
+      return {
+        title: 'Ofcom rejected the API key',
+        sub: 'The configured OFCOM_API_KEY is invalid, expired, or its subscription tier doesn’t include broadband. Regenerate it from your Ofcom developer portal.',
+      }
+    case 'rate_limited':
+      return {
+        title: 'Ofcom rate limit reached',
+        sub: 'Too many requests for this key today. Wait or upgrade your Ofcom subscription tier.',
+      }
+    case 'not_found':
+    case 'no_premises':
+      return {
+        title: 'No coverage on file for this postcode',
+        sub: 'Ofcom’s database has no entries for this postcode. Newer builds may not be mapped yet.',
+      }
+    case 'timeout':
+      return {
+        title: 'Ofcom request timed out',
+        sub: 'The Ofcom API didn’t respond in time. Try again — if this persists, Ofcom may be having an outage.',
+      }
+    case 'network':
+      return {
+        title: 'Couldn’t reach Ofcom',
+        sub: 'Network error talking to Ofcom’s API. Check the server’s outbound connectivity.',
+      }
+    default:
+      return {
+        title: 'Broadband data unavailable',
+        sub: 'We couldn’t retrieve coverage for this postcode. Check directly on Ofcom’s site below.',
+      }
+  }
+})
+
+function formatMbps(v: any): string {
+  const n = Number(v) || 0
+  if (n >= 1000) return `${(n / 1000).toFixed(1)} Gbps`
+  return `${Math.round(n)} Mbps`
+}
+
+// Ofcom mobile-signal data is keyed per-network — flatten into a render-ready
+// list with a Good/Limited/Poor verdict per operator. Renamed to avoid
+// collision with the static `mobileOperators` list from the legacy script.
+const mobileOperatorRows = computed(() => {
+  const m = enrichmentMobile.value
+  if (!m) return []
+  const ops: Array<{ label: string; summary: string; colour: string }> = []
+  const verdict = (op: any): { text: string; cls: string } => {
+    if (!op) return { text: 'No data', cls: '' }
+    const has5g = (op.data5g ?? '').toLowerCase().includes('high')
+    const data4gStr = String(op.data4g ?? '').toLowerCase()
+    const has4g = data4gStr.includes('high') || data4gStr.includes('strong')
+    const noService =
+      data4gStr.includes('none') || data4gStr.includes('no signal')
+    if (has5g) return { text: 'Strong · 5G', cls: 'pps-ds-v--green' }
+    if (has4g) return { text: 'Strong · 4G', cls: 'pps-ds-v--green' }
+    if (noService) return { text: 'No service', cls: 'pps-ds-v--red' }
+    return { text: 'Limited', cls: 'pps-ds-v--amber' }
+  }
+  for (const [label, op] of [
+    ['EE', m.EE],
+    ['O2', m.O2],
+    ['Three', m.Three],
+    ['Vodafone', m.Vodafone],
+  ] as const) {
+    const v = verdict(op)
+    ops.push({ label, summary: v.text, colour: v.cls })
+  }
+  return ops
+})
+
+// ── Leaflet map ────────────────────────────────────────────────────────────────
+const mapEl = ref<HTMLElement | null>(null)
+let mapInstance: any = null
+let mapInitialised = false
+
+const loadLeaflet = (): Promise<any> =>
+  new Promise((resolve) => {
+    if ((window as any).L) return resolve((window as any).L)
+    if (!document.querySelector('link[href*="leaflet"]')) {
+      const link = document.createElement('link')
+      link.rel = 'stylesheet'
+      link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
+      document.head.appendChild(link)
+    }
+    const script = document.createElement('script')
+    script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
+    script.onload = () => resolve((window as any).L)
+    document.head.appendChild(script)
+  })
+
+async function initMap() {
+  if (!mapEl.value || !property.value) return
+  const lat = property.value.latitude
+  const lng = property.value.longitude
+  if (!lat || !lng) return
+
+  const L = await loadLeaflet()
+  if (mapInstance) {
+    mapInstance.remove()
+    mapInstance = null
+  }
+
+  const map = L.map(mapEl.value, { zoomControl: false }).setView([lat, lng], 15)
+  L.control.zoom({ position: 'bottomright' }).addTo(map)
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution:
+      '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    maxZoom: 19,
+  }).addTo(map)
+  mapInstance = map
+
+  const markerIcon = L.divIcon({
+    className: '',
+    html: `<div style="width:42px;height:42px;border-radius:50%;background:#00a19a;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,161,154,0.6);border:3px solid white;">
+      <svg viewBox="0 0 24 24" fill="none" width="20" height="20">
+        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" stroke="white" stroke-width="2" fill="rgba(255,255,255,0.25)"/>
+        <path d="M9 22V12h6v10" stroke="white" stroke-width="2"/>
+      </svg>
+    </div>`,
+    iconSize: [42, 42],
+    iconAnchor: [21, 21],
+  })
+  L.marker([lat, lng], { icon: markerIcon }).addTo(map)
+
+  // Map-pin glyphs. `path` is an SVG path body drawn in white on the pin's
+  // colour disc — emoji rendered at three different sizes across platforms
+  // and clipped inside the 30px circle on Windows.
+  const POI_GLYPH: Record<string, string> = {
+    school:
+      '<path d="m12 3 10 5-10 5L2 8l10-5Z"/><path d="M6 10.5V16c0 1.7 2.7 3 6 3s6-1.3 6-3v-5.5"/>',
+    train:
+      '<rect x="4" y="3" width="16" height="13" rx="3"/><path d="M4 11h16M8 20l-2 2M16 20l2 2M7 19h10"/>',
+    bus: '<rect x="3" y="4" width="18" height="13" rx="3"/><path d="M3 11h18M7 17v2M17 17v2"/>',
+    park: '<path d="M12 3 6.5 11h3L5 17h14l-4.5-6h3L12 3ZM12 17v4"/>',
+    airport:
+      '<path d="M17.8 19.8 16 14l4-4a2.1 2.1 0 1 0-3-3l-4 4-5.8-1.8a1 1 0 0 0-1 1.7l4.6 3-2.3 2.3-2.2-.6a1 1 0 0 0-1 1.6l2.1 2.1a1 1 0 0 0 1.6-.2l.6-2.2 2.3-2.3 3 4.6a1 1 0 0 0 1.7-1Z"/>',
+  }
+  function makeDivIcon(color: string, glyph: string) {
+    const path = POI_GLYPH[glyph] ?? POI_GLYPH.park
+    return L.divIcon({
+      className: '',
+      html: `<div style="width:30px;height:30px;border-radius:50%;background:${color};display:flex;align-items:center;justify-content:center;border:2px solid white;box-shadow:0 1px 5px rgba(0,0,0,0.3);"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${path}</svg></div>`,
+      iconSize: [30, 30],
+      iconAnchor: [15, 15],
+    })
+  }
+
+  const addTitleBoundary = () => {
+    const boundary = enrichment.value?.titleBoundary
+    if (!boundary?.geometry) return
+    try {
+      L.geoJSON(boundary.geoJson, {
+        style: {
+          color: '#00a19a',
+          weight: 2,
+          dashArray: '6 4',
+          fillColor: '#00a19a',
+          fillOpacity: 0.12,
+        },
+      }).addTo(map)
+    } catch {
+      /* non-critical */
+    }
+  }
+
+  const addPois = () => {
+    const n = enrichment.value?.nearby ?? {}
+    for (const s of n.schools ?? []) {
+      if (s.lat && s.lon)
+        L.marker([s.lat, s.lon], { icon: makeDivIcon('#3b82f6', 'school') })
+          .bindPopup(s.name)
+          .addTo(map)
+    }
+    for (const t of n.trains ?? []) {
+      if (t.lat && t.lon)
+        L.marker([t.lat, t.lon], { icon: makeDivIcon('#8b5cf6', 'train') })
+          .bindPopup(t.name)
+          .addTo(map)
+    }
+    for (const b of n.busStops ?? []) {
+      if (b.lat && b.lon)
+        L.marker([b.lat, b.lon], { icon: makeDivIcon('#f59e0b', 'bus') })
+          .bindPopup(b.name)
+          .addTo(map)
+    }
+    for (const p of n.parks ?? []) {
+      if (p.lat && p.lon)
+        L.marker([p.lat, p.lon], { icon: makeDivIcon('#00a19a', 'park') })
+          .bindPopup(p.name)
+          .addTo(map)
+    }
+    for (const a of n.airports ?? []) {
+      if (a.lat && a.lon)
+        L.marker([a.lat, a.lon], { icon: makeDivIcon('#ec4899', 'airport') })
+          .bindPopup(a.name)
+          .addTo(map)
+    }
+  }
+
+  const applyEnrichment = () => {
+    addPois()
+    addTitleBoundary()
+  }
+
+  if (enrichment.value?.nearby || enrichment.value?.titleBoundary) {
+    applyEnrichment()
+  } else {
+    const stop = watch(enrichment, (v) => {
+      if (v) {
+        applyEnrichment()
+        stop()
+      }
+    })
+  }
+}
+
+function switchLocTab(tab: LocTab) {
+  activeLocTab.value = tab
+  if (tab === 'map') {
+    nextTick(() => {
+      if (!mapInitialised) {
+        mapInitialised = true
+        initMap()
+      } else if (mapInstance) mapInstance.invalidateSize()
+    })
+  } else if (tab === 'flood') {
+    nextTick(() => {
+      if (!floodMapInitialised && enrichment.value) {
+        floodMapInitialised = true
+        initFloodMap()
+      } else if (floodMapInstance) {
+        try {
+          floodMapInstance.resize()
+        } catch {
+          /* noop */
+        }
+      }
+    })
+  }
+}
+
+// Separate computeds for the new individual transit tabs
+const nearbyTrains = computed(() => enrichment.value?.nearby?.trains ?? [])
+const nearbyBuses = computed(() => enrichment.value?.nearby?.busStops ?? [])
+const nearbyAirports = computed(() => enrichment.value?.nearby?.airports ?? [])
+
+// ── Flood map ──────────────────────────────────────────────────────────────────
+const floodMapEl = ref<HTMLElement | null>(null)
+let floodMapInstance: any = null
+let floodMapInitialised = false
+
+async function initFloodMap() {
+  if (!enrichment.value) {
+    const stop = watch(enrichment, async (v) => {
+      if (v) {
+        stop()
+        await nextTick()
+        initFloodMap()
+      }
+    })
+    return
+  }
+
+  if (!floodMapEl.value || !property.value) return
+  const lat = property.value.latitude
+  const lng = property.value.longitude
+  if (!lat || !lng) return
+
+  const token = config.public.mapboxToken as string
+  const osKey = config.public.osApiKey as string
+
+  let mapboxgl: any
+  try {
+    mapboxgl = (await import('mapbox-gl')).default
+  } catch {
+    return
+  }
+
+  if (!document.querySelector('link[href*="mapbox-gl"]')) {
+    const link = document.createElement('link')
+    link.rel = 'stylesheet'
+    link.href = 'https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css'
+    document.head.appendChild(link)
+  }
+
+  mapboxgl.accessToken = token || ''
+
+  const mapStyle: any = osKey
+    ? {
+        version: 8,
+        sources: {
+          'os-raster': {
+            type: 'raster',
+            tiles: [
+              `https://api.os.uk/maps/raster/v1/zxy/Light_3857/{z}/{x}/{y}.png?key=${osKey}`,
+            ],
+            tileSize: 256,
+            attribution:
+              '© Crown copyright and database rights 2024 Ordnance Survey',
+          },
+        },
+        layers: [
+          {
+            id: 'os-raster',
+            type: 'raster',
+            source: 'os-raster',
+            minzoom: 0,
+            maxzoom: 20,
+          },
+        ],
+      }
+    : 'mapbox://styles/mapbox/streets-v12'
+
+  const fmap = new mapboxgl.Map({
+    container: floodMapEl.value,
+    style: mapStyle,
+    center: [lng, lat],
+    zoom: 12,
+    interactive: true,
+    attributionControl: false,
+  })
+  floodMapInstance = fmap
+
+  const pin = document.createElement('div')
+  pin.style.cssText =
+    'width:14px;height:14px;border-radius:50%;background:#00a19a;border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.4);'
+  new mapboxgl.Marker({ element: pin }).setLngLat([lng, lat]).addTo(fmap)
+
+  const zoneColour = (zone: any) => {
+    const sev = (zone.severity ?? '').toLowerCase()
+    if (sev.includes('severe') || sev.includes('warning')) return '#dc2626'
+    if (sev.includes('alert') || sev.includes('high')) return '#ea580c'
+    if (sev.includes('medium')) return '#f59e0b'
+    return '#3b82f6'
+  }
+
+  fmap.on('load', () => {
+    const currentZones = enrichment.value?.floodZones ?? []
+    currentZones.forEach((zone: any, idx: number) => {
+      if (!zone.polygon) return
+      const sourceId = `flood-zone-${idx}`
+      const colour = zoneColour(zone)
+      try {
+        fmap.addSource(sourceId, { type: 'geojson', data: zone.polygon })
+        fmap.addLayer({
+          id: `${sourceId}-fill`,
+          type: 'fill',
+          source: sourceId,
+          paint: { 'fill-color': colour, 'fill-opacity': 0.25 },
+        })
+        fmap.addLayer({
+          id: `${sourceId}-line`,
+          type: 'line',
+          source: sourceId,
+          paint: { 'line-color': colour, 'line-width': 1.5 },
+        })
+      } catch {
+        /* non-critical */
+      }
+    })
+
+    if (!currentZones.some((z: any) => z.polygon)) {
+      fmap.addSource('flood-radius', {
+        type: 'geojson',
+        data: {
+          type: 'Feature',
+          geometry: { type: 'Point', coordinates: [lng, lat] },
+          properties: {},
+        },
+      })
+      fmap.addLayer({
+        id: 'flood-radius-circle',
+        type: 'circle',
+        source: 'flood-radius',
+        paint: {
+          'circle-radius': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            10,
+            40,
+            14,
+            200,
+          ],
+          'circle-color': '#3b82f6',
+          'circle-opacity': 0.15,
+          'circle-stroke-width': 1.5,
+          'circle-stroke-color': '#3b82f6',
+          'circle-stroke-opacity': 0.4,
+        },
+      })
+    }
+  })
+}
+
+// Initialise flood map when enrichment arrives
+watch(enrichment, (v) => {
+  if (v && !floodMapInitialised) {
+    floodMapInitialised = true
+    nextTick(() => initFloodMap())
+  }
+})
+
+onBeforeUnmount(() => {
+  if (mapInstance) {
+    mapInstance.remove()
+    mapInstance = null
+  }
+  if (floodMapInstance) {
+    floodMapInstance.remove()
+    floodMapInstance = null
+  }
+})
+
+// ── Data loading ───────────────────────────────────────────────────────────────
+onMounted(async () => {
+  const apiBase = config.public.apiBase as string
+  // Honour ?openSheet=<key> so a user returning from sign-in/sign-up after
+  // tapping "Make contact" / "Watch this" lands back on that same sheet.
+  const requestedSheet = (route.query?.openSheet as string | undefined)?.trim()
+  const allowedAutoOpen: SheetKey[] = ['owner', 'watch', 'passport']
+  if (
+    requestedSheet &&
+    (allowedAutoOpen as string[]).includes(requestedSheet)
+  ) {
+    activeSheet.value = requestedSheet as SheetKey
+    // Strip the query so back-nav / refresh doesn't keep reopening it.
+    router.replace({ path: route.path }).catch(() => {})
+  }
+  // Only the property record gates first paint. Previously all three calls
+  // sat in one Promise.all, so the page held its loading state until the
+  // slowest finished — passport status and saved/wishlist state are both
+  // secondary UI whose consumers already optional-chain through null, so
+  // making the page wait on them just delayed everything for no benefit.
+  const secondary = Promise.allSettled([
+    getPassportStatus(propertyId),
+    fetchActions(propertyId),
+  ]).then(([statusResult]) => {
+    if (statusResult.status === 'fulfilled') passportStatus.value = statusResult.value
+    else passportStatusUnknown.value = true
+  })
+
+  try {
+    const propData = await getPropertyDetails(propertyId)
+    if (!propData) {
+      loadError.value = 'Property not found.'
+    } else {
+      property.value = propData
+      // Guest-safe localStorage history that feeds Explore's "Recently
+      // explored" list. Fires for signed-out visitors too - that page has no
+      // auth middleware, so the backend's own recently-viewed feed (which is
+      // JWT-gated) can never cover it.
+      recordExplored({
+        id: propertyId,
+        addressLine1: propData.addressLine1 ?? '',
+        postcode: propData.postcode ?? null,
+        city: propData.city ?? null,
+        estimatedPrice: propData.estimatedPrice ?? null,
+        lastSoldPrice: propData.lastSoldPrice ?? null,
+        lastSoldDate: propData.lastSoldDate ?? null,
+        image: propData.images?.[0] ?? propData.imageUrl ?? null,
+      })
+    }
+  } catch (err) {
+    loadError.value = 'Failed to load property details.'
+    console.error(err)
+  } finally {
+    pageLoading.value = false
+    await nextTick()
+    if (!mapInitialised) {
+      mapInitialised = true
+      initMap()
+    }
+  }
+
+  // Everything below reads passport status, so join it here — after the
+  // page has already painted.
+  await secondary
+
+  // Enrichment (non-blocking)
+  try {
+    const token = localStorage.getItem('token')
+    const res = await fetch(`${apiBase}/property/${propertyId}/enrichment`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+    if (res.ok) enrichment.value = await res.json()
+  } catch {
+    /* non-critical */
+  }
+
+  // HomeScore
+  try {
+    const pubRes = await fetch(
+      `${apiBase}/property/${propertyId}/homescore/public`,
+    )
+    if (pubRes.ok) {
+      const hs = await pubRes.json()
+      if (hs?.total) {
+        homeScore.value = hs
+        homeScoreIsAuto.value = false
+      }
+    }
+
+    const token = localStorage.getItem('token')
+    if (token && !homeScore.value) {
+      const hsRes = await fetch(`${apiBase}/property/${propertyId}/homescore`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (hsRes.ok) {
+        const hs = await hsRes.json()
+        if (hs?.total) {
+          homeScore.value = hs
+          homeScoreIsAuto.value = false
+        }
+      }
+    }
+
+    if (!homeScore.value) {
+      const saved = localStorage.getItem(`homescore_answers_${propertyId}`)
+      if (saved) {
+        const { answers } = JSON.parse(saved)
+        if (answers && Object.keys(answers).length > 0) {
+          const { calculateScore } = await import('~/utils/homescoreScoring')
+          const base = calculateScore(answers)
+          homeScore.value = {
+            ...base.breakdown,
+            total: base.total,
+            rating: base.rating,
+          }
+          homeScoreIsAuto.value = Object.keys(answers).length < 11
+        }
+      }
+    }
+  } catch {
+    /* non-critical */
+  }
+
+  // EPC auto-score fallback
+  if (!homeScore.value) {
+    try {
+      const { getPrefillFromProperty, calculateScore } =
+        await import('~/utils/homescoreScoring')
+      const epcPrefill = property.value
+        ? getPrefillFromProperty(property.value)
+        : {}
+      const base = calculateScore(epcPrefill)
+      homeScore.value = {
+        ...base.breakdown,
+        total: base.total,
+        rating: base.rating,
+      }
+      homeScoreIsAuto.value = true
+    } catch {
+      /* non-critical */
+    }
+  }
+})
+
+// ── Actions ────────────────────────────────────────────────────────────────────
+function handlePassportAction() {
+  // Delegate to the single ownership-aware router so every Passport CTA on
+  // this page behaves identically.
+  routeForPassportState()
+}
+
+// Inline claim CTA on the property page routes into the global /claim/[id]
+// flow (KYC → Land Registry → passport issued).
+function onClaimCtaClick() {
+  goToClaim()
+}
+
+// router.back() dead-ends for anyone with no history to pop - a guest opening
+// a shared link, or a new tab - and this page is public, so that is a common
+// arrival. Route explicitly instead.
+// Three buttons on this page used to share one goBack() that sent signed-in
+// users to /dashboard?focusSearch=1 — including one labelled "All passports"
+// and one labelled "Back to Explore", neither of which is the dashboard.
+// Each now goes where its label says.
+
+// "Back to Explore" in the Keep going card. Always /explore: the label names
+// the destination, and /explore is public (no auth middleware, no redirect),
+// so this works signed in or out.
+function goToExplore() {
+  navigateTo('/explore')
+}
+
+// "All passports" in the top nav.
+function goToAllPassports() {
+  navigateTo('/passport/collections')
+}
+
+// The error state's "Go Back". No specific destination is implied, so use real
+// history when there is any, and fall back to the caller's home screen.
+function goBack() {
+  if (typeof window !== 'undefined' && window.history.length > 1) {
+    router.back()
+    return
+  }
+  const isAuthed =
+    typeof localStorage !== 'undefined' && !!localStorage.getItem('token')
+  navigateTo(isAuthed ? '/dashboard' : '/explore')
+}
+
+// The EPC certificate lives on gov.uk, keyed by its LMK. Prefer the key we
+// already persist; fall back to the backend UPRN lookup for older cache rows
+// that predate that column.
+// Real watcher count from the backend (PropertyWatch rows). Renders nothing
+// at zero rather than showing "0 people watching", which would read as a
+// negative signal on a property nobody has looked at yet.
+const watcherCountLabel = computed<string>(() => {
+  const n = Number((property.value as any)?.watcherCount ?? 0)
+  if (!Number.isFinite(n) || n <= 0) return ''
+  return `${n} ${n === 1 ? 'person' : 'people'} watching`
+})
+
+// ─── Passport status card ─────────────────────────────────────────────────
+// Ported from the reference app's floating claim box: the public-facing
+// answer to "is there a Passport for this home, and can I see it?".
+// Hidden entirely when the status fetch failed - see passportStatusUnknown.
+// `isClaimed` alone isn't enough: the backend sets it true the moment
+// ownership verification succeeds, even if the owner never went on to create
+// a passport. There'd then be nothing to be Private/Partial/Public about, so
+// that still has to read as Unclaimed - hence keying off hasPassport.
+const claimCardState = computed<
+  'unclaimed' | 'private' | 'partiallyPublic' | 'public'
+>(() => {
+  const s = passportStatus.value
+  // `??` is wrong here, and it made this card contradict the hero's state
+  // pill: getPassportStatus() swallows the guest 401 and RESOLVES with
+  // { hasPassport: false }, so `s.hasPassport` is a real `false` rather than
+  // undefined and the chain never reached the /property payload - the only
+  // source a signed-out viewer actually has. Take a truthy signal from
+  // either source, exactly as pageState above already does.
+  const claimed =
+    s?.hasPassport === true || (property.value as any)?.hasPassport === true
+  if (!claimed) return 'unclaimed'
+  const isPublished =
+    s?.isPublished === true ||
+    (property.value as any)?.passportPublished === true ||
+    pageState.value === 'published'
+  if (!isPublished) return 'private'
+  return (s?.milestonePct ?? 0) >= 100 ? 'public' : 'partiallyPublic'
+})
+const claimCardTitle = computed<string>(() => {
+  if (claimCardState.value === 'public')
+    return 'Property Passport claimed · Public'
+  if (claimCardState.value === 'partiallyPublic')
+    return 'Property Passport claimed · Partially Public'
+  if (claimCardState.value === 'private')
+    return 'Property Passport claimed · Private'
+  return ((property.value as any)?.streetClaimedCount ?? 0) > 0
+    ? 'Be one of the first on this street'
+    : 'Be the first on this street'
+})
+const claimCardSub = computed<string>(() => {
+  if (claimCardState.value === 'public')
+    return 'Verified information about this home is ready to explore.'
+  if (claimCardState.value === 'partiallyPublic')
+    return 'Some verified information about this home is available to view.'
+  if (claimCardState.value === 'private')
+    return "There isn't a published Property Passport available for this home right now."
+  return "Create your Property Passport to store and verify your home's information — and choose what you share."
+})
+// Highlighted second line. Unclaimed has none in the reference.
+const claimCardSub2 = computed<string>(() => {
+  if (claimCardState.value === 'public')
+    return 'See more before you view, offer or commit.'
+  if (claimCardState.value === 'partiallyPublic')
+    return 'More may be added as the owner continues building it.'
+  if (claimCardState.value === 'private') return 'Want to know if that changes?'
+  return ''
+})
+// Bold lead-in that only the published state carries.
+const claimCardEmphasis = computed<string>(() =>
+  claimCardState.value === 'public' ? 'Buying blind stops here.' : '',
+)
+// The state name isn't self-explanatory to a first-time viewer, so every
+// claimed state offers an explainer.
+const claimCardExplainerLabel = computed<string>(() => {
+  if (
+    claimCardState.value === 'partiallyPublic' ||
+    claimCardState.value === 'public'
+  )
+    return "What's inside the Passport?"
+  if (claimCardState.value === 'private') return 'What is claimed · Private?'
+  return ''
+})
+const claimCardCta = computed<string>(() => {
+  if (claimCardState.value === 'public')
+    return isPassportOwnerOrCollab.value
+      ? 'View my Passport'
+      : 'View Property Passport'
+  if (claimCardState.value === 'partiallyPublic')
+    return isPassportOwnerOrCollab.value
+      ? 'Continue building'
+      : 'View Property Passport'
+  // Private: this button only explains the state, it doesn't watch or buy
+  // anything, so it must not promise more than it does.
+  if (claimCardState.value === 'private') return 'Learn More'
+  return 'Claim this property'
+})
+const claimCardIcon = computed<string>(() =>
+  claimCardState.value === 'unclaimed'
+    ? '/op-icons/passport-covers/property_passport_navy_tilted_left_on_tile.png'
+    : '/op-icons/passport-covers/property_passport_teal_tilted_left_on_tile.png',
+)
+// "1 of 21 homes on Dulverton Avenue claimed" - only meaningful once at
+// least one other property on the street has been matched (streetTotalCount
+// counts this property too).
+const streetClaimLabel = computed<string | null>(() => {
+  if (claimCardState.value !== 'unclaimed') return null
+  const total = Number((property.value as any)?.streetTotalCount ?? 0)
+  if (!Number.isFinite(total) || total <= 1) return null
+  const claimed = Number((property.value as any)?.streetClaimedCount ?? 0)
+  const street = (property.value as any)?.streetName || 'your street'
+  return `${claimed} of ${total} homes on ${street} claimed`
+})
+// Reuses this page's existing explainer sheets rather than introducing a
+// second drawer system. A claimed-but-unpublished passport is the
+// in-progress explainer.
+function claimExplainerSheetKey(): SheetKey {
+  if (
+    claimCardState.value === 'public' ||
+    claimCardState.value === 'partiallyPublic'
+  )
+    return 'explain-published'
+  if (claimCardState.value === 'private') return 'explain-progress'
+  return 'explain-unclaimed'
+}
+function onClaimCardExplainerClick() {
+  openSheet(claimExplainerSheetKey())
+}
+function onClaimCardCtaClick() {
+  // Published states route to the Passport itself; the other two explain
+  // first, which is what their button copy promises.
+  if (
+    claimCardState.value === 'public' ||
+    claimCardState.value === 'partiallyPublic'
+  ) {
+    onAccessPassport()
+    return
+  }
+  if (claimCardState.value === 'unclaimed') {
+    onClaimClick()
+    return
+  }
+  openSheet('explain-progress')
+}
+
+const passportEcosystemOpen = ref(false)
+const epcDownloading = ref(false)
+async function downloadEpc() {
+  if (epcDownloading.value) return
+  epcDownloading.value = true
+  try {
+    const openCert = (lmk: string) => {
+      window.open(
+        `https://find-energy-certificate.service.gov.uk/energy-certificate/${lmk}`,
+        '_blank',
+        'noopener,noreferrer',
+      )
+    }
+    const stored = (property.value as any)?.epcLmkKey
+    if (stored) return openCert(stored)
+    const res = await fetch(
+      `${config.public.apiBase}/property/${propertyId}/epc-download-info`,
+    ).catch(() => null)
+    const info = res && res.ok ? await res.json().catch(() => null) : null
+    if (info?.lmkKey) return openCert(info.lmkKey)
+    showToast({ message: 'No EPC certificate is on file for this property.', duration: 3000 })
+  } catch {
+    showToast({ message: 'Could not open the EPC certificate. Please try again.', duration: 3000 })
+  } finally {
+    epcDownloading.value = false
+  }
+}
+
+function openRegisterInterest() {
+  showUnpublishedModal.value = false
+  showRegisterInterest.value = true
+}
+
+function tapOwner() {
+  showUnpublishedModal.value = false
+  router.push(`/owner/${propertyId}`)
+}
+
+function onInterestRegistered() {
+  showRegisterInterest.value = false
+  showToast({ message: 'Interest registered!', duration: 2000 })
+}
+
+function handleShare() {
+  /* share logic */
+}
+
+async function handleWishlist() {
+  const result = await toggleWishlist(propertyId)
+  let message = ''
+  if (result === 'unauthenticated')
+    message = 'Please log in to wishlist properties'
+  else if (result === 'error')
+    message = 'Something went wrong, please try again'
+  else
+    message = result.wishlisted
+      ? 'Added to your wishlist'
+      : 'Removed from wishlist'
+  showToast({ message, icon: propertyImages.value[0], duration: 2000 })
+}
+
+function handleClaimed(passportId: string) {
+  if (buyerModePassportId.value) router.push(`/buyer-passport/${passportId}`)
+  else router.push(`/passportview/${passportId}`)
+}
+
+function formatSaleDate(dateStr: string): string {
+  if (!dateStr) return '—'
+  const d = new Date(dateStr)
+  return d.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })
+}
+</script>
+
+<style scoped>
+.pps-page {
+  /* ── Design tokens ───────────────────────────────────────────
+     One source of truth for the premium look: restrained shadows,
+     a consistent radius/spacing rhythm, and a tight type scale. */
+  --ink: #0e1c34;          /* primary text */
+  --ink-2: #46566f;        /* secondary text */
+  --ink-3: #8093a8;        /* muted text */
+  --brand: #00b6ae;        /* teal */
+  --brand-ink: #00857f;    /* teal on light */
+  --navy: #231d45;
+  --line: #e9eef5;         /* hairline borders */
+  --surface: #ffffff;
+
+  --r-sm: 12px;
+  --r-md: 16px;
+  --r-lg: 20px;
+  --r-xl: 26px;
+
+  --sp-1: 6px;
+  --sp-2: 10px;
+  --sp-3: 14px;
+  --sp-4: 18px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+
+  /* Layered, low-spread shadows — depth without heaviness */
+  --sh-sm: 0 1px 2px rgba(14, 28, 52, 0.04), 0 1px 3px rgba(14, 28, 52, 0.05);
+  --sh-md: 0 1px 2px rgba(14, 28, 52, 0.04), 0 8px 20px rgba(14, 28, 52, 0.06);
+  --sh-lg: 0 2px 4px rgba(14, 28, 52, 0.04), 0 18px 40px rgba(14, 28, 52, 0.09);
+  --sh-brand: 0 10px 26px rgba(0, 182, 174, 0.20);
+
+  min-height: 100dvh;
+  background:
+    radial-gradient(1200px 480px at 78% -8%, rgba(0, 182, 174, 0.08) 0%, rgba(0, 182, 174, 0) 60%),
+    linear-gradient(180deg, #fbfdff 0%, #f4f8fc 100%);
+  width: 100%;
+  margin: 0;
+  color: var(--ink);
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont,
+    'Segoe UI', Inter, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: clip;
+  padding: 0;
+}
+
+/* ─── Web top nav ─────────────────────────────────────────────── */
+.pps-web-nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: saturate(150%) blur(14px);
+  -webkit-backdrop-filter: saturate(150%) blur(14px);
+  border-bottom: 1px solid rgba(28, 43, 65, 0.07);
+}
+.pps-web-nav-inner {
+  width: min(1180px, calc(100% - 48px));
+  margin: 0 auto;
+  min-height: 68px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+.pps-nav-brand {
+  border: 0;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  color: #0f2440;
+  cursor: pointer;
+}
+.pps-nav-logo { width: 28px; height: 28px; object-fit: contain; }
+.pps-nav-beta { font-size: 9.5px; font-weight: 800; letter-spacing: 0.8px; text-transform: uppercase; color: #00857f; background: rgba(0, 161, 154, 0.1); border: 1px solid rgba(0, 161, 154, 0.3); border-radius: 6px; padding: 2px 7px; margin-left: 2px; }
+.pps-nav-links { display: flex; gap: 4px; }
+.pps-nav-links button {
+  border: 0;
+  background: transparent;
+  color: #5b6d89;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  padding: 9px 13px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.pps-nav-links button:hover { background: rgba(20, 53, 98, 0.06); color: #0f2440; }
+.pps-nav-links button.active {
+  background: rgba(0, 182, 174, 0.12);
+  color: #00857f;
+  box-shadow: inset 0 0 0 1px rgba(0, 182, 174, 0.22);
+}
+.pps-nav-actions { display: flex; align-items: center; gap: 12px; }
+.pps-nav-help {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  border: 1px solid #e2eaf2;
+  background: #fff;
+  color: #00857f;
+  font-weight: 800;
+  font-size: 15px;
+  cursor: pointer;
+  transition: box-shadow 0.15s, transform 0.15s;
+}
+.pps-nav-help:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(0, 133, 127, 0.16); }
+.pps-nav-allpass {
+  border: 1px solid #dbe5ef;
+  background: #fff;
+  color: #0f2440;
+  font-weight: 700;
+  font-size: 13.5px;
+  font-family: inherit;
+  padding: 9px 16px;
+  border-radius: 11px;
+  cursor: pointer;
+  transition: box-shadow 0.15s, transform 0.15s, border-color 0.15s;
+}
+.pps-nav-allpass:hover { transform: translateY(-1px); border-color: #c6d6e6; box-shadow: 0 8px 18px rgba(15, 36, 62, 0.1); }
+
+/* ─── Shell + two-column grid ─────────────────────────────────── */
+.pps-shell {
+  /* Same measure as the nav and the footer, so the three line up. */
+  width: min(1180px, calc(100% - 48px));
+  margin: 0 auto;
+  padding-top: 40px;
+  padding-bottom: 8px;
+}
+
+/* ── Footer (app-wide standard) ───────────────────────────────── */
+.pps-footer {
+  margin-top: 48px;
+  background: var(--navy);
+  color: #fff;
+  padding: 56px 0 28px;
+}
+.pps-footer-grid,
+.pps-footer-bottom {
+  width: min(1180px, calc(100% - 48px));
+  margin: 0 auto;
+}
+.pps-footer-grid {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr 1fr 1fr;
+  gap: 28px;
+  padding-bottom: 36px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.pps-footer-brand { display: inline-flex; align-items: center; gap: 9px; margin-bottom: 14px; }
+.pps-footer-logo { height: 26px; width: auto; display: block; object-fit: contain; }
+.pps-footer-brand strong { font-size: 18px; font-weight: 800; color: #fff; }
+.pps-footer-intro p { font-size: 13px; line-height: 1.65; color: rgba(255, 255, 255, 0.6); margin: 0 0 16px; max-width: 34ch; }
+.pps-footer-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.pps-footer-chips span {
+  font-size: 10.5px; font-weight: 700; color: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 7px; padding: 5px 9px;
+}
+.pps-footer-col { display: flex; flex-direction: column; align-items: flex-start; }
+.pps-footer-col h5 {
+  margin: 2px 0 14px;
+  font-size: 12px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+}
+.pps-footer-col button {
+  display: block;
+  border: 0; background: transparent;
+  font-family: inherit; font-size: 13.5px; font-weight: 600;
+  color: rgba(255, 255, 255, 0.78);
+  padding: 0; margin-bottom: 11px; cursor: pointer;
+  text-align: left;
+  transition: color 0.15s;
+}
+.pps-footer-col button:hover { color: var(--brand); }
+.pps-footer-bottom {
+  padding-top: 22px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.45);
+}
+@media (max-width: 980px) {
+  .pps-footer-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 640px) {
+  .pps-footer-grid { grid-template-columns: 1fr; }
+  .pps-footer-grid,
+  .pps-footer-bottom { width: calc(100% - 32px); }
+}
+
+/* Single-column body. Every top-level band sits directly in .pps-shell
+   and the gap between bands is set once, here - desktop pages need more
+   air between sections than the 16px the phone layout used. */
+.pps-shell > .pps-section,
+.pps-shell > .pps-costs-card,
+.pps-shell > .pps-keepgoing {
+  margin-top: 56px;
+}
+@media (max-width: 860px) {
+  .pps-shell > .pps-section,
+  .pps-shell > .pps-costs-card,
+  .pps-shell > .pps-keepgoing {
+    margin-top: 38px;
+  }
+}
+.pps-col-main { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.pps-col-side {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  position: sticky;
+  top: 88px;
+}
+
+/* ─── Ask-a-question sidebar card ─────────────────────────────── */
+.pps-ask-card {
+  position: relative;
+  overflow: hidden;
+  border: none;
+  border-radius: 22px;
+  padding: 34px 26px;
+  text-align: center;
+  color: #fff;
+  background:
+    radial-gradient(120% 120% at 20% 100%, rgba(0, 182, 174, 0.3) 0%, rgba(0, 182, 174, 0) 55%),
+    linear-gradient(160deg, #1c2547 0%, #141b38 55%, #0f1530 100%);
+  box-shadow: 0 22px 46px rgba(12, 18, 42, 0.28);
+}
+.pps-ask-ic {
+  width: 52px; height: 52px;
+  margin: 0 auto 16px;
+  display: grid;
+  place-items: center;
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #2fd4c6;
+}
+.pps-ask-ic svg { width: 24px; height: 24px; }
+.pps-ask-title { font-size: 19px; font-weight: 800; color: #fff; letter-spacing: -0.01em; }
+.pps-ask-sub {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.62);
+  margin-top: 8px;
+  line-height: 1.5;
+}
+.pps-ask-btn {
+  margin-top: 20px;
+  border: none;
+  background: #00b6ae;
+  color: #08312e;
+  font-weight: 800;
+  font-size: 15px;
+  font-family: inherit;
+  padding: 13px 30px;
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(0, 182, 174, 0.32);
+  transition: box-shadow 0.15s, transform 0.15s, background 0.15s;
+}
+.pps-ask-btn:hover {
+  transform: translateY(-1px);
+  background: #12c3ba;
+  box-shadow: 0 14px 28px rgba(0, 182, 174, 0.42);
+}
+
+@media (max-width: 980px) {
+  .pps-grid { grid-template-columns: 1fr; }
+  .pps-col-side { position: static; }
+  .pps-nav-links { display: none; }
+  .pps-shell { width: calc(100% - 32px); }
+  .pps-web-nav-inner { width: calc(100% - 32px); }
+}
+
+.pps-loading-state {
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  color: #6b6783;
+  font-size: 15px;
+}
+.pps-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #ececef;
+  border-top-color: #00a19a;
+  border-radius: 50%;
+  animation: pps-spin 0.9s linear infinite;
+}
+@keyframes pps-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.pps-back-txt {
+  background: none;
+  border: 1px solid #ececef;
+  border-radius: 9px;
+  padding: 8px 14px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  color: #231d45;
+  cursor: pointer;
+}
+
+/* ─── Hero (web) ─────────────────────────────────────────────────
+   Two real columns at desktop width — copy left, photo right — with
+   the Passport preview spanning both underneath. Nothing here is
+   sized for a phone viewport. */
+.pps-herocard {
+  position: relative;
+  border-radius: var(--r-xl);
+  padding: 40px 44px 36px;
+  overflow: hidden;
+  color: #fff;
+  background:
+    radial-gradient(120% 140% at 88% 0%, rgba(0, 182, 174, 0.28) 0%, rgba(0, 182, 174, 0) 46%),
+    linear-gradient(135deg, #221b47 0%, #1c1a3e 48%, #141a37 100%);
+  box-shadow: var(--sh-lg);
+}
+.pps-herocard-grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 0.82fr);
+  column-gap: 48px;
+  row-gap: 34px;
+  /* Stretch, so the photo panel is as tall as the copy beside it and the
+     hero reads as two full-height columns rather than a block of text
+     with a thumbnail parked next to it. */
+  align-items: stretch;
+}
+
+/* ── Left column: identity ─────────────────────────────────────── */
+.pps-herocard-lead {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.pps-herocard-staterow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.pps-herocard-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.82);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  padding: 6px 13px;
+  border-radius: 999px;
+}
+.pps-herocard-state-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+.pps-herocard-explain {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  background: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.62);
+  cursor: pointer;
+}
+.pps-herocard-explain:hover { color: #fff; }
+.pps-herocard-explain-q {
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.14);
+  font-size: 10px;
+}
+.pps-herocard-title {
+  margin: 20px 0 0;
+  /* Fluid so a long address stays on two lines at most instead of
+     stacking word-per-line the way a fixed 40px did in a narrow column. */
+  font-size: clamp(30px, 3.1vw, 46px);
+  line-height: 1.04;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  color: #fff;
+  text-wrap: balance;
+}
+.pps-herocard-sub {
+  margin: 10px 0 0;
+  font-size: 15.5px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.62);
+}
+.pps-herocard-pricerow {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  column-gap: 16px;
+  row-gap: 4px;
+  margin-top: 24px;
+  padding-top: 24px;
+  width: 100%;
+  border-top: 1px solid rgba(255, 255, 255, 0.09);
+}
+.pps-herocard-price {
+  font-size: clamp(32px, 2.6vw, 40px);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1;
+  font-feature-settings: 'tnum';
+}
+.pps-herocard-price-src {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.48);
+}
+.pps-herocard-price-info {
+  display: grid;
+  place-items: center;
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.86);
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 800;
+  font-style: italic;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.pps-herocard-price-info:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+/* Illustrated pill artwork (the flood droplet) - kept small enough to read
+   as an icon at pill size. */
+.pps-herocard-pill-img {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  object-fit: contain;
+  display: block;
+}
+.pps-herocard-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 20px;
+}
+.pps-herocard-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.86);
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  padding: 6px 13px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.pps-herocard-ctas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 28px;
+}
+.pps-herocard-btn {
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  padding: 15px 26px;
+  border-radius: 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  border: 1px solid transparent;
+  transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+}
+.pps-herocard-btn--primary {
+  background: #00857f;
+  color: #fff;
+  box-shadow: 0 10px 26px rgba(0, 133, 127, 0.4);
+}
+.pps-herocard-btn--primary:hover {
+  transform: translateY(-1px);
+  background: #009a92;
+  box-shadow: 0 14px 30px rgba(0, 133, 127, 0.48);
+}
+.pps-herocard-btn--ghost {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+.pps-herocard-btn--ghost:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+/* Secondary actions sit on one line with the watcher count, rather
+   than as a stacked block of chrome above the price. */
+.pps-herocard-quick {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+.pps-herocard-quick-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.07);
+  color: #fff;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.16s ease, border-color 0.16s ease;
+}
+.pps-herocard-quick-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.28);
+}
+.pps-herocard-quick-btn svg { width: 16px; height: 16px; }
+.pps-herocard-quick-ic {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  object-fit: contain;
+  display: block;
+  /* The askAQuestion artwork is a JPEG on white; the rounding keeps it from
+     reading as a hard white square on the navy hero. */
+  border-radius: 7px;
+}
+.pps-herocard-watchers {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-left: 4px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.55);
+}
+.pps-herocard-watchers svg { width: 15px; height: 15px; }
+.pps-herocard-foot {
+  margin: 22px 0 0;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.44);
+  max-width: 52ch;
+}
+
+/* ── Right column: photo panel ─────────────────────────────────── */
+.pps-herocard-media {
+  min-width: 0;
+  display: flex;
+}
+.pps-herocard-photo {
+  position: relative;
+  /* A hero photo, not a thumbnail: fills its column and matches the
+     height of the copy block beside it. */
+  height: 100%;
+  min-height: 360px;
+  width: 100%;
+  border-radius: 20px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 24px 54px rgba(6, 10, 26, 0.42);
+}
+.pps-herocard-photo :deep(img) { width: 100%; height: 100%; object-fit: cover; }
+.pps-herocard-actions {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: flex;
+  gap: 8px;
+  z-index: 3;
+}
+.pps-herocard-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  background: rgba(16, 14, 38, 0.5);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: rgba(255, 255, 255, 0.94);
+  cursor: pointer;
+  transition: background 0.15s, transform 0.15s;
+}
+.pps-herocard-icon:hover {
+  background: rgba(16, 14, 38, 0.78);
+  transform: translateY(-1px);
+}
+.pps-herocard-photo-count {
+  position: absolute;
+  /* Right-hand side: PropertyImage puts its own "No photo yet" label
+     bottom-left and the two used to overlap. */
+  right: 12px;
+  bottom: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(20, 16, 42, 0.72);
+  backdrop-filter: blur(6px);
+  color: #fff;
+  font-size: 11.5px;
+  font-weight: 800;
+}
+.pps-herocard-photo-count svg { width: 13px; height: 11px; }
+
+/* ── Passport preview strip (spans the hero's full width) ──────── */
+.pps-preview {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfdfe 100%);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 22px;
+  padding: 24px 28px;
+  color: #0f2440;
+  box-shadow:
+    0 2px 0 rgba(255, 255, 255, 0.5) inset,
+    0 26px 56px rgba(8, 12, 30, 0.36);
+}
+.pps-preview-main {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 26px;
+}
+.pps-preview-id {
+  min-width: 0;
+}
+.pps-preview-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #00857f;
+  background: #eafaf8;
+  border: 1px solid #d3f0ec;
+  padding: 5px 10px;
+  border-radius: 999px;
+}
+.pps-preview-addr {
+  margin-top: 10px;
+  font-size: 20px;
+  font-weight: 800;
+  color: #0f2440;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+.pps-preview-sub {
+  margin-top: 3px;
+  font-size: 13px;
+  color: #7c8aa0;
+  font-weight: 500;
+}
+.pps-preview-ring {
+  position: relative;
+  width: 86px;
+  height: 86px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+}
+.pps-preview-ring::before {
+  content: '';
+  position: absolute;
+  inset: 10px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0, 182, 174, 0.1), transparent 70%);
+}
+.pps-preview-ring svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+.pps-preview-ring-bg {
+  fill: none;
+  stroke: #eef2f7;
+  stroke-width: 8;
+}
+.pps-preview-ring-fill {
+  fill: none;
+  stroke: url(#ppsPreviewGrad);
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-dasharray: 263.9;
+  transition: stroke-dashoffset 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  filter: drop-shadow(0 0 4px rgba(0, 182, 174, 0.45));
+}
+.pps-preview-ring-num {
+  position: absolute;
+  top: 42%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  color: #0f2440;
+  font-feature-settings: 'tnum';
+}
+.pps-preview-ring-denom {
+  position: absolute;
+  top: 67%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #9aa7b8;
+}
+/* Three real figures, laid out as a stat row with hairline dividers. */
+.pps-preview-metrics {
+  display: flex;
+  align-items: stretch;
+  flex-shrink: 0;
+}
+.pps-preview-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 0 22px;
+  border-left: 1px solid #edf1f6;
+}
+.pps-preview-metric:first-child { border-left: 0; }
+.pps-preview-metric:last-child { padding-right: 4px; }
+.pps-preview-metric-val {
+  font-size: 18px;
+  font-weight: 800;
+  color: #0f2440;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.pps-preview-metric-of {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #9aa7b8;
+}
+.pps-preview-metric-lab {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #8a97a9;
+  white-space: nowrap;
+}
+.pps-preview-foot {
+  display: grid;
+  grid-template-columns: auto minmax(160px, 1fr);
+  align-items: center;
+  gap: 20px;
+  padding-top: 18px;
+  border-top: 1px solid #edf1f6;
+}
+.pps-preview-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #1f6f66;
+  background: #eafaf8;
+  border: 1px solid #cdeee9;
+  border-radius: 999px;
+  padding: 9px 16px;
+  line-height: 1.3;
+}
+.pps-preview-hint-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #00b6ae;
+  box-shadow: 0 0 0 3px rgba(0, 182, 174, 0.16);
+  flex-shrink: 0;
+}
+.pps-preview-track {
+  height: 7px;
+  border-radius: 999px;
+  background: #edf1f6;
+  overflow: hidden;
+}
+.pps-preview-track-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #2fd0c6, #00857f);
+  transition: width 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Hero — narrower desktops / tablets */
+@media (max-width: 1180px) {
+  /* Give the copy column back some width so the two CTAs stay on one
+     row instead of stacking. */
+  .pps-herocard-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 0.66fr);
+    column-gap: 34px;
+  }
+  .pps-herocard-btn { font-size: 14px; padding: 14px 20px; }
+}
+@media (max-width: 1080px) {
+  .pps-herocard { padding: 32px 30px 30px; }
+  .pps-preview-main { grid-template-columns: auto minmax(0, 1fr); row-gap: 20px; }
+  .pps-preview-metrics { grid-column: 1 / -1; }
+  .pps-preview-metric:first-child { padding-left: 0; }
+}
+
+/* Quick actions (two bars under the hero) */
+.pps-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 16px;
+}
+.pps-actionbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  text-align: left;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 16px 18px;
+  cursor: pointer;
+  font-family: inherit;
+  box-shadow: var(--sh-sm);
+  transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+}
+.pps-actionbar:hover {
+  transform: translateY(-1px);
+  border-color: #cfe9e6;
+  box-shadow: var(--sh-md);
+}
+.pps-actionbar-ic {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 11px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #eafaf8, #def6f3);
+  color: #00857f;
+}
+.pps-actionbar-ic svg {
+  width: 20px;
+  height: 20px;
+}
+.pps-actionbar-ic--img {
+  background: #fff;
+  overflow: hidden;
+}
+.pps-actionbar-ic--img img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.pps-actionbar-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.pps-actionbar-body strong {
+  font-size: 14.5px;
+  font-weight: 800;
+  color: #0f2440;
+  letter-spacing: -0.01em;
+}
+.pps-actionbar-body small {
+  font-size: 12.5px;
+  color: #6b7a90;
+}
+.pps-actionbar-arrow {
+  color: #b3c0d0;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 860px) {
+  .pps-herocard {
+    padding: 24px 20px 22px;
+  }
+  .pps-herocard-grid {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 24px;
+  }
+  /* Photo above the copy once there is only one column. */
+  .pps-herocard-media { order: -1; }
+  .pps-herocard-photo { aspect-ratio: 16 / 10; border-radius: 16px; }
+  .pps-herocard-btn { flex: 1 1 100%; }
+  .pps-preview { padding: 20px; }
+  .pps-preview-main {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 18px;
+  }
+  .pps-preview-metrics {
+    grid-column: 1 / -1;
+    flex-wrap: wrap;
+    row-gap: 14px;
+  }
+  .pps-preview-metric {
+    /* 30% basis rather than 40%, so all three figures still fit on one
+       row on a tablet and only wrap on a phone. */
+    flex: 1 1 30%;
+    min-width: 148px;
+    padding: 0 14px;
+  }
+  .pps-preview-metric:first-child { padding-left: 0; }
+  .pps-preview-foot {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
+  .pps-actions {
+    grid-template-columns: 1fr;
+  }
+  .pps-signal-bar {
+    flex-wrap: wrap;
+    padding: 14px 18px;
+    gap: 8px;
+  }
+}
+
+/* ─── Hero (legacy mobile overlay unit — unused on web) ─────── */
+.pps-hero {
+  height: 340px;
+  width: 100%;
+  margin: 0 auto;
+  background: linear-gradient(180deg, #b8cfc4 0%, #8aab96 45%, #6d9080 100%);
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+  border-radius: var(--r-xl);
+  box-shadow: var(--sh-lg);
+}
+/* Scrim: legible white text over any photo */
+.pps-hero-scrim {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(8, 16, 34, 0.32) 0%, rgba(8, 16, 34, 0) 26%),
+    linear-gradient(0deg, rgba(8, 16, 34, 0.78) 0%, rgba(8, 16, 34, 0.28) 34%, rgba(8, 16, 34, 0) 58%);
+  pointer-events: none;
+}
+.pps-hero-overlay {
+  position: absolute;
+  left: var(--sp-5);
+  right: var(--sp-5);
+  bottom: var(--sp-5);
+  z-index: 6;
+  color: #fff;
+}
+.pps-hero-meta {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+  margin-top: var(--sp-3);
+}
+.pps-hero-btn {
+  position: absolute;
+  z-index: 10;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 50%;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: white;
+}
+.pps-hero-btn-back {
+  top: 18px;
+  left: 16px;
+  padding-top: env(safe-area-inset-top);
+}
+.pps-hero-btn-fav {
+  top: 18px;
+  right: 60px;
+  padding-top: env(safe-area-inset-top);
+}
+.pps-hero-btn-share {
+  top: 18px;
+  right: 16px;
+  padding-top: env(safe-area-inset-top);
+}
+.pps-hero-house {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 70px;
+  opacity: 0.15;
+  pointer-events: none;
+}
+.pps-hero-gradient-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 80px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.35) 0%, transparent 100%);
+  pointer-events: none;
+}
+.pps-hero-badges {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  z-index: 10;
+  animation: pps-badge-slide-up 0.4s 0.3s both;
+}
+@keyframes pps-badge-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.pps-badge-passport {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  background: rgba(26, 21, 53, 0.88);
+  color: white;
+  border-radius: 20px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.pps-badge-passport-dot {
+  width: 7px;
+  height: 7px;
+  background: #00b6ae;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.pps-badge-flood {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  background: rgba(255, 255, 255, 0.92);
+  color: #c73e36;
+  border-radius: 20px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* ─── Identity (now overlaid on hero) ───────────────────────── */
+.pps-identity-address {
+  margin: 0;
+  font-size: clamp(26px, 3vw, 38px);
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.35);
+}
+.pps-identity-suburb {
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.86);
+  margin-top: 4px;
+  font-weight: 500;
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.3);
+}
+.pps-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.pps-price-value {
+  font-size: clamp(24px, 2.6vw, 32px);
+  font-weight: 800;
+  color: #fff;
+  line-height: 1;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.35);
+}
+.pps-price-source {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.78);
+  font-weight: 500;
+}
+.pps-pill-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.pps-pill {
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 12.5px;
+  color: #fff;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* ─── Action bar ────────────────────────────────────────────── */
+.pps-action-bar {
+  width: 100%;
+  margin: 0;
+  padding: var(--sp-3);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-md);
+}
+.pps-passport-cta-unlock {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  background: linear-gradient(135deg, #f0b460 0%, #d4822a 45%, #7a3a05 100%);
+  border: none;
+  border-radius: 16px;
+  padding: 20px 20px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: all 0.15s ease;
+  box-shadow: 0 6px 22px rgba(122, 58, 5, 0.35);
+  position: relative;
+  overflow: hidden;
+}
+.pps-passport-cta-unlock::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 60%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.12) 50%,
+    transparent 100%
+  );
+  animation: pps-shimmer 3s ease-in-out infinite;
+}
+@keyframes pps-shimmer {
+  0% {
+    transform: translateX(-100%) skewX(-15deg);
+  }
+  100% {
+    transform: translateX(400%) skewX(-15deg);
+  }
+}
+.pps-passport-cta-unlock:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 28px rgba(35, 29, 69, 0.28);
+}
+.pps-passport-cta-unlock-left {
+  flex: 1;
+  position: relative;
+  z-index: 1;
+}
+.pps-passport-cta-unlock-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: white;
+  letter-spacing: -0.3px;
+}
+.pps-passport-cta-unlock-sub {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.72);
+  margin-top: 4px;
+}
+.pps-passport-cta-unlock-price {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+.pps-passport-cta-unlock-amount {
+  font-size: 26px;
+  font-weight: 900;
+  color: white;
+  letter-spacing: -0.8px;
+  line-height: 1;
+}
+.pps-passport-cta-unlock-arrow {
+  font-size: 20px;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 700;
+}
+.pps-secondary-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.pps-secondary-btn {
+  background: white;
+  border: 1.5px solid #ececef;
+  border-radius: 12px;
+  padding: 12px 10px;
+  text-align: center;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s ease;
+}
+.pps-secondary-btn:hover {
+  border-color: #231d45;
+  box-shadow: 0 4px 12px rgba(35, 29, 69, 0.1);
+  transform: translateY(-1px);
+}
+.pps-secondary-btn-label {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1a1535;
+  display: block;
+}
+.pps-secondary-btn-sub {
+  font-size: 11px;
+  color: #999;
+  display: block;
+  margin-top: 2px;
+}
+
+/* ─── Signal bar ────────────────────────────────────────────── */
+.pps-signal-bar {
+  width: 100%;
+  margin: 0;
+  background: #ddefe7;
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-radius: 16px;
+}
+.pps-signal-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pps-pulse-dot {
+  width: 6px;
+  height: 6px;
+  background: #00a19a;
+  border-radius: 50%;
+  flex-shrink: 0;
+  animation: pps-pulse 1.8s infinite;
+  display: inline-block;
+}
+@keyframes pps-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(0, 161, 154, 0.6);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(0, 161, 154, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 161, 154, 0);
+  }
+}
+.pps-signal-viewing {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1b7a63;
+}
+.pps-signal-count {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #178a6e;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-color: rgba(23, 138, 110, 0.45);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+/* ─── Score card ────────────────────────────────────────────── */
+/* ─── Page sections (shared desktop rhythm) ─────────────────────
+   One header pattern for every band on the page: eyebrow, title,
+   supporting line on the left, an optional action on the right. */
+.pps-section {
+  width: 100%;
+}
+.pps-section-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 28px;
+  margin-bottom: 20px;
+  padding: 0 2px;
+}
+.pps-section-heading {
+  min-width: 0;
+}
+.pps-section-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #00897b;
+}
+.pps-section-eyebrow-dash {
+  width: 26px;
+  height: 2px;
+  border-radius: 2px;
+  background: #00a19a;
+}
+.pps-section-title {
+  margin: 12px 0 0;
+  font-size: clamp(24px, 2.1vw, 32px);
+  font-weight: 800;
+  color: #1a1535;
+  letter-spacing: -0.025em;
+  line-height: 1.12;
+}
+.pps-section-sub {
+  margin: 10px 0 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #6b7a90;
+  max-width: 62ch;
+}
+.pps-section-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  flex-shrink: 0;
+  font-family: inherit;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #0f2440;
+  background: #fff;
+  border: 1.5px solid #dbe5ef;
+  border-radius: 13px;
+  padding: 13px 22px;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: var(--sh-sm);
+  transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+.pps-section-cta:hover {
+  transform: translateY(-1px);
+  border-color: #00a19a;
+  box-shadow: 0 10px 24px rgba(0, 161, 154, 0.16);
+}
+/* A count, not a link — no arrow and no hover state, because there is
+   nothing behind it to open. */
+.pps-section-badge {
+  flex-shrink: 0;
+  align-self: flex-end;
+  font-size: 13px;
+  font-weight: 700;
+  color: #178a6e;
+  background: #f1faf8;
+  border: 1px solid #d5e7e2;
+  border-radius: 999px;
+  padding: 8px 16px;
+  white-space: nowrap;
+}
+
+/* ─── Passport-status card ──────────────────────────────────────────
+   Icon left, the state and its explanation in the middle, the action
+   right — a full-width desktop band rather than the narrow stacked box
+   the phone layout used. */
+.pps-claimcard {
+  position: relative;
+  width: 100%;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  box-shadow: var(--sh-md);
+  padding: 28px 32px;
+}
+/* State accents: teal once a Passport exists, amber while the address is
+   still unclaimed. */
+.pps-claimcard--private,
+.pps-claimcard--partiallyPublic,
+.pps-claimcard--public {
+  border-color: #cfe9e6;
+  background:
+    radial-gradient(120% 180% at 0% 0%, rgba(0, 182, 174, 0.07) 0%, rgba(0, 182, 174, 0) 58%),
+    #fff;
+}
+.pps-claimcard--unclaimed {
+  border-color: #f0dcb4;
+  background:
+    radial-gradient(120% 180% at 0% 0%, rgba(230, 162, 60, 0.09) 0%, rgba(230, 162, 60, 0) 58%),
+    #fff;
+}
+.pps-claimcard-streetpill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 18px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #a4711a;
+  background: #fdf4e3;
+  border: 1px solid #f3ddb0;
+  border-radius: 999px;
+  padding: 7px 14px;
+}
+.pps-claimcard-streetpill-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #e6a23c;
+  flex-shrink: 0;
+}
+.pps-claimcard-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 26px;
+}
+.pps-claimcard-ic {
+  width: 92px;
+  height: 92px;
+  flex-shrink: 0;
+  object-fit: contain;
+  display: block;
+}
+.pps-claimcard-body {
+  min-width: 0;
+}
+.pps-claimcard-title {
+  margin: 0;
+  font-size: 21px;
+  font-weight: 800;
+  color: #1a1535;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+.pps-claimcard-sub {
+  margin: 8px 0 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #6b7a90;
+  max-width: 64ch;
+}
+.pps-claimcard-emphasis {
+  margin: 10px 0 0;
+  font-size: 15.5px;
+  font-weight: 800;
+  color: #1a1535;
+  letter-spacing: -0.01em;
+}
+.pps-claimcard-sub2 {
+  margin: 8px 0 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f857c;
+}
+.pps-claimcard-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin-top: 16px;
+}
+.pps-claimcard-explain {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 0;
+  background: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #0f857c;
+  cursor: pointer;
+  text-align: left;
+}
+.pps-claimcard-explain:hover { color: #00615c; text-decoration: underline; }
+.pps-claimcard-explain-q {
+  display: grid;
+  place-items: center;
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #e2f3ec;
+  border: 1px solid #cde9df;
+  font-size: 10px;
+  font-weight: 800;
+}
+.pps-claimcard-watchers {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #8a94a3;
+}
+.pps-claimcard-watchers svg { width: 15px; height: 15px; }
+.pps-claimcard-cta {
+  flex-shrink: 0;
+}
+.pps-claimcard-btn {
+  font-family: inherit;
+  font-size: 14.5px;
+  font-weight: 800;
+  color: #fff;
+  background: #231d45;
+  border: 0;
+  border-radius: 999px;
+  padding: 15px 30px;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 10px 24px rgba(35, 29, 69, 0.22);
+  transition: background 0.16s ease, transform 0.16s ease;
+}
+.pps-claimcard-btn:hover {
+  background: #322a5f;
+  transform: translateY(-1px);
+}
+
+@media (max-width: 900px) {
+  .pps-claimcard { padding: 24px 22px; }
+  .pps-claimcard-row {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 18px;
+  }
+  .pps-claimcard-ic { width: 68px; height: 68px; }
+  .pps-claimcard-cta { grid-column: 1 / -1; }
+  .pps-claimcard-btn { width: 100%; }
+}
+
+/* ─── HomeScore card ────────────────────────────────────────────── */
+.pps-score-card {
+  position: relative;
+  margin: 0;
+  width: 100%;
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  box-shadow: var(--sh-md);
+  background: var(--surface);
+}
+/* Teal accent bar on the card's left edge */
+.pps-score-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  background: #00a19a;
+  z-index: 2;
+}
+.pps-score-card--clickable {
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+.pps-score-card--clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 34px rgba(35, 29, 69, 0.13);
+}
+/* Score left, EPC breakdown right — the bars get a 340px panel instead
+   of the full width of the shell. */
+.pps-score-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  align-items: stretch;
+}
+.pps-score-top {
+  background: var(--surface, #fff);
+  padding: 34px 34px 34px 40px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 30px;
+}
+.pps-gauge-wrap {
+  position: relative;
+  width: 124px;
+  height: 124px;
+  flex-shrink: 0;
+  z-index: 1;
+}
+.pps-gauge-svg {
+  width: 124px;
+  height: 124px;
+  transform: rotate(-90deg);
+}
+.pps-gauge-bg {
+  fill: none;
+  stroke: rgba(35, 29, 69, 0.1);
+  stroke-width: 8;
+}
+.pps-gauge-fill {
+  fill: none;
+  stroke: #00a19a;
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-dasharray: 251.33;
+  transition: stroke-dashoffset 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.pps-gauge-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+.pps-gauge-num {
+  font-size: 36px;
+  font-weight: 900;
+  color: #231d45;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-feature-settings: 'tnum';
+}
+.pps-gauge-denom {
+  font-size: 12px;
+  font-weight: 700;
+  color: #9c98ad;
+  margin-top: 3px;
+}
+.pps-score-info {
+  flex: 1;
+  min-width: 0;
+  z-index: 1;
+}
+.pps-score-verdict {
+  font-size: 24px;
+  font-weight: 800;
+  color: #1a1535;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+.pps-score-desc {
+  font-size: 16px;
+  font-weight: 500;
+  color: #46566f;
+  margin: 0;
+  line-height: 1.6;
+  max-width: 46ch;
+}
+.pps-score-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-top: 18px;
+}
+.pps-score-pill {
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 7px 14px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.pps-score-pill--epc {
+  background: #e2f3ec;
+  color: #14735f;
+  border: 1px solid #cde9df;
+}
+.pps-score-pill--warn {
+  background: #fdf1d8;
+  color: #a4711a;
+  border: 1px solid #f3ddb0;
+}
+.pps-score-pill--plain {
+  background: #f4f7fa;
+  color: #5b6d89;
+  border: 1px solid #e5ebf3;
+}
+/* In-card button. The section header carries the same action at desktop
+   width, so this one only shows once the header action is hidden. */
+.pps-score-run-btn {
+  display: none;
+  margin-top: 20px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e2233;
+  background: #fff;
+  border: 1.5px solid #1e2233;
+  border-radius: 14px;
+  padding: 14px 24px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, transform 0.15s;
+}
+.pps-score-run-btn:hover {
+  background: #f4f6f9;
+  transform: translateY(-1px);
+}
+.pps-epc-dot {
+  width: 6px;
+  height: 6px;
+  background: #e6a23c;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.pps-score-epc {
+  padding: 34px 34px 30px;
+  border-left: 1px solid #eef1f6;
+  background: linear-gradient(180deg, #fbfdfe 0%, #f6f9fc 100%);
+  display: flex;
+  flex-direction: column;
+}
+.pps-epc-header {
+  font-size: 10px;
+  font-weight: 800;
+  color: #9aa7b8;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin: 0 0 16px;
+}
+.pps-epc-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+.pps-epc-row {
+  display: grid;
+  grid-template-columns: 68px minmax(0, 1fr) 60px;
+  align-items: center;
+  gap: 12px;
+}
+.pps-epc-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #46566f;
+}
+.pps-epc-track {
+  height: 8px;
+  background: #e7ecf3;
+  border-radius: 999px;
+  overflow: hidden;
+}
+.pps-bar-fill {
+  height: 100%;
+  background: #00a19a;
+  border-radius: 999px;
+  width: 0%;
+  transition: width 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.pps-epc-rating {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #6b7a90;
+  text-align: right;
+}
+.pps-epc-attr {
+  margin-top: auto;
+  padding-top: 18px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #9aa7b8;
+}
+
+@media (max-width: 1020px) {
+  .pps-score-main { grid-template-columns: minmax(0, 1fr); }
+  .pps-score-epc {
+    border-left: 0;
+    border-top: 1px solid #eef1f6;
+    padding: 24px 30px 26px 40px;
+  }
+  .pps-epc-row { grid-template-columns: 78px minmax(0, 1fr) 60px; }
+}
+@media (max-width: 860px) {
+  .pps-section-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  /* Duplicate action collapses to the one inside the card. */
+  .pps-section-cta { display: none; }
+  .pps-score-run-btn { display: inline-flex; }
+  .pps-score-top {
+    flex-direction: column;
+    padding: 24px 22px 24px 26px;
+    gap: 20px;
+  }
+  .pps-score-epc { padding: 22px 22px 24px 26px; }
+  .pps-score-verdict { font-size: 21px; }
+  .pps-score-run-btn { width: 100%; justify-content: center; }
+}
+
+/* ─── Explore grid ──────────────────────────────────────────────
+   Four columns at desktop width. Tiles are uniform height (the icon
+   row is fixed, the body grows) so the grid reads as a table of the
+   record rather than a stack of phone cards. */
+.pps-explore-grid {
+  width: 100%;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  padding: 0;
+}
+.pps-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  text-align: left;
+  font-family: inherit;
+  background: var(--surface);
+  border-radius: 18px;
+  padding: 20px;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(15, 36, 62, 0.04), 0 10px 22px rgba(15, 36, 62, 0.045);
+  border: 1px solid #eaeff5;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+.pps-tile:hover {
+  transform: translateY(-3px);
+  border-color: #c8e3df;
+  box-shadow: 0 16px 34px rgba(15, 36, 62, 0.1);
+}
+.pps-tile:active {
+  transform: translateY(-1px);
+}
+.pps-tile:focus-visible {
+  outline: 2px solid #00a19a;
+  outline-offset: 2px;
+}
+.pps-tile-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.pps-tile-icon {
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pps-tile-icon svg {
+  width: 24px;
+  height: 24px;
+}
+.pps-tile-icon--img {
+  background: transparent;
+  overflow: hidden;
+}
+.pps-tile-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+/* Body pushes to the bottom of the tile, which keeps the value and
+   sub-label on a shared baseline across the whole row. */
+.pps-tile-body {
+  margin-top: auto;
+  min-width: 0;
+}
+.pps-tile-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: #1a1535;
+  letter-spacing: -0.01em;
+}
+.pps-tile-value {
+  font-size: 19px;
+  font-weight: 800;
+  color: #0f857c;
+  letter-spacing: -0.015em;
+  margin-top: 6px;
+}
+.pps-tile-value--warn {
+  color: #bf8324;
+}
+.pps-tile-sub {
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: #8a94a3;
+  margin-top: 5px;
+}
+.pps-tile-trend {
+  font-size: 11px;
+  font-weight: 700;
+  color: #2eab55;
+  margin-top: 4px;
+}
+.pps-tile-new-pip {
+  display: inline-block;
+  background: #00a19a;
+  color: white;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  border-radius: 4px;
+  padding: 1px 5px;
+  vertical-align: middle;
+  margin-left: 4px;
+}
+.pps-tile-arrow {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1.5px solid #e7ebf0;
+  background: #fff;
+  font-size: 14px;
+  color: #9aa4b2;
+  line-height: 1;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.pps-tile:hover .pps-tile-arrow {
+  border-color: #00a19a;
+  color: #00a19a;
+  background: #f0faf8;
+}
+
+/* Row-closing CTA tile — spans the cells the data tiles leave free. */
+.pps-tile--cta {
+  grid-column: span var(--pps-fill-span, 1);
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 22px;
+  border-color: rgba(0, 161, 154, 0.28);
+  background:
+    radial-gradient(120% 160% at 100% 0%, rgba(0, 182, 174, 0.1) 0%, rgba(0, 182, 174, 0) 60%),
+    linear-gradient(180deg, #ffffff 0%, #f5fbfa 100%);
+}
+.pps-tile--cta:hover {
+  border-color: #00a19a;
+  box-shadow: 0 16px 34px rgba(0, 161, 154, 0.16);
+}
+.pps-tile-cta-ic {
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+  object-fit: contain;
+  display: block;
+}
+.pps-tile-cta-body {
+  min-width: 0;
+  flex: 1;
+}
+.pps-tile-cta-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #0f2440;
+  letter-spacing: -0.015em;
+}
+.pps-tile-cta-sub {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #6b7a90;
+  margin-top: 4px;
+}
+.pps-tile-cta-arrow {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #00a19a;
+  color: #fff;
+  font-size: 15px;
+  line-height: 1;
+  box-shadow: 0 8px 18px rgba(0, 161, 154, 0.3);
+  transition: transform 0.15s;
+}
+.pps-tile--cta:hover .pps-tile-cta-arrow {
+  transform: translateX(2px);
+}
+
+@media (max-width: 1180px) {
+  .pps-explore-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  /* The span is computed for a 4-column grid, so below that the CTA
+     simply takes the whole row. */
+  .pps-tile--cta { grid-column: 1 / -1; }
+}
+@media (max-width: 820px) {
+  .pps-explore-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .pps-explore-grid { grid-template-columns: minmax(0, 1fr); }
+  .pps-tile--cta { flex-direction: column; align-items: flex-start; }
+}
+
+/* ─── Passport card ─────────────────────────────────────────── */
+.pps-passport-card {
+  width: 100%;
+  margin: 0;
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  padding: var(--sp-5);
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  box-shadow: var(--sh-md);
+}
+.pps-passport-card--clickable {
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+.pps-passport-card--clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--sh-lg);
+}
+.pps-passport-eyebrow-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.pps-passport-eyebrow {
+  font-size: 9px;
+  font-weight: 800;
+  color: #9c98ad;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.pps-passport-eyebrow-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: #00a19a;
+  flex-shrink: 0;
+}
+.pps-passport-price-pill {
+  background: #f2faf8;
+  color: #007e78;
+  font-size: 12px;
+  font-weight: 800;
+  border-radius: 20px;
+  padding: 3px 10px;
+  border: 1px solid #e5f4f2;
+}
+.pps-passport-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: #231d45;
+  margin-top: 8px;
+}
+.pps-passport-explain {
+  border-radius: 0 8px 8px 0;
+  padding: 9px 12px;
+  margin-top: 10px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.pps-explain-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: none;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 900;
+  cursor: pointer;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1px;
+  font-family: inherit;
+}
+.pps-explain-btn:hover {
+  transform: scale(1.05);
+}
+.pps-passport-explain--unclaimed {
+  background: #f5f3ff;
+  border-left: 3px solid #231d45;
+}
+.pps-passport-explain--progress {
+  background: #e6f7f6;
+  border-left: 3px solid #00a19a;
+  margin-bottom: 14px;
+}
+.pps-passport-explain--published {
+  background: #fef9f0;
+  border-left: 3px solid #d4822a;
+  margin-bottom: 14px;
+}
+.pps-passport-explain-eyebrow {
+  font-size: 9px;
+  font-weight: 800;
+  color: #231d45;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  margin-bottom: 3px;
+}
+.pps-passport-explain-body {
+  font-size: 12px;
+  color: #4a4560;
+  line-height: 1.5;
+}
+
+/* Stepper for unclaimed */
+.pps-pp-stepper {
+  display: flex;
+  align-items: center;
+  margin: 18px 0 16px;
+}
+.pps-pp-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 0 0 auto;
+  position: relative;
+}
+.pps-pp-step-dot {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #f0f0f2;
+  color: #9c98ad;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 800;
+  transition: all 0.15s ease;
+}
+.pps-pp-step--active .pps-pp-step-dot {
+  background: #231d45;
+  color: white;
+}
+.pps-pp-step-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #9c98ad;
+  margin-top: 6px;
+}
+.pps-pp-step--active .pps-pp-step-label {
+  color: #231d45;
+}
+.pps-pp-step-line {
+  flex: 1;
+  height: 2px;
+  background: #f0f0f2;
+  margin: 0 4px;
+  margin-bottom: 18px;
+}
+
+/* Progress bar (used by in-progress + published) */
+.pps-progress-bar-wrap {
+  margin: 14px 0 4px;
+  background: #ececef;
+  border-radius: 100px;
+  height: 10px;
+  overflow: hidden;
+}
+.pps-progress-bar-fill {
+  background: linear-gradient(90deg, #00a19a, #00b6ae);
+  border-radius: 100px;
+  height: 100%;
+  width: 0%;
+  transition: width 1s 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.pps-progress-label {
+  font-size: 12px;
+  color: #9c98ad;
+  text-align: right;
+}
+
+/* Feature list */
+.pps-passport-features {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.pps-passport-feature {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.pps-feature-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.pps-feature-icon--verified {
+  background: #e5f4f2;
+}
+.pps-feature-icon--locked {
+  background: #f5f5f7;
+}
+.pps-feature-text-title--verified {
+  font-size: 15px;
+  font-weight: 800;
+  color: #231d45;
+}
+.pps-feature-text-title--locked {
+  font-size: 15px;
+  font-weight: 800;
+  color: #c0bdcc;
+}
+.pps-feature-text-sub {
+  font-size: 12px;
+  color: #9c98ad;
+  margin-top: 1px;
+}
+
+.pps-passport-cta {
+  width: 100%;
+  border: none;
+  border-radius: 14px;
+  padding: 16px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 18px;
+  transition: all 0.15s ease;
+  position: relative;
+  z-index: 1;
+}
+.pps-passport-cta:hover {
+  transform: translateY(-1px);
+}
+.pps-passport-cta-sub {
+  font-size: 11px;
+  color: #9c98ad;
+  text-align: center;
+  margin-top: 8px;
+}
+
+/* ─── Dark unclaimed passport card (redesign) ───────────────────── */
+.pps-passport-card--dark {
+  background:
+    radial-gradient(
+      130% 130% at 100% 100%,
+      rgba(31, 111, 156, 0.5) 0%,
+      rgba(31, 111, 156, 0) 55%
+    ),
+    linear-gradient(150deg, #1b1638 0%, #201a44 50%, #1c2350 100%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 22px 55px rgba(20, 16, 45, 0.4);
+  border-radius: 24px;
+  padding: 34px 32px;
+}
+.pps-passport-eyebrow--dark {
+  color: #35c9b6;
+}
+.pps-passport-eyebrow-line {
+  width: 18px;
+  height: 2px;
+  border-radius: 2px;
+  background: #35c9b6;
+  flex-shrink: 0;
+}
+.pps-passport-price-pill--unclaimed-dark {
+  background: rgba(255, 255, 255, 0.04);
+  color: #938fb5;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 5px 12px;
+}
+.pps-passport-title--dark {
+  color: #ffffff;
+  font-size: 30px;
+  line-height: 1.12;
+  margin-top: 16px;
+}
+.pps-passport-title-accent {
+  color: #35c9b6;
+}
+.pps-passport-explain--unclaimed-dark {
+  background: rgba(255, 255, 255, 0.035);
+  border-left: 3px solid #35c9b6;
+  border-radius: 0 10px 10px 0;
+  padding: 16px 18px;
+  margin-top: 22px;
+}
+.pps-passport-explain-eyebrow--dark {
+  color: #35c9b6;
+  letter-spacing: 1.5px;
+  margin-bottom: 8px;
+}
+.pps-passport-explain-body--dark {
+  color: #b9b5d0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.pps-passport-explain-body--dark strong {
+  color: #ffffff;
+  font-weight: 700;
+}
+.pps-pp-stepper--dark {
+  margin: 30px 0 26px;
+}
+.pps-pp-stepper--dark .pps-pp-step-dot {
+  width: 40px;
+  height: 40px;
+  font-size: 16px;
+  background: transparent;
+  border: 1.5px solid rgba(255, 255, 255, 0.14);
+  color: #6f6a92;
+}
+.pps-pp-stepper--dark .pps-pp-step--active .pps-pp-step-dot {
+  background: #12b6a5;
+  border-color: #12b6a5;
+  color: #ffffff;
+  box-shadow: 0 0 0 5px rgba(18, 182, 165, 0.15);
+}
+.pps-pp-stepper--dark .pps-pp-step-label {
+  color: #6f6a92;
+  margin-top: 12px;
+  font-size: 13px;
+}
+.pps-pp-stepper--dark .pps-pp-step--active .pps-pp-step-label {
+  color: #ffffff;
+}
+.pps-pp-stepper--dark .pps-pp-step-line {
+  background: rgba(255, 255, 255, 0.1);
+  margin-bottom: 28px;
+}
+.pps-passport-cta--dark {
+  background: linear-gradient(180deg, #16c2ad 0%, #10b6a3 100%);
+  color: #ffffff;
+  border-radius: 16px;
+  padding: 18px;
+  font-size: 16px;
+  box-shadow: 0 12px 30px rgba(16, 182, 163, 0.4);
+}
+.pps-passport-cta--dark:hover {
+  box-shadow: 0 14px 34px rgba(16, 182, 163, 0.5);
+}
+.pps-passport-cta-sub--dark {
+  color: #7d78a0;
+  font-size: 12px;
+  margin-top: 14px;
+}
+.pps-passport-cta-sub--dark strong {
+  color: #b9b5d0;
+  font-weight: 700;
+}
+
+/* ─── Costs card ────────────────────────────────────────────── */
+/* ─── Keep going (closing band) ─────────────────────────────────── */
+.pps-keepgoing {
+  padding: 40px 44px 42px;
+  border-radius: 24px;
+  background:
+    radial-gradient(110% 150% at 50% 0%, rgba(0, 182, 174, 0.07) 0%, rgba(0, 182, 174, 0) 62%),
+    #fff;
+  border: 1px solid #e9eef5;
+  box-shadow: var(--sh-md);
+}
+.pps-keepgoing-head {
+  max-width: 60ch;
+  margin: 0 auto 30px;
+  text-align: center;
+}
+.pps-keepgoing-title {
+  font-size: clamp(22px, 1.9vw, 28px);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  color: #231d45;
+  line-height: 1.15;
+}
+.pps-keepgoing-sub {
+  margin-top: 10px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #7c8aa0;
+}
+.pps-keepgoing-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+.pps-keepgoing-card {
+  display: flex;
+  flex-direction: column;
+  padding: 26px 24px 24px;
+  border-radius: 20px;
+  background: #fafbfd;
+  border: 1px solid #eceff5;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease;
+}
+.pps-keepgoing-card:hover {
+  border-color: #d6e4f0;
+  box-shadow: 0 10px 26px rgba(15, 36, 62, 0.07);
+}
+.pps-keepgoing-card-top { display: flex; align-items: flex-start; gap: 18px; flex: 1; }
+.pps-keepgoing-card-ic { width: 66px; height: 66px; flex-shrink: 0; object-fit: contain; }
+.pps-keepgoing-card-ic--fan { width: 72px; }
+.pps-keepgoing-card-body { min-width: 0; }
+.pps-keepgoing-card-title {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.018em;
+  color: #231d45;
+  margin-bottom: 7px;
+}
+.pps-keepgoing-card-sub {
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1.6;
+  color: #6b7089;
+}
+.pps-keepgoing-card-btn {
+  margin-top: 22px;
+  align-self: flex-start;
+  padding: 13px 24px;
+  border: none;
+  border-radius: 13px;
+  background: #231d45;
+  color: #fff;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 0.16s ease, transform 0.16s ease;
+}
+.pps-keepgoing-card-btn:hover { background: #322a5f; transform: translateY(-1px); }
+
+/* ─── Running costs ─────────────────────────────────────────────── */
+.pps-costs-card {
+  width: 100%;
+  margin: 0;
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  box-shadow: var(--sh-md);
+  background: var(--surface);
+}
+.pps-costs-body {
+  background: #fff;
+  padding: 26px 28px 24px;
+}
+/* All four figures on one row at desktop width. */
+.pps-costs-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+.pps-costs-box {
+  border: 1px solid #eceff5;
+  border-radius: 16px;
+  perspective: 700px;
+  height: 108px;
+}
+.pps-costs-box-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.pps-costs-box:hover .pps-costs-box-inner {
+  transform: rotateY(180deg);
+}
+.pps-costs-box-front,
+.pps-costs-box-back {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 15px;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  background: #fbfcfe;
+}
+.pps-costs-box-back {
+  transform: rotateY(180deg);
+  background: #f2f6fa;
+}
+.pps-costs-box-back-label {
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #9aa7b8;
+}
+.pps-costs-box-back-val {
+  font-size: 22px;
+  font-weight: 800;
+  color: #0f2440;
+  letter-spacing: -0.02em;
+}
+.pps-costs-box--highlight {
+  border-color: #bfe6e2;
+}
+.pps-costs-box--highlight .pps-costs-box-front {
+  background: linear-gradient(180deg, #eafaf8 0%, #ddf4f1 100%);
+}
+.pps-costs-box--highlight .pps-costs-box-back {
+  background: linear-gradient(180deg, #ddf4f1 0%, #cfeeea 100%);
+}
+.pps-costs-box-value {
+  font-size: 26px;
+  font-weight: 800;
+  color: #0f2440;
+  letter-spacing: -0.025em;
+  font-feature-settings: 'tnum';
+}
+.pps-costs-box--highlight .pps-costs-box-value {
+  color: #0f6f68;
+}
+.pps-costs-box-label {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #7c8aa0;
+}
+.pps-costs-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid #eef1f6;
+}
+.pps-costs-attr {
+  font-size: 12.5px;
+  color: #9aa7b8;
+  font-weight: 500;
+}
+
+@media (max-width: 1020px) {
+  .pps-costs-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 860px) {
+  .pps-keepgoing { padding: 28px 22px 26px; }
+  .pps-keepgoing-cards { grid-template-columns: minmax(0, 1fr); }
+  .pps-keepgoing-card-btn { align-self: stretch; text-align: center; }
+  .pps-costs-body { padding: 20px 20px 18px; }
+}
+
+/* ─── Details card ──────────────────────────────────────────── */
+.pps-details-card {
+  width: 100%;
+  margin: 0;
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  box-shadow: var(--sh-md);
+  background: var(--surface);
+}
+.pps-details-header {
+  padding: 20px 20px 0;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: #1a1535;
+}
+.pps-details-sub {
+  padding: 4px 16px 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b6783;
+  line-height: 1.45;
+}
+button.pps-detail-tile {
+  border: 1.5px solid transparent;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  width: 100%;
+}
+button.pps-detail-tile.pps-detail-tile--clickable:hover {
+  border-color: #00a19a;
+  background: white;
+}
+.pps-details-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  padding: 16px 18px 18px;
+}
+.pps-detail-tile {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  border-radius: 14px;
+  background: #f7f4ec;
+  border: 1px solid #eee9dc;
+  transition: border-color 0.15s, background 0.15s;
+}
+.pps-detail-tile:hover {
+  border-color: #ddd5c2;
+  background: #f5f1e6;
+}
+.pps-detail-tile-icon {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: #fff;
+  color: #1e2233;
+  box-shadow: 0 1px 3px rgba(26, 21, 53, 0.08);
+}
+.pps-detail-tile-icon svg {
+  width: 20px;
+  height: 20px;
+}
+.pps-detail-tile-icon--img {
+  padding: 0;
+  overflow: hidden;
+}
+.pps-detail-tile-icon--img img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: inherit;
+}
+.pps-detail-tile-body {
+  min-width: 0;
+}
+.pps-detail-label {
+  font-size: 11px;
+  font-weight: 800;
+  color: #9aa0ad;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+}
+.pps-detail-value {
+  font-size: 16px;
+  font-weight: 800;
+  color: #1a1535;
+  margin-top: 3px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  overflow-wrap: anywhere;
+}
+.pps-epc-badge {
+  color: white;
+  font-size: 13px;
+  font-weight: 800;
+  border-radius: 7px;
+  padding: 2px 9px;
+  background: #10a58c;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   BOTTOM SHEETS — single overlay, swaps body by activeSheet
+   ════════════════════════════════════════════════════════════════ */
+.pps-sheet-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 220;
+  background: rgba(15, 12, 38, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  overflow-y: auto;
+  /* Stop wheel/touch momentum from chaining through to the page behind the
+     sheet — that scroll-through is what made open sheets feel "stuck". */
+  overscroll-behavior: contain;
+  animation: pps-overlay-fade 0.22s ease both;
+}
+@keyframes pps-overlay-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.pps-sheet {
+  width: 100%;
+  max-width: 28rem;
+  background: #fff;
+  border-radius: 22px;
+  padding: 16px 20px 24px;
+  max-height: min(88vh, 760px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  outline: none;
+  box-shadow: 0 24px 60px rgba(15, 12, 38, 0.32);
+  animation: pps-sheet-pop 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+  /* Slim, inset scrollbar so it doesn't collide with the rounded corners */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(35, 29, 69, 0.28) transparent;
+}
+.pps-sheet::-webkit-scrollbar {
+  width: 10px;
+}
+.pps-sheet::-webkit-scrollbar-track {
+  background: transparent;
+}
+.pps-sheet::-webkit-scrollbar-thumb {
+  background: rgba(35, 29, 69, 0.22);
+  border-radius: 100px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+.pps-sheet::-webkit-scrollbar-thumb:hover {
+  background: rgba(35, 29, 69, 0.4);
+  background-clip: padding-box;
+}
+.pps-sheet--tall {
+  max-height: min(92vh, 860px);
+}
+@keyframes pps-sheet-pop {
+  from { transform: translateY(14px) scale(0.97); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+@keyframes pps-sheet-up {
+  from {
+    transform: translateY(28px);
+    opacity: 0.6;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+.pps-sheet-handle {
+  display: none; /* desktop = centered modal; handle only shows on mobile bottom-sheet */
+  width: 40px;
+  height: 4px;
+  background: #ececef;
+  border-radius: 100px;
+  margin: 0 auto 14px;
+}
+
+/* Collapse to a bottom-sheet on phones */
+@media (max-width: 560px) {
+  .pps-sheet-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+  .pps-sheet {
+    max-width: 100%;
+    border-radius: 22px 22px 0 0;
+    max-height: 88vh;
+    padding-bottom: calc(24px + env(safe-area-inset-bottom));
+    box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.18);
+    animation: pps-sheet-up 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .pps-sheet--tall {
+    max-height: 92vh;
+  }
+  .pps-sheet-handle {
+    display: block;
+  }
+}
+/* Sticky close affordance — zero-height so it floats over the sheet body and
+   follows the scroll instead of disappearing off the top of a long sheet. */
+.pps-sheet-closebar {
+  position: sticky;
+  /* Matches the sheet's own top padding so the button doesn't jump when it
+     goes from static to stuck. */
+  top: 12px;
+  z-index: 6;
+  height: 0;
+  display: flex;
+  justify-content: flex-end;
+  pointer-events: none;
+}
+.pps-sheet-x {
+  pointer-events: auto;
+  width: 32px;
+  height: 32px;
+  margin: -4px -4px 0 0;
+  border: 1px solid #ecebf3;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(6px);
+  color: #4a4665;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(35, 29, 69, 0.12);
+  transition: background 0.14s, color 0.14s;
+}
+.pps-sheet-x:hover {
+  background: #fff;
+  color: #231d45;
+}
+.pps-sheet-x svg {
+  width: 15px;
+  height: 15px;
+}
+/* ── Sheet glyph sizing ────────────────────────────────────────────────
+   The data-source sheets used emoji as row/label icons; these classes size
+   the inline SVGs that replaced them so they sit on the text baseline. */
+.pps-ds-rowic {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  vertical-align: -3px;
+  margin-right: 5px;
+  color: #00857f;
+}
+.pps-herocard-pill-ic {
+  width: 13px;
+  height: 13px;
+  vertical-align: -2px;
+  margin-right: 3px;
+}
+.pps-sd-type-ic {
+  width: 15px;
+  height: 15px;
+  vertical-align: -3px;
+  margin-right: 5px;
+}
+/* Flex child of .pps-privacy-note — that rule supplies the gap, so this only
+   needs to hold its size and sit on the first line of copy. */
+.pps-privacy-ic {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.pps-cta-ic {
+  width: 17px;
+  height: 17px;
+  vertical-align: -4px;
+  margin-right: 7px;
+}
+.pps-callout-ic {
+  width: 16px;
+  height: 16px;
+  vertical-align: -3px;
+  margin-right: 6px;
+}
+.pps-psi-icon svg {
+  width: 17px;
+  height: 17px;
+  color: #00857f;
+}
+/* Illustrated artwork inside the 30px tinted squares of the explain sheets —
+   drop the tint so the artwork's own plinth isn't fighting a coloured box.
+   Doubled class selectors: the base rules are declared further down the sheet,
+   so equal specificity would let them win on width/height. */
+.pps-explain-checklist-icon.pps-explain-checklist-icon--img {
+  background: transparent;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  font-size: 0;
+}
+.pps-explain-checklist-icon--img img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.unpub-icon.unpub-icon--img {
+  width: 60px;
+  height: 60px;
+  margin: 0 auto 12px;
+  font-size: 0;
+}
+.unpub-icon--img img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.pps-sheet-icon {
+  font-size: 36px;
+  text-align: center;
+  margin: 4px 0 8px;
+}
+/* Illustrated artwork in place of the emoji sheet glyph. */
+.pps-sheet-icon--img {
+  width: 64px;
+  height: 64px;
+  margin: 4px auto 10px;
+  font-size: 0;
+}
+.pps-sheet-icon--img img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.pps-sheet-title {
+  font-size: 17px;
+  font-weight: 900;
+  color: #231d45;
+  text-align: center;
+  letter-spacing: -0.3px;
+  margin-bottom: 6px;
+}
+.pps-sheet-sub {
+  font-size: 13px;
+  color: #6b6783;
+  text-align: center;
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+.pps-sheet-cta {
+  width: 100%;
+  padding: 14px;
+  background: #00a19a;
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(0, 161, 154, 0.3);
+  margin-top: 14px;
+  margin-bottom: 6px;
+  transition: background 0.15s ease;
+}
+.pps-sheet-cta:hover { background: #008a84; }
+.pps-sheet-cancel {
+  width: 100%;
+  padding: 12px;
+  background: none;
+  border: 1.5px solid #ececef;
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  color: #6b6783;
+  cursor: pointer;
+  margin-top: 12px;
+}
+
+/* Header strip at top of a data-source sheet.
+   Unified on-brand teal gradient (#00a19a) — overrides the older per-sheet
+   pastel inline backgrounds so every popup header matches. */
+.pps-ds-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border-radius: 14px;
+  /* Extra right padding keeps the title clear of the floating close button. */
+  padding: 14px 46px 14px 16px;
+  margin-bottom: 18px;
+  background: linear-gradient(135deg, rgba(0, 161, 154, 0.18) 0%, rgba(0, 161, 154, 0.05) 100%) !important;
+}
+.pps-ds-header-icon {
+  font-size: 26px;
+  flex-shrink: 0;
+}
+/* Real property-card illustration in place of the emoji */
+.pps-ds-header-icon--img {
+  width: 46px;
+  height: 46px;
+  font-size: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pps-ds-header-icon--img img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.pps-ds-header-title {
+  font-size: 17px;
+  font-weight: 800;
+  color: #231d45;
+  letter-spacing: -0.3px;
+}
+.pps-ds-header-meta {
+  font-size: 12px;
+  color: #9c98ad;
+  margin-top: 2px;
+}
+
+.pps-ds-section-title {
+  font-size: 11px;
+  font-weight: 800;
+  color: #9c98ad;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+/* Table (price history) */
+.pps-ds-table {
+  background: #f5f5f7;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.pps-ds-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  padding: 10px 14px;
+  border-bottom: 1px solid #ececef;
+  font-size: 15px;
+  font-weight: 600;
+  color: #231d45;
+  align-items: center;
+}
+.pps-ds-row:last-child {
+  border-bottom: none;
+}
+.pps-ds-row--header {
+  font-size: 11px;
+  font-weight: 800;
+  color: #9c98ad;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  background: #fff;
+}
+.pps-ds-val {
+  font-weight: 800;
+  color: #231d45;
+}
+.pps-ds-muted {
+  color: #9c98ad;
+  font-size: 13px;
+}
+.pps-ds-empty {
+  background: #fafafa;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  font-size: 13px;
+  color: #6b6783;
+}
+
+/* ── Price-history timeline (restored) ───────────────────── */
+.pps-ds-cagr-banner {
+  margin: 4px 0 14px;
+  background: #f2faf8;
+  border: 1px solid #e5f4f2;
+  border-radius: 12px;
+  padding: 10px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.pps-ds-cagr-label {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #6b6783;
+  text-transform: uppercase;
+}
+.pps-ds-cagr-val {
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: -0.4px;
+}
+.pps-ds-cagr-val--up {
+  color: #00a19a;
+}
+.pps-ds-cagr-val--down {
+  color: #c73e36;
+}
+
+.pps-ds-timeline {
+  display: flex;
+  flex-direction: column;
+  border-left: 2px solid #ececef;
+  padding-left: 0;
+  margin-left: 6px;
+}
+.pps-ds-tl-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0 10px 16px;
+  border-bottom: 1px solid #f5f5f7;
+}
+.pps-ds-tl-row:last-child {
+  border-bottom: none;
+}
+.pps-ds-tl-row--est .pps-ds-tl-price {
+  color: #00a19a;
+}
+.pps-ds-tl-bullet {
+  position: absolute;
+  left: -7px;
+  top: 16px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #c0bdcc;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 2px #c0bdcc;
+}
+.pps-ds-tl-bullet--est {
+  background: #00a19a;
+  box-shadow: 0 0 0 2px #00a19a;
+}
+.pps-ds-tl-body {
+  flex: 1;
+  min-width: 0;
+}
+.pps-ds-tl-price {
+  font-size: 16px;
+  font-weight: 900;
+  color: #231d45;
+  letter-spacing: -0.3px;
+}
+.pps-ds-tl-est-pill {
+  display: inline-block;
+  vertical-align: middle;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  background: #e6f7f6;
+  color: #007e78;
+  border: 1px solid #b2e4e1;
+  border-radius: 100px;
+  padding: 2px 8px;
+  margin-left: 6px;
+}
+.pps-ds-tl-date {
+  font-size: 12px;
+  color: #9c98ad;
+  margin-top: 1px;
+}
+.pps-ds-tl-delta {
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+  padding: 4px 8px;
+  border-radius: 100px;
+}
+.pps-ds-tl-delta--up {
+  background: #e8f5ee;
+  color: #2eab55;
+}
+.pps-ds-tl-delta--down {
+  background: #fcebea;
+  color: #c73e36;
+}
+.pps-ds-tl-arrow {
+  font-size: 13px;
+}
+.pps-ds-tl-pct {
+  font-weight: 700;
+  opacity: 0.7;
+  margin-left: 2px;
+}
+
+/* ── EPC components bars (restored) ──────────────────────── */
+.pps-epc-comp-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 8px;
+}
+.pps-epc-comp-row {
+  display: grid;
+  grid-template-columns: 80px 1fr 50px;
+  align-items: center;
+  gap: 10px;
+}
+.pps-epc-comp-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #4a4566;
+}
+.pps-epc-comp-track {
+  height: 8px;
+  background: #f5f5f7;
+  border-radius: 100px;
+  overflow: hidden;
+}
+.pps-epc-comp-fill {
+  height: 100%;
+  border-radius: 100px;
+  transition: width 0.5s ease;
+}
+.pps-epc-comp-fill--good {
+  background: #2eab55;
+}
+.pps-epc-comp-fill--avg {
+  background: #e6a23c;
+}
+.pps-epc-comp-fill--poor {
+  background: #c73e36;
+}
+.pps-epc-comp-fill--vpoor {
+  background: #a82e26;
+}
+.pps-epc-comp-fill--na {
+  background: #c0bdcc;
+}
+.pps-epc-comp-rating {
+  font-size: 12px;
+  font-weight: 800;
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* ── Running-costs EPC upside row ────────────────────────── */
+.pps-costs-upside {
+  margin: 8px 14px 0;
+  background: linear-gradient(135deg, #f2faf8, #f6f5fb);
+  border: 1px solid #e5f4f2;
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #007e78;
+  line-height: 1.4;
+}
+.pps-costs-upside-ic {
+  font-size: 14px;
+  font-weight: 800;
+  width: 22px;
+  height: 22px;
+  background: #00a19a;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.pps-costs-upside strong {
+  color: #231d45;
+}
+
+/* ── Unpublished-passport modal (restored) ─────────────────── */
+.unpub-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  background: rgba(35, 29, 69, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 22px;
+}
+.unpub-modal {
+  background: white;
+  max-width: 380px;
+  width: 100%;
+  border-radius: 22px;
+  padding: 28px 24px 22px;
+  position: relative;
+  box-shadow: 0 24px 48px -12px rgba(35, 29, 69, 0.5);
+  text-align: center;
+}
+.unpub-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  background: #f5f5f7;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b6783;
+  cursor: pointer;
+}
+.unpub-close svg {
+  width: 16px;
+  height: 16px;
+}
+.unpub-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+.unpub-eyebrow {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  color: #007e78;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+.unpub-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: #231d45;
+  letter-spacing: -0.4px;
+  margin-bottom: 8px;
+  line-height: 1.25;
+}
+.unpub-body {
+  font-size: 15px;
+  color: #6b6783;
+  line-height: 1.55;
+  margin-bottom: 18px;
+}
+.unpub-cta {
+  width: 100%;
+  background: #00a19a;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 14px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  box-shadow: 0 6px 18px rgba(0, 161, 154, 0.32);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.unpub-cta:hover {
+  background: #00b6ae;
+  transform: translateY(-1px);
+}
+
+/* Fade transition for the modal */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* Key-value list */
+.pps-ds-kv-list {
+  display: flex;
+  flex-direction: column;
+}
+.pps-ds-kv {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 9px 0;
+  border-bottom: 1px solid #f5f5f7;
+  font-size: 15px;
+}
+.pps-ds-kv:last-child {
+  border-bottom: none;
+}
+.pps-ds-k {
+  color: #6b6783;
+  font-weight: 500;
+}
+.pps-ds-major-pill {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #007e78;
+  background: #e0f4f1;
+  border: 1px solid #c2e6df;
+  vertical-align: 2px;
+}
+.pps-ds-phase-pill {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  vertical-align: 2px;
+  white-space: nowrap;
+}
+.pps-ds-phase-pill--prenursery {
+  color: #6b21a8;
+  background: #f3e8ff;
+  border: 1px solid #e9d5ff;
+}
+.pps-ds-phase-pill--primary {
+  color: #075985;
+  background: #e0f2fe;
+  border: 1px solid #bae6fd;
+}
+.pps-ds-phase-pill--secondary {
+  color: #1e40af;
+  background: #dbeafe;
+  border: 1px solid #bfdbfe;
+}
+.pps-ds-phase-pill--further {
+  color: #92400e;
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+}
+.pps-ds-phase-pill--higher {
+  color: #831843;
+  background: #fce7f3;
+  border: 1px solid #fbcfe8;
+}
+.pps-ds-phase-pill--specialist {
+  color: #166534;
+  background: #dcfce7;
+  border: 1px solid #bbf7d0;
+}
+.pps-ds-phase-pill--default {
+  color: #4b5563;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+}
+.pps-ds-v {
+  font-weight: 700;
+  color: #231d45;
+}
+.pps-ds-v--red {
+  color: #c73e36;
+}
+.pps-ds-v--amber {
+  color: #c18a38;
+}
+.pps-ds-v--green {
+  color: #2eab55;
+}
+.pps-ds-v--muted {
+  color: #8a8595;
+  font-weight: 600;
+  font-size: 13px;
+}
+.pps-ds-kv--link {
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.pps-ds-kv--link:hover {
+  background: #f5f5f7;
+}
+.pps-ds-kv--link .pps-ds-v--muted {
+  color: #00a19a;
+  font-weight: 700;
+}
+.pps-ds-bar-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.pps-ds-bar-item {
+  display: grid;
+  grid-template-columns: 22px 1fr auto;
+  align-items: center;
+  gap: 10px;
+}
+.pps-ds-bar-item--active .pps-ds-bar-label {
+  color: #00a19a;
+  font-weight: 900;
+}
+.pps-ds-bar-item--active .pps-ds-bar-count {
+  color: #00a19a;
+  font-weight: 900;
+}
+.pps-ds-bar-label {
+  font-weight: 800;
+  color: #231d45;
+  text-align: center;
+  font-size: 15px;
+}
+.pps-ds-bar-track {
+  background: #f5f5f7;
+  border-radius: 6px;
+  height: 14px;
+  overflow: hidden;
+}
+.pps-ds-bar-fill {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 0.4s ease;
+}
+.pps-ds-bar-count {
+  font-size: 12px;
+  font-weight: 700;
+  color: #6b6783;
+  min-width: 56px;
+  text-align: right;
+}
+
+/* Highlight box (used by Council, Broadband) */
+.pps-ds-highlight-box {
+  background: linear-gradient(135deg, #f2faf8 0%, #e5f4f2 100%);
+  border: 1.5px solid #e5f4f2;
+  border-radius: 14px;
+  padding: 16px;
+  text-align: center;
+  margin-bottom: 4px;
+}
+.pps-ds-highlight-num {
+  font-size: 26px;
+  font-weight: 800;
+  color: #231d45;
+  letter-spacing: -0.5px;
+}
+.pps-ds-highlight-sub {
+  font-size: 13px;
+  color: #6b6783;
+  margin-top: 4px;
+}
+
+/* Rank card (street) */
+.pps-ds-rank-card {
+  background: #f9f9fb;
+  border-radius: 14px;
+  padding: 18px;
+  text-align: center;
+  margin-bottom: 4px;
+}
+.pps-ds-rank-big {
+  font-size: 38px;
+  font-weight: 900;
+  color: #231d45;
+  letter-spacing: -1px;
+  line-height: 1;
+}
+.pps-ds-rank-sub {
+  font-size: 13px;
+  color: #6b6783;
+  margin-top: 6px;
+}
+
+/* Risk card (flood) */
+.pps-ds-risk-card {
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 4px;
+}
+.pps-ds-risk-card--high {
+  background: #fef2f2;
+  border: 1.5px solid rgba(199, 62, 54, 0.3);
+}
+.pps-ds-risk-card--medium {
+  background: #fff7e6;
+  border: 1.5px solid rgba(230, 162, 60, 0.4);
+}
+.pps-ds-risk-card--low {
+  background: #fffbe6;
+  border: 1.5px solid rgba(240, 220, 128, 0.6);
+}
+.pps-ds-risk-card--clear {
+  background: #f0fbf4;
+  border: 1.5px solid #b8e8c8;
+}
+.pps-ds-risk-label {
+  font-size: 14px;
+  font-weight: 800;
+  color: #231d45;
+  margin-bottom: 6px;
+}
+.pps-ds-risk-card--high .pps-ds-risk-label {
+  color: #c73e36;
+}
+.pps-ds-risk-card--medium .pps-ds-risk-label {
+  color: #c18a38;
+}
+.pps-ds-risk-desc {
+  font-size: 13px;
+  color: #4a4560;
+  line-height: 1.55;
+}
+
+/* Council band list */
+.pps-ds-band-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.pps-ds-band-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 0;
+}
+.pps-ds-band-row--active .pps-ds-band-letter {
+  color: #00a19a;
+  font-weight: 900;
+}
+.pps-ds-band-row--active .pps-ds-band-amt {
+  color: #00a19a;
+}
+.pps-ds-band-letter {
+  width: 32px;
+  font-size: 13px;
+  font-weight: 800;
+  color: #6b6783;
+}
+.pps-ds-band-bar-track {
+  flex: 1;
+  height: 8px;
+  background: #ececef;
+  border-radius: 100px;
+  overflow: hidden;
+}
+.pps-ds-band-bar {
+  height: 100%;
+  background: #c0bdcc;
+  border-radius: 100px;
+  transition: width 0.6s ease;
+}
+.pps-ds-band-amt {
+  width: 64px;
+  text-align: right;
+  font-size: 13px;
+  font-weight: 700;
+  color: #231d45;
+}
+
+/* Info note + attribution */
+.pps-ds-info-note {
+  background: #f9f9fb;
+  border-left: 3px solid #c0bdcc;
+  border-radius: 0 8px 8px 0;
+  padding: 10px 14px;
+  margin-top: 14px;
+  font-size: 12px;
+  color: #6b6783;
+  line-height: 1.55;
+}
+.pps-pd-download {
+  width: 100%;
+  margin-top: 16px;
+  padding: 14px 20px;
+  border: none;
+  border-radius: 12px;
+  background: #00a19a;
+  color: #fff;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 0.16s ease;
+}
+.pps-pd-download:hover { background: #018e88; }
+.pps-pd-download:disabled { opacity: 0.6; cursor: default; }
+
+.pps-ds-attribution {
+  font-size: 12px;
+  color: #c0bdcc;
+  text-align: center;
+  margin-top: 16px;
+  font-style: italic;
+}
+
+/* Stamp Duty type buttons + bands */
+.pps-sd-type-btn {
+  background: transparent;
+  border: none;
+  border-radius: 9px;
+  padding: 9px 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #6b6783;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s ease;
+}
+.pps-sd-type-btn--active {
+  background: #fff;
+  color: #231d45;
+  box-shadow: 0 2px 8px rgba(35, 29, 69, 0.1);
+}
+.pps-sd-band {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.pps-sd-band-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.pps-sd-band-pct {
+  font-size: 15px;
+  font-weight: 800;
+  color: #231d45;
+}
+.pps-sd-band-amt {
+  font-size: 15px;
+  font-weight: 800;
+  color: #231d45;
+}
+.pps-sd-band-track {
+  height: 7px;
+  background: #ececef;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.pps-sd-band-fill {
+  height: 100%;
+  background: #00a19a;
+  border-radius: 4px;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.pps-sd-band-range {
+  font-size: 11px;
+  color: #9c98ad;
+  margin-top: 2px;
+}
+
+/* Placeholder for sheets with no data yet */
+.pps-ds-placeholder {
+  text-align: center;
+  padding: 28px 16px;
+  background: #fafafa;
+  border-radius: 14px;
+  border: 1.5px dashed #ececef;
+  margin-bottom: 16px;
+}
+.pps-ds-placeholder-icon {
+  font-size: 36px;
+  margin-bottom: 10px;
+}
+.pps-ds-placeholder-icon--img {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 10px;
+  display: block;
+}
+.pps-ds-placeholder-icon--img img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.pps-ds-placeholder-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: #231d45;
+  margin-bottom: 6px;
+}
+.pps-ds-placeholder-sub {
+  font-size: 13px;
+  color: #6b6783;
+  line-height: 1.55;
+}
+.pps-ds-placeholder-link {
+  display: inline-block;
+  margin-top: 12px;
+  font-size: 13px;
+  font-weight: 800;
+  color: #00a19a;
+  text-decoration: none;
+  padding: 8px 14px;
+  border: 1.5px solid #e5f4f2;
+  background: #f2faf8;
+  border-radius: 100px;
+  transition: all 0.15s;
+}
+.pps-ds-placeholder-link:hover {
+  background: #e5f4f2;
+  border-color: #00a19a;
+}
+
+/* Broadband — row layout */
+.pps-ds-bb-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.pps-ds-bb-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: #fafafa;
+  border-radius: 10px;
+}
+.pps-ds-bb-check {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 15px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+.pps-ds-bb-check--yes {
+  background: #e8f5ee;
+  color: #2eab55;
+}
+.pps-ds-bb-check--no {
+  background: #fef2f2;
+  color: #c73e36;
+}
+.pps-ds-bb-info {
+  flex: 1;
+  min-width: 0;
+}
+.pps-ds-bb-name {
+  font-size: 15px;
+  font-weight: 800;
+  color: #231d45;
+}
+.pps-ds-bb-meta {
+  font-size: 12px;
+  color: #6b6783;
+  margin-top: 1px;
+}
+
+/* Map iframe */
+.pps-map-frame {
+  width: 100%;
+  height: 280px;
+  border: none;
+  border-radius: 12px;
+  margin-bottom: 14px;
+}
+
+/* Passport sheet (£99 unlock) */
+.pps-passport-sheet-header {
+  background: linear-gradient(135deg, #fef9f0 0%, #f5e0b5 100%);
+  border-radius: 14px;
+  padding: 16px 18px;
+  margin-bottom: 16px;
+}
+/* Unclaimed: neutral grey gradient — no need to imply value already there */
+.pps-passport-sheet-header--unclaimed {
+  background: linear-gradient(135deg, #f6f5fb 0%, #eeedf5 100%);
+}
+/* Progress: teal gradient — Passport is actively being built */
+.pps-passport-sheet-header--progress {
+  background: linear-gradient(135deg, #e6f7f6 0%, #b2e4e1 100%);
+}
+.pps-passport-sheet-empty {
+  font-size: 14px;
+  color: #6b6783;
+  line-height: 1.55;
+  padding: 0 2px;
+  margin: 6px 0 4px;
+}
+.pps-passport-sheet-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  color: #b07a1c;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+.pps-passport-sheet-dot {
+  width: 8px;
+  height: 8px;
+  background: #d4822a;
+  border-radius: 2px;
+}
+.pps-passport-sheet-address {
+  font-size: 18px;
+  font-weight: 900;
+  color: #231d45;
+  letter-spacing: -0.3px;
+  margin-top: 4px;
+}
+.pps-passport-sheet-meta {
+  font-size: 13px;
+  color: #6b4c1a;
+  margin-top: 2px;
+}
+.pps-passport-sheet-section-title {
+  font-size: 11px;
+  font-weight: 800;
+  color: #9c98ad;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.pps-passport-sheet-items {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.pps-psi-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.pps-psi-icon {
+  width: 32px;
+  height: 32px;
+  background: #e5f4f2;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+.pps-psi-text {
+  flex: 1;
+  min-width: 0;
+}
+.pps-psi-name {
+  font-size: 15px;
+  font-weight: 800;
+  color: #231d45;
+}
+.pps-psi-meta {
+  font-size: 12px;
+  color: #9c98ad;
+  margin-top: 1px;
+}
+.pps-psi-check {
+  color: #00a19a;
+  font-weight: 800;
+  font-size: 14px;
+}
+
+.pps-passport-price-breakdown {
+  background: #fafafa;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-top: 4px;
+}
+.pps-ppb-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 15px;
+  font-weight: 600;
+  color: #6b6783;
+  padding: 4px 0;
+}
+.pps-ppb-divider {
+  height: 1px;
+  background: #ececef;
+  margin: 8px 0;
+}
+.pps-ppb-total {
+  font-size: 16px;
+  font-weight: 900;
+  color: #231d45;
+}
+.pps-ppb-note {
+  font-size: 11px;
+  color: #9c98ad;
+  margin-top: 8px;
+  text-align: center;
+}
+
+/* Explain sheets */
+.pps-explain-hero {
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 16px;
+  position: relative;
+  overflow: hidden;
+}
+.pps-explain-hero--unclaimed {
+  background: #231d45;
+  color: #fff;
+}
+.pps-explain-hero--progress {
+  background: linear-gradient(135deg, #4dd4ce 0%, #00a19a 45%, #006e68 100%);
+  color: #fff;
+}
+.pps-explain-hero--published {
+  background: linear-gradient(135deg, #f0b460 0%, #d4822a 45%, #7a3a05 100%);
+  color: #fff;
+}
+.pps-explain-eyebrow {
+  font-size: 9px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.7);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.pps-explain-title {
+  font-size: 18px;
+  font-weight: 900;
+  color: #fff;
+  line-height: 1.25;
+  letter-spacing: -0.3px;
+  margin-bottom: 8px;
+}
+.pps-explain-body {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.55;
+}
+.pps-explain-callout {
+  background: #f9f9fb;
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 16px;
+  border-left: 3px solid #231d45;
+}
+.pps-explain-callout--unclaimed {
+  border-left-color: #231d45;
+}
+.pps-explain-callout--progress {
+  border-left-color: #00a19a;
+}
+.pps-explain-callout-eyebrow {
+  font-size: 9px;
+  font-weight: 800;
+  color: #231d45;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.pps-explain-callout-body {
+  font-size: 13px;
+  color: #4a4560;
+  line-height: 1.6;
+}
+.pps-explain-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.pps-explain-stats > div {
+  background: #f9f9fb;
+  border-radius: 12px;
+  padding: 12px;
+  text-align: center;
+}
+.pps-explain-stat-num {
+  font-size: 20px;
+  font-weight: 900;
+  color: #231d45;
+  letter-spacing: -0.5px;
+}
+.pps-explain-stat-sub {
+  font-size: 11px;
+  color: #9c98ad;
+  margin-top: 2px;
+  font-weight: 600;
+}
+
+/* New explain components — lifetime callout, search-reuse callout, steps, checklist, progress, footer */
+.pps-explain-callout--lifetime {
+  background: #f0f0ff;
+  border-left-color: #5b52a0;
+}
+.pps-explain-callout--reuse {
+  background: #fef9f0;
+  border-left-color: #d4822a;
+}
+.pps-explain-callout-foot {
+  font-size: 13px;
+  font-weight: 700;
+  color: #231d45;
+  margin-top: 8px;
+}
+.pps-explain-section-label {
+  font-size: 11px;
+  font-weight: 800;
+  color: #9c98ad;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin: 16px 0 10px;
+}
+.pps-explain-steps {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 18px;
+}
+.pps-explain-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  flex: 1;
+  min-width: 0;
+}
+.pps-explain-step-num {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #ececef;
+  color: #9c98ad;
+  font-size: 13px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pps-explain-step--active .pps-explain-step-num {
+  background: #231d45;
+  color: #fff;
+}
+.pps-explain-step-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #9c98ad;
+}
+.pps-explain-step--active .pps-explain-step-title {
+  color: #231d45;
+}
+.pps-explain-step-sub {
+  font-size: 9px;
+  color: #9c98ad;
+  text-align: center;
+  line-height: 1.4;
+  padding: 0 2px;
+}
+.pps-explain-step-line {
+  flex: 1;
+  height: 2px;
+  background: #ececef;
+  margin-top: 17px;
+}
+.pps-explain-checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-bottom: 14px;
+}
+.pps-explain-checklist-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #f9f9fb;
+  border-radius: 11px;
+  padding: 10px 12px;
+}
+.pps-explain-checklist-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.pps-explain-checklist-text {
+  flex: 1;
+  min-width: 0;
+}
+.pps-explain-checklist-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: #231d45;
+}
+.pps-explain-checklist-sub {
+  font-size: 11px;
+  color: #9c98ad;
+  margin-top: 1px;
+}
+.pps-explain-checklist-tick {
+  color: #00a19a;
+  font-weight: 800;
+  font-size: 15px;
+}
+.pps-explain-progress-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 6px;
+}
+.pps-explain-progress-pct {
+  font-size: 15px;
+  font-weight: 800;
+  color: #231d45;
+}
+.pps-explain-progress-frac {
+  font-size: 12px;
+  color: #9c98ad;
+}
+.pps-explain-progress-track {
+  height: 8px;
+  background: #ececef;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+.pps-explain-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #00a19a, #4dd4ce);
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+.pps-explain-footer {
+  text-align: center;
+  font-size: 12px;
+  color: #9c98ad;
+  line-height: 1.6;
+  padding: 0 8px 16px;
+}
+
+/* ─── Make Contact / Watch form fields ─────────────────────── */
+.pps-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.pps-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.pps-field-label {
+  font-size: 12px;
+  font-weight: 800;
+  color: #6b6783;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+.pps-text-input {
+  width: 100%;
+  border: 1.5px solid #ececef;
+  border-radius: 10px;
+  padding: 11px 13px;
+  font-family: inherit;
+  font-size: 15px;
+  color: #231d45;
+  outline: none;
+  background: #fff;
+  transition: border-color 0.15s;
+  box-sizing: border-box;
+}
+.pps-text-input:focus {
+  border-color: #00a19a;
+}
+.pps-text-input::placeholder {
+  color: #c0bdcc;
+}
+.pps-text-textarea {
+  min-height: 92px;
+  resize: vertical;
+  line-height: 1.5;
+}
+.pps-choice-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.pps-choice {
+  background: #f5f5f7;
+  border: 1.5px solid transparent;
+  border-radius: 999px;
+  padding: 7px 13px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  color: #6b6783;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.pps-choice:hover {
+  background: #ececef;
+  color: #231d45;
+}
+.pps-choice--active {
+  background: #231d45;
+  border-color: #231d45;
+  color: #fff;
+}
+.pps-choice--active:hover {
+  background: #2e2855;
+}
+.pps-privacy-note {
+  background: #f9f9fb;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 12px;
+  color: #6b6783;
+  line-height: 1.5;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.pps-form-error {
+  font-size: 13px;
+  color: #c73e36;
+  background: #fef2f2;
+  border-radius: 8px;
+  padding: 9px 12px;
+  margin: 6px 0 10px;
+  font-weight: 600;
+}
+</style>
