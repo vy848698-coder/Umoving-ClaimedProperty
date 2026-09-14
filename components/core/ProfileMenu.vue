@@ -6,13 +6,17 @@
       :class="{ open }"
       aria-haspopup="menu"
       :aria-expanded="open ? 'true' : 'false'"
+      aria-label="Account menu"
+      :title="displayName || email || 'Account'"
       @click="open = !open"
     >
-      <span class="pm-avatar">{{ initials }}</span>
-      <span class="pm-label">Profile</span>
-      <svg class="pm-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="6 9 12 15 18 9" />
-      </svg>
+      <span class="pm-initials">{{ initials }}</span>
+      <!-- Corner tab: the dropdown cue, in place of a label and arrow -->
+      <span class="pm-tab" aria-hidden="true">
+        <svg class="pm-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </span>
     </button>
 
     <div v-if="open" class="pm-menu" role="menu">
@@ -154,44 +158,67 @@ watch(
   font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
+/* A squared initials tile - same 10px corner as the nav's Back / Share
+   buttons, so it reads as part of that row rather than a round badge. */
 .pm-trigger {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  height: 42px;
-  padding: 0 12px 0 6px;
-  border-radius: 10px;
-  border: 1px solid #d8e3ee;
-  background: #fff;
-  color: #0c2342;
-  font-family: inherit;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: border-color 0.18s, background 0.18s;
-}
-.pm-trigger:hover,
-.pm-trigger.open {
-  border-color: #bfd1e4;
-  background: #f8fbff;
-}
-
-.pm-avatar {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
+  position: relative;
+  width: 40px;
+  height: 40px;
+  padding: 0;
   display: grid;
   place-items: center;
-  background: #00a19a;
+  border: 0;
+  border-radius: 10px;
+  background: linear-gradient(145deg, #00b3aa 0%, #00857f 100%);
   color: #fff;
-  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    0 4px 10px rgba(0, 110, 104, 0.22);
+  transition: box-shadow 0.18s, transform 0.18s;
+}
+.pm-trigger:hover {
+  transform: translateY(-1px);
+}
+.pm-trigger:hover,
+.pm-trigger.open,
+.pm-trigger:focus-visible {
+  outline: none;
+  /* Offset ring: a white gap, then teal, drawn outside the tile. */
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    0 0 0 2px #fff,
+    0 0 0 4px rgba(0, 161, 154, 0.55);
+}
+
+.pm-initials {
+  font-size: 13.5px;
   font-weight: 800;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.6px;
+  line-height: 1;
+}
+
+/* Notched corner tab carrying the chevron. The white border cuts it out of
+   the tile so it looks tucked into the corner. */
+.pm-tab {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  width: 16px;
+  height: 16px;
+  display: grid;
+  place-items: center;
+  border-radius: 5px;
+  background: #0c2342;
+  color: #fff;
+  border: 2px solid #fff;
+  box-sizing: content-box;
 }
 
 .pm-chev {
-  width: 14px;
-  height: 14px;
+  width: 10px;
+  height: 10px;
   transition: transform 0.18s;
 }
 .pm-trigger.open .pm-chev {
@@ -339,14 +366,5 @@ watch(
   height: 1px;
   margin: 4px 6px;
   background: #eef2f6;
-}
-
-@media (max-width: 520px) {
-  .pm-label {
-    display: none;
-  }
-  .pm-trigger {
-    padding: 0 8px 0 6px;
-  }
 }
 </style>
