@@ -1034,13 +1034,14 @@ const executeDelete = async () => {
 
 .ppn-cta {
   height: 42px;
-  padding: 0 18px;
+  padding: 0 20px;
   border-radius: 11px;
   border: 0;
   color: #fff;
   font-family: inherit;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 800;
+  letter-spacing: -0.01em;
   cursor: pointer;
   background: var(--teal);
   box-shadow: 0 10px 22px rgba(0, 161, 154, 0.26);

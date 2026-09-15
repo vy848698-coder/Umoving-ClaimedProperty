@@ -10,9 +10,8 @@
       :title="displayName || email || 'Account'"
       @click="open = !open"
     >
-      <span class="pm-chip">{{ initials }}</span>
       <span class="pm-label">Profile</span>
-      <svg class="pm-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <svg class="pm-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <polyline points="6 9 12 15 18 9" />
       </svg>
     </button>
@@ -96,14 +95,6 @@ const signedIn = ref(false)
 const displayName = ref('')
 const email = ref('')
 
-const initials = computed(() => {
-  const parts = (displayName.value || email.value).trim().split(/\s+/).filter(Boolean)
-  if (!parts.length) return 'U'
-  const first = parts[0]?.[0] ?? ''
-  const last = parts.length > 1 ? (parts[parts.length - 1]?.[0] ?? '') : ''
-  return (first + last).toUpperCase()
-})
-
 function go(path: string) {
   open.value = false
   if (route.path !== path) navigateTo(path)
@@ -162,63 +153,71 @@ watch(
   font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
-/* Solid teal block - the same #00857f and 42px / 10px-corner shape as the
-   nav's Share button - with the initials in a translucent square chip. */
+/* Text-only twin of the nav's "Claim Passport" button (.ppn-cta) and the
+   Passport button: 42px, 11px corners, #00a19a, 15px / 800, teal glow. */
 .pm-trigger {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
   height: 42px;
-  padding: 0 12px 0 5px;
+  padding: 0 20px;
   border: 0;
-  border-radius: 10px;
-  background: #00857f;
+  border-radius: 11px;
+  background: #00a19a;
   color: #fff;
-  font-family: inherit;
-  font-size: 14px;
-  font-weight: 700;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1;
+  white-space: nowrap;
   cursor: pointer;
-  transition: background 0.18s;
+  box-shadow: 0 10px 22px rgba(0, 161, 154, 0.26);
+  transition: transform 0.18s, background 0.18s;
 }
-.pm-trigger:hover,
+.pm-trigger:hover {
+  transform: translateY(-1px);
+  background: #00857f;
+}
+/* Menu open: darker teal with an inner ring, like the Passport button on its own page. */
 .pm-trigger.open {
-  background: #00736e;
+  transform: none;
+  background: #00857f;
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 255, 255, 0.28),
+    0 10px 22px rgba(0, 161, 154, 0.26);
 }
 .pm-trigger:focus-visible {
   outline: 2px solid #00a19a;
   outline-offset: 2px;
 }
 
-.pm-chip {
-  width: 32px;
-  height: 32px;
-  border-radius: 7px;
-  display: grid;
-  place-items: center;
-  background: rgba(255, 255, 255, 0.18);
-  color: #fff;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
+/* Dropdown cue: sits after the label and flips while the menu is open. The
+   right padding is trimmed so the button stays optically centred. */
+.pm-trigger:has(.pm-chev) {
+  gap: 7px;
+  padding: 0 15px 0 20px;
 }
-
 .pm-chev {
-  width: 14px;
-  height: 14px;
-  transition: transform 0.18s;
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  opacity: 0.9;
+  transition: transform 0.2s ease;
 }
 .pm-trigger.open .pm-chev {
   transform: rotate(180deg);
 }
-
-/* Phones: keep just the chip and arrow so the nav row doesn't overflow. */
-@media (max-width: 520px) {
-  .pm-label {
-    display: none;
+@media (prefers-reduced-motion: reduce) {
+  .pm-chev {
+    transition: none;
   }
-  .pm-trigger {
-    gap: 6px;
-    padding-right: 8px;
+}
+
+@media (max-width: 520px) {
+  .pm-trigger,
+  .pm-trigger:has(.pm-chev) {
+    padding: 0 12px 0 14px;
   }
 }
 

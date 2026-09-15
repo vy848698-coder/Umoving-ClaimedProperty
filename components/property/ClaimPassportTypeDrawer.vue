@@ -98,6 +98,9 @@ type PassportType = 'seller' | 'landlord'
 
 const props = defineProps<{
   modelValue: boolean
+  // Current choice, pre-selected when the drawer is reopened to change it.
+  initialType?: PassportType | null
+  initialIsHmo?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -112,10 +115,11 @@ watch(
   () => props.modelValue,
   (open) => {
     if (open) {
-      chosen.value = null
-      isHmo.value = false
+      chosen.value = props.initialType ?? null
+      isHmo.value = props.initialType === 'landlord' && !!props.initialIsHmo
     }
   },
+  { immediate: true },
 )
 
 const close = () => emit('update:modelValue', false)

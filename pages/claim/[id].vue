@@ -500,14 +500,22 @@
       </div>
 
       <div class="cl-ready cl-mb-sm">
-        <img class="cl-ready-img" src="/build/umu-passport-sm.png" alt="Property Passport" />
-        <div>
-          <div class="cl-ready-t">Your Property Passport is ready</div>
+        <img class="cl-ready-img" :src="readyPassport.image" :alt="readyPassport.title" />
+        <div class="cl-ready-text">
+          <div class="cl-ready-t">{{ readyPassport.title }}</div>
           <div class="cl-ready-s">
             {{ proprietorDisplay }} is confirmed as the owner. Issue your Passport
             to start building its record.
           </div>
         </div>
+        <button
+          type="button"
+          class="cl-ready-change"
+          :disabled="issueLoading"
+          @click="showTypeDrawer = true"
+        >
+          {{ chosenPassportType ? 'Change' : 'Choose type' }}
+        </button>
       </div>
 
       <div v-if="issueError" class="cl-err-banner">
@@ -591,6 +599,8 @@
 
     <ClaimPassportTypeDrawer
       v-model="showTypeDrawer"
+      :initial-type="chosenPassportType"
+      :initial-is-hmo="chosenIsHmo"
       @confirm="onPassportTypeConfirmed"
     />
   </div>
@@ -628,8 +638,10 @@ import ClaimPassportTypeDrawer from '~/components/property/ClaimPassportTypeDraw
 const route = useRoute()
 const config = useRuntimeConfig()
 
-// Passport-type gate. Always shown before the actual claim happens, even if
-// the user's role preference suggests one or the other.
+// Passport-type choice. The drawer opens once ownership is verified (the
+// 'lr-found' step), just before "Issue my Passport": choosing only records the
+// type - the user then issues the Passport themselves. It can be reopened from
+// the ready card to change the choice, and issuing without one opens it too.
 const showTypeDrawer = ref(false)
 const chosenPassportType = ref<'seller' | 'landlord' | null>(null)
 const chosenIsHmo = ref(false)
@@ -637,13 +649,20 @@ function onPassportTypeConfirmed(payload: { type: 'seller' | 'landlord'; isHmo: 
   chosenPassportType.value = payload.type
   chosenIsHmo.value = payload.isHmo
   showTypeDrawer.value = false
-  // Resume the claim only if the user is already at the final step. When the
-  // drawer is shown at mount-time (the common case), the user still needs to
-  // walk through search → confirm → KYC; their choice is just persisted.
-  if (step.value === 'lr-found') {
-    issuePassport()
-  }
 }
+
+const readyPassport = computed(() => {
+  if (chosenPassportType.value === 'landlord') {
+    return {
+      image: '/build/landlordPassport-sm.png',
+      title: chosenIsHmo.value ? 'Your Landlord Passport (HMO) is ready' : 'Your Landlord Passport is ready',
+    }
+  }
+  if (chosenPassportType.value === 'seller') {
+    return { image: '/build/umu-passport-sm.png', title: 'Your Seller Passport is ready' }
+  }
+  return { image: '/build/umu-passport-sm.png', title: 'Your Property Passport is ready' }
+})
 const base = config.public.apiBase as string
 
 const propertyId = route.params.id as string
@@ -744,10 +763,8 @@ async function loadProfile() {
 }
 
 onMounted(async () => {
-  // First thing: ask the user which type of passport they're claiming.
-  // Always shown — even if their profile role suggests one — so they can
-  // override per-property (a landlord might still claim a seller passport).
-  showTypeDrawer.value = true
+  // The passport-type drawer is not shown here any more: it opens once
+  // ownership is verified, right before issuing (see the step watcher).
   await Promise.all([loadProperty(), loadProfile()])
 })
 
@@ -1094,6 +1111,8 @@ watch(
   () => step.value,
   (s) => {
     if (s === 'lr-searching') runLrSearch()
+    // Ownership verified: ask which passport to set up before "Issue my Passport".
+    if (s === 'lr-found' && !chosenPassportType.value) showTypeDrawer.value = true
   },
 )
 async function runLrSearch() {
@@ -2350,6 +2369,38 @@ async function issuePassport() {
   flex-shrink: 0;
   object-fit: contain;
   filter: drop-shadow(0 6px 10px rgba(0, 110, 104, 0.25));
+}
+.cl-ready-text {
+  flex: 1;
+  min-width: 0;
+}
+/* Reopens the passport-type drawer; same outline language as the nav buttons. */
+.cl-ready-change {
+  flex-shrink: 0;
+  align-self: center;
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 9px;
+  border: 1px solid rgba(0, 133, 127, 0.35);
+  background: #fff;
+  color: #00665f;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 0.18s, border-color 0.18s;
+}
+.cl-ready-change:hover {
+  background: #f1faf6;
+  border-color: #00857f;
+}
+.cl-ready-change:focus-visible {
+  outline: 2px solid #00a19a;
+  outline-offset: 2px;
+}
+.cl-ready-change:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 .cl-ready-t {
   font-size: 15px;
