@@ -2,6 +2,22 @@
   <div class="app">
     <NuxtPage />
 
+    <!-- Toast — mounted once here (not per-page). showToast() is a global
+         reactive singleton (useCustomToast.ts), but nothing rendered it
+         outside the handful of pages that happen to include <Toast>
+         locally themselves - every other showToast() call in the app
+         silently did nothing. Global mount here is what lets claim/[id].vue
+         surface a non-blocking warning when ownership verification or
+         passport activation fails without blocking the user's flow. -->
+    <Toast
+      :is-visible="toastState.isVisible"
+      :message="toastState.message"
+      :icon="toastState.icon"
+      :icon-emoji="toastState.iconEmoji"
+      :duration="toastState.duration"
+      @close="hideToast"
+    />
+
     <!-- Passport achievement celebration. Every reward-award call site on
          the backend is fire-and-forget from its HTTP response's point of
          view, so the frontend never learns about a new stamp from a
@@ -30,6 +46,10 @@
 // Component file kept at ~/components/core/SplashScreen.vue if it needs to
 // be re-enabled later — just re-add the import and <SplashScreen /> tag.
 import PassportAchievement from '~/components/rewards/PassportAchievement.vue'
+import Toast from '~/components/ui/Toast.vue'
+import { useAppToast } from '~/composables/useCustomToast'
+
+const { toastState, hideToast } = useAppToast()
 
 // Global app configuration
 useHead({

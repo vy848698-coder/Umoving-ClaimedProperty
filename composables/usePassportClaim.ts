@@ -75,7 +75,7 @@ export const usePassportClaim = () => {
     addressLine1: string,
     postcode: string,
     opts: { type?: 'seller' | 'landlord'; isHmo?: boolean } = {},
-  ): Promise<{ passportId: string }> => {
+  ): Promise<{ passportId: string; activated: boolean }> => {
     const res = await $fetch<{ passportId: string }>(`${base}/passport/create`, {
       method: 'POST',
       headers: headers(),
@@ -93,11 +93,14 @@ export const usePassportClaim = () => {
     // passport, so there is no point at which an un-seeded passport is useful.
     // Non-fatal on failure - the passport does exist at this point, and
     // failing the whole claim would be worse than opening it unseeded - but
-    // never silent, because an unseeded passport is exactly the bug that made
-    // every passport look broken.
+    // never silent (console.error here, plus `activated: false` lets the
+    // caller surface a real, visible warning instead of a user landing on a
+    // quietly-broken-looking passport with no explanation).
+    let activated = false
     if (res?.passportId) {
       try {
         await activatePassport(res.passportId)
+        activated = true
       } catch (err) {
         console.error(
           '[passport] activate failed - sections may be missing for',
@@ -107,7 +110,7 @@ export const usePassportClaim = () => {
       }
     }
 
-    return res
+    return { ...res, activated }
   }
 
   const unlockPassport = async (passportId: string): Promise<{ passportId: string }> => {

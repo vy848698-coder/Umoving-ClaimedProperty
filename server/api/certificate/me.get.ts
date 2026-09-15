@@ -47,9 +47,14 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // Owned (seller / landlord) passports only - not ones the user watches as a buyer.
+  // Owned (seller / landlord) passports only - not ones the user watches as a
+  // buyer - and only ones actually claimed (not PENDING_PAYMENT: a draft row
+  // that exists after KYC+HMLR but before the owner-claim charge, with no
+  // seeded sections yet - certifying a claim that isn't actually complete).
   const passports = (await api<AnyRecord[]>('/profile/passports').catch(() => [])) ?? []
-  const owned = passports.filter((p) => p?.id && p?.type !== 'BUYER')
+  const owned = passports.filter(
+    (p) => p?.id && p?.type !== 'BUYER' && p?.status !== 'PENDING_PAYMENT',
+  )
 
   const { passportId, format } = getQuery(event)
   let chosen: AnyRecord | undefined

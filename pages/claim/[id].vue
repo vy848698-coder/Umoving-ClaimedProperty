@@ -225,148 +225,6 @@
       </div>
     </div>
 
-    <!-- ════════════════════════════ KYC ID UPLOAD ════════════════════════════ -->
-    <div v-else-if="step === 'kyc-id'" class="cl-screen">
-      <div class="cl-hero">
-        <div class="cl-hero-ic"><img src="/build/idCard.png" alt="" /></div>
-        <h1 class="cl-h1">Upload your photo ID</h1>
-        <p class="cl-body">
-          Passport or UK driving licence. All four corners visible, image clear.
-        </p>
-      </div>
-
-      <div class="cl-slot-label">Front</div>
-      <div
-        class="cl-slot cl-slot-front"
-        :class="{ 'cl-slot-filled': idFrontUrl }"
-        @click="triggerUpload('front')"
-      >
-        <img v-if="idFrontUrl" :src="idFrontUrl" class="cl-slot-thumb" />
-        <template v-else>
-          <div class="cl-slot-ic"><img src="/build/cameraFront.png" alt="" /></div>
-          <div class="cl-slot-text">Tap to photograph front</div>
-        </template>
-        <div v-if="idFrontUrl" class="cl-slot-check">✓</div>
-      </div>
-
-      <div class="cl-slot-label">Back</div>
-      <div
-        class="cl-slot cl-slot-back"
-        :class="{ 'cl-slot-filled': idBackUrl }"
-        @click="triggerUpload('back')"
-      >
-        <img v-if="idBackUrl" :src="idBackUrl" class="cl-slot-thumb" />
-        <template v-else>
-          <div class="cl-slot-ic cl-slot-ic-muted"><img src="/build/cameraBack.png" alt="" /></div>
-          <div class="cl-slot-text cl-slot-text-muted">
-            Tap to photograph back
-          </div>
-        </template>
-        <div v-if="idBackUrl" class="cl-slot-check">✓</div>
-      </div>
-
-      <input
-        ref="idInputEl"
-        type="file"
-        accept="image/*"
-        capture="environment"
-        style="display: none"
-        @change="onIdFile"
-      />
-
-      <div class="cl-card">
-        <div class="cl-eyebrow cl-mb-xs">Accepted documents</div>
-        <div class="cl-pills">
-          <span class="cl-pill"><img src="/build/passport.png" alt="" /> UK Passport</span>
-          <span class="cl-pill"><img src="/build/drivingLicence.png" alt="" /> Driving Licence</span>
-          <span class="cl-pill"><img src="/build/passport.png" alt="" /> EU Passport</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- ════════════════════════════ KYC LIVENESS ════════════════════════════ -->
-    <div v-else-if="step === 'kyc-liveness'" class="cl-screen cl-center-col">
-      <div class="cl-live-wrap">
-        <svg width="160" height="160" viewBox="0 0 160 160" class="cl-live-svg">
-          <circle cx="80" cy="80" r="74" fill="none" stroke="#cff4f2" stroke-width="4" />
-          <circle
-            cx="80"
-            cy="80"
-            r="74"
-            fill="none"
-            stroke="#00a19a"
-            stroke-width="4"
-            stroke-dasharray="464"
-            stroke-dashoffset="116"
-            class="cl-live-ring"
-          />
-        </svg>
-        <div class="cl-live-inner"><img src="/build/cameraFront.png" alt="" /></div>
-      </div>
-
-      <div class="cl-hero">
-        <h1 class="cl-h1">Quick selfie check</h1>
-        <p class="cl-body">
-          Look at the camera and follow the prompts. Takes about 20 seconds.
-        </p>
-      </div>
-
-      <div class="cl-card cl-text-l">
-        <div class="cl-row-list cl-gap-sm">
-          <div class="cl-num-row">
-            <div class="cl-num">1</div>
-            Face the camera straight on, in good light
-          </div>
-          <div class="cl-num-row">
-            <div class="cl-num">2</div>
-            Slowly turn your head left, then right
-          </div>
-          <div class="cl-num-row">
-            <div class="cl-num">3</div>
-            Hold still — we'll capture automatically
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ════════════════════════════ KYC AML ════════════════════════════ -->
-    <div v-else-if="step === 'kyc-aml'" class="cl-screen cl-center-col">
-      <div class="cl-hero">
-        <div class="cl-hero-ic"><img src="/build/shield.png" alt="" /></div>
-        <h1 class="cl-h1">Almost there</h1>
-        <p class="cl-body">
-          Automatic check against sanctions lists and PEP registers. Happens
-          instantly.
-        </p>
-      </div>
-
-      <div class="cl-card cl-text-l cl-mb-sm">
-        <div class="cl-row-list cl-gap-sm">
-          <div class="cl-aml-row">
-            <div class="cl-aml-label">Sanctions list check</div>
-            <span class="cl-pill-good">✓ Clear</span>
-          </div>
-          <div class="cl-aml-row">
-            <div class="cl-aml-label">PEP screening</div>
-            <span class="cl-pill-good">✓ Clear</span>
-          </div>
-          <div class="cl-aml-row">
-            <div class="cl-aml-label">Adverse media</div>
-            <span class="cl-pill-good">✓ Clear</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="cl-card-pale cl-text-l">
-        <div class="cl-pale-row">
-          <div class="cl-pale-ic-sm"><img src="/build/padlock.png" alt="" /></div>
-          <div class="cl-pale-s">
-            AML checks are required by UK regulations. Data processed securely.
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- ════════════════════════════ KYC VERIFIED ════════════════════════════ -->
     <div v-else-if="step === 'kyc-verified'" class="cl-screen cl-center-col">
       <div class="cl-hero cl-hero--celebrate">
@@ -619,6 +477,7 @@ import AddressHelp from '~/components/claim/AddressHelp.vue'
 import { toTitleCase } from '~/utils/form-helpres'
 import { FLOW_HOME } from '~/utils/appFlow'
 import { CLAIM_STEPS } from '~/utils/claimSteps'
+import { useAppToast } from '~/composables/useCustomToast'
 
 definePageMeta({ middleware: 'auth' })
 
@@ -626,9 +485,6 @@ type ClaimStep =
   | 'search'
   | 'confirm'
   | 'kyc-explainer'
-  | 'kyc-id'
-  | 'kyc-liveness'
-  | 'kyc-aml'
   | 'kyc-verified'
   | 'lr-searching'
   | 'lr-found'
@@ -668,17 +524,6 @@ const base = config.public.apiBase as string
 const propertyId = route.params.id as string
 const step = ref<ClaimStep>('search')
 const selectedProperty = ref<any>(null)
-
-// KYC state
-const idInputEl = ref<HTMLInputElement | null>(null)
-const idUploadSide = ref<'front' | 'back'>('front')
-const idFrontFile = ref<File | null>(null)
-const idBackFile = ref<File | null>(null)
-const idFrontUrl = ref<string>('')
-const idBackUrl = ref<string>('')
-
-// Liveness state
-const livenessAnalysing = ref(false)
 
 // LR state
 const lrStep = ref(0)
@@ -778,9 +623,6 @@ const stepMeta: Record<ClaimStep, { title: string; stage: number }> = {
   search: { title: 'Find your property', stage: 1 },
   confirm: { title: 'Confirm property', stage: 1 },
   'kyc-explainer': { title: 'Verify identity', stage: 2 },
-  'kyc-id': { title: 'Photo ID', stage: 2 },
-  'kyc-liveness': { title: 'Liveness check', stage: 2 },
-  'kyc-aml': { title: 'AML screening', stage: 2 },
   'kyc-verified': { title: 'Identity verified', stage: 3 },
   'lr-searching': { title: 'Searching Land Registry', stage: 3 },
   'lr-found': { title: 'Ownership confirmed', stage: 3 },
@@ -840,17 +682,8 @@ function onBack() {
     case 'kyc-explainer':
       step.value = 'confirm'
       return
-    case 'kyc-id':
-      step.value = 'kyc-explainer'
-      return
-    case 'kyc-liveness':
-      step.value = 'kyc-id'
-      return
-    case 'kyc-aml':
-      step.value = 'kyc-liveness'
-      return
     case 'kyc-verified':
-      step.value = 'kyc-aml'
+      step.value = 'kyc-explainer'
       return
     case 'lr-found':
       step.value = 'kyc-verified'
@@ -858,27 +691,6 @@ function onBack() {
     default:
       navigateTo(FLOW_HOME)
   }
-}
-
-// ── KYC: ID upload ────────────────────────────────────────────
-function triggerUpload(side: 'front' | 'back') {
-  idUploadSide.value = side
-  idInputEl.value?.click()
-}
-function onIdFile(ev: Event) {
-  const input = ev.target as HTMLInputElement
-  const f = input.files?.[0]
-  if (!f) return
-  const url = URL.createObjectURL(f)
-  if (idUploadSide.value === 'front') {
-    idFrontFile.value = f
-    idFrontUrl.value = url
-  } else {
-    idBackFile.value = f
-    idBackUrl.value = url
-  }
-  // Allow re-selecting the same file later
-  input.value = ''
 }
 
 // ── CTA label / action per step ───────────────────────────────
@@ -890,12 +702,6 @@ const ctaLabel = computed(() => {
       return verifyLoading.value ? 'Starting…' : 'Yes, this is my property →'
     case 'kyc-explainer':
       return personaPolling.value ? 'Verifying…' : 'Start identity check →'
-    case 'kyc-id':
-      return 'Continue →'
-    case 'kyc-liveness':
-      return livenessAnalysing.value ? 'Analysing…' : 'Open camera →'
-    case 'kyc-aml':
-      return 'Complete verification →'
     case 'kyc-verified':
       return 'Verify property ownership →'
     case 'lr-found':
@@ -905,28 +711,16 @@ const ctaLabel = computed(() => {
   }
 })
 const ctaDisabled = computed(() => {
-  if (
-    verifyLoading.value ||
-    livenessAnalysing.value ||
-    issueLoading.value ||
-    personaPolling.value
-  )
-    return true
+  if (verifyLoading.value || issueLoading.value || personaPolling.value) return true
   switch (step.value) {
     case 'search':
       return !selectedProperty.value
-    case 'kyc-id':
-      return !idFrontFile.value
     default:
       return false
   }
 })
 const ctaLoading = computed(
-  () =>
-    verifyLoading.value ||
-    livenessAnalysing.value ||
-    issueLoading.value ||
-    personaPolling.value,
+  () => verifyLoading.value || issueLoading.value || personaPolling.value,
 )
 
 function onPrimary() {
@@ -940,11 +734,6 @@ function onPrimary() {
     case 'kyc-explainer':
       // Real Persona flow — opens hosted page in a new tab and polls for completion.
       startPersonaKyc()
-      return
-    case 'kyc-id':       // Legacy simulated screens — unreachable when Persona is wired.
-    case 'kyc-liveness':
-    case 'kyc-aml':
-      step.value = 'kyc-verified'
       return
     case 'kyc-verified':
       step.value = 'lr-searching'
@@ -1098,14 +887,6 @@ async function checkPersonaNow() {
 
 onBeforeUnmount(() => personaAbort?.abort())
 
-// ── Liveness simulated delay ──────────────────────────────────
-async function doLiveness() {
-  livenessAnalysing.value = true
-  await new Promise((r) => setTimeout(r, 1500))
-  livenessAnalysing.value = false
-  step.value = 'kyc-aml'
-}
-
 // ── LR searching animation → lr-found ─────────────────────────
 watch(
   () => step.value,
@@ -1137,14 +918,22 @@ async function issuePassport() {
   }
   issueLoading.value = true
   try {
-    // 1) complete-verification
+    // 1) complete-verification. Non-fatal - the backend may already
+    // consider this done (idempotent retry) and failing the whole claim
+    // over it would be worse than a passport that opens with an
+    // unconfirmed ownership flag - but it must never be silent: this is
+    // the actual ownership-verification step, so if it genuinely failed
+    // the user should know rather than land on a "successful" passport
+    // with no idea anything's off.
+    let verificationConfirmed = true
     try {
       await $fetch(`${base}/property/${pId}/complete-verification`, {
         method: 'POST',
         headers: authHeaders(),
       })
-    } catch {
-      // Non-fatal: still try to claim; backend may tolerate without
+    } catch (err) {
+      verificationConfirmed = false
+      console.error('[claim] complete-verification failed for property', pId, err)
     }
 
     // 2) Gate the claim on the user's passport-type pick.
@@ -1167,6 +956,21 @@ async function issuePassport() {
     )
     const passportId = res.passportId
     if (!passportId) throw new Error('Passport could not be created')
+
+    // Surface (not block on) either non-fatal failure above - the user is
+    // about to be routed straight to a "success" screen, and would
+    // otherwise have zero indication that ownership verification or
+    // passport activation didn't actually complete.
+    if (!verificationConfirmed || !res.activated) {
+      const { showToast } = useAppToast()
+      showToast({
+        message: !res.activated
+          ? "Your Passport was claimed, but some sections may take a moment to appear - refresh if they're missing."
+          : "Your Passport was claimed - we'll double check ownership verification shortly.",
+        iconEmoji: '⚠️',
+        duration: 5000,
+      })
+    }
 
     // 3) Show the Founding Homeowner certificate first (the client's
     // launch incentive for the first 1M claimants), with a "Continue to
