@@ -5,9 +5,13 @@
 // never applies. Production (Vercel) is unaffected: it keeps calling Railway
 // directly via NUXT_PUBLIC_API_BASE (Vercel's origin IS in the allowlist).
 const isDev = process.env.NODE_ENV !== 'production'
+// AWS App Runner is this launch's production backend (Railway is UAT/demo
+// only, per project decision). Falls back here only if NUXT_PROXY_TARGET
+// (dev) / NUXT_PUBLIC_API_BASE (prod, below) is somehow unset - a forgotten
+// env var should point at prod, not silently serve UAT data.
 const proxyTarget =
   process.env.NUXT_PROXY_TARGET ||
-  'https://demo-umu-backend-production.up.railway.app'
+  'https://ijfai9mgwj.eu-west-2.awsapprunner.com'
 
 export default defineNuxtConfig({
   devtools: { enabled: false },
@@ -183,9 +187,7 @@ export default defineNuxtConfig({
       // silently break production.
       apiBase:
         process.env.NUXT_PUBLIC_API_BASE ||
-        (isDev
-          ? '/__backend'
-          : 'https://demo-umu-backend-production.up.railway.app'),
+        (isDev ? '/__backend' : proxyTarget),
       googleClientId:
         process.env.NUXT_PUBLIC_GOOGLE_CLIENT_ID ||
         '869780740735-rlucf6t174rb3dljniqfj3ri2r0kg9cj.apps.googleusercontent.com',

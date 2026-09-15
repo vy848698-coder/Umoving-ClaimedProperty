@@ -1168,13 +1168,19 @@ async function issuePassport() {
     const passportId = res.passportId
     if (!passportId) throw new Error('Passport could not be created')
 
-    // 3) Open the issued Passport — the seller view (with its Buyer/Seller
-    // switch) or the landlord view, per the type chosen. replace: true so the
-    // back button doesn't drop the user mid-KYC.
-    await navigateTo(
+    // 3) Show the Founding Homeowner certificate first (the client's
+    // launch incentive for the first 1M claimants), with a "Continue to
+    // your Passport" CTA that lands on the seller view (with its Buyer/
+    // Seller switch) or the landlord view, per the type chosen. Certificate
+    // page handles the actual number/email assignment (idempotent - only
+    // fires once per user, ever). replace: true throughout so the back
+    // button doesn't drop the user mid-KYC.
+    const passportPath =
       chosenPassportType.value === 'landlord'
         ? `/passportview/landlord/${passportId}`
-        : `/passportview/${passportId}`,
+        : `/passportview/${passportId}`
+    await navigateTo(
+      `/certificate?justClaimed=1&next=${encodeURIComponent(passportPath)}`,
       { replace: true },
     )
   } catch (e: any) {

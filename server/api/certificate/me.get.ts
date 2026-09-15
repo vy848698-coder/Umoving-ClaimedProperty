@@ -93,7 +93,7 @@ export default defineEventHandler(async (event) => {
   const postcode = formatPostcode(passport.postcode ?? chosen.postcode ?? property.postcode ?? '')
   const addressLine2 = [town, postcode].filter(Boolean).join(', ')
 
-  const founder = await getOrAssignFounderNumber(userId)
+  const founder = await getOrAssignFounderNumber(backendBase, auth)
   // The day the certificate was first issued - today on the first request,
   // then fixed for good. Passport records can be created long before the claim,
   // so their createdAt showed the wrong day.
@@ -112,6 +112,27 @@ export default defineEventHandler(async (event) => {
   }
 
   setHeader(event, 'Cache-Control', 'private, no-store')
+
+  // First-ever request for this user: this is the moment they're actually
+  // becoming a Founding Homeowner, so email them a copy now rather than
+  // waiting for them to notice the certificate exists under the Profile
+  // menu. Every later view of this page (isNew: false) skips this - no
+  // re-send on refresh. Fire-and-forget: a failed email shouldn't break
+  // the page the user is looking at right now, which already has its copy.
+  if (founder.isNew) {
+    const image = await renderCertificate(details)
+    $fetch(`${backendBase}/profile/founder-number/email`, {
+      method: 'POST',
+      headers: { Authorization: auth },
+      body: { imageBase64: image.toString('base64') },
+    }).catch((err) => {
+      console.error('[certificate] founder email send failed:', err?.data?.message ?? err?.message ?? err)
+    })
+    if (format !== 'json') {
+      setHeader(event, 'Content-Type', 'image/jpeg')
+      return image
+    }
+  }
 
   if (format === 'json') return details
 

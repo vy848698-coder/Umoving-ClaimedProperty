@@ -5,16 +5,19 @@
     <main class="ct-main">
       <div class="ct-head">
         <p class="ct-kicker">Founding Homeowner</p>
-        <h1>Your certificate</h1>
+        <h1>{{ justClaimed ? 'You did it - welcome to the first 1,000,000' : 'Your certificate' }}</h1>
         <p class="ct-lede">
-          Built from your profile and your claimed property, so it always shows
-          your current name.
+          {{
+            justClaimed
+              ? "You're officially a Founding Homeowner. We've also emailed you a copy of this certificate."
+              : 'Built from your profile and your claimed property, so it always shows your current name.'
+          }}
         </p>
       </div>
 
       <div v-if="loading" class="ct-state" aria-live="polite">
         <span class="ct-spinner" />
-        Preparing your certificate…
+        {{ justClaimed ? 'One moment - preparing your Founding Homeowner certificate…' : 'Preparing your certificate…' }}
       </div>
 
       <div v-else-if="error" class="ct-state ct-state--error" role="alert">
@@ -39,7 +42,14 @@
               <dd>{{ details.joinedLabel }}</dd>
             </div>
           </dl>
-          <a class="ct-btn" :href="imageUrl" :download="fileName">Download certificate</a>
+          <div class="ct-btn-row">
+            <a class="ct-btn" :class="{ 'ct-btn--ghost': nextPath }" :href="imageUrl" :download="fileName">
+              Download certificate
+            </a>
+            <button v-if="nextPath" type="button" class="ct-btn" @click="continueOn">
+              Continue to your Passport →
+            </button>
+          </div>
         </div>
 
         <figure class="ct-figure">
@@ -61,6 +71,22 @@ interface CertificateDetails {
   addressLine1: string
   addressLine2: string
   joinedLabel: string
+}
+
+const route = useRoute()
+const router = useRouter()
+
+// Reached right after a successful claim (see pages/claim/[id].vue's
+// issuePassport()), which routes here with ?justClaimed=1&next=<passport
+// path> instead of straight to the passport - the "you're a Founding
+// Homeowner" moment the client asked for, before the normal passport view.
+const justClaimed = computed(() => route.query.justClaimed === '1')
+const nextPath = computed(() => {
+  const next = route.query.next
+  return typeof next === 'string' && next.startsWith('/') && !next.startsWith('//') ? next : ''
+})
+function continueOn() {
+  router.replace(nextPath.value)
 }
 
 const loading = ref(true)
@@ -159,6 +185,12 @@ onBeforeUnmount(revoke)
   background: #fff;
   border: 1px solid #e3e8ee;
   border-radius: 12px;
+}
+
+.ct-btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .ct-facts {
