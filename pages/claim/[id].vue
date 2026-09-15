@@ -133,6 +133,53 @@
       </div>
     </div>
 
+    <!-- ════════════════════════════ OWNER-CLAIM PAYMENT ════════════════════════════ -->
+    <div v-else-if="step === 'payment'" class="cl-screen">
+      <div class="cl-owned">
+        <img src="/build/lrTitleBank.png" alt="" class="cl-owned-illus" />
+        <div>
+          <div class="cl-owned-t">Before we verify your ownership</div>
+          <div class="cl-owned-s">{{ claimPriceReason }}</div>
+        </div>
+      </div>
+
+      <div class="cl-card cl-mb-sm">
+        <div class="cl-eyebrow cl-mb-sm">What this fee covers</div>
+        <p class="cl-body" style="margin: 0">
+          Identity checks and HM Land Registry ownership lookups cost us real
+          money per property, so we ask for this one-off fee upfront -
+          {{ claimPriceReason }}. Once it's paid, we'll run those checks next.
+        </p>
+      </div>
+
+      <div class="cl-card cl-mb-sm">
+        <div class="cl-lrf-rows">
+          <div class="cl-lrf-row">
+            <span class="cl-lrf-l">Verification fee</span>
+            <span class="cl-lrf-v">{{ claimPriceDisplay }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="cl-card cl-mb-sm">
+        <div class="cl-eyebrow cl-mb-sm">Card details</div>
+        <div id="claim-stripe-card-element" class="cl-stripe-box" />
+      </div>
+
+      <div v-if="paymentError" class="cl-err-banner" role="alert">
+        <span>{{ paymentError }}</span>
+      </div>
+
+      <button
+        class="cl-btn-brand cl-w-full"
+        :disabled="paymentLoading || !cardReady"
+        @click="payClaimFee"
+      >
+        <span v-if="paymentLoading" class="cl-btn-spinner" />
+        <template v-else>Pay {{ claimPriceDisplay }} securely →</template>
+      </button>
+    </div>
+
     <!-- ════════════════════════════ KYC EXPLAINER ════════════════════════════ -->
     <div v-else-if="step === 'kyc-explainer'" class="cl-screen cl-center-col">
       <div class="cl-hero">
@@ -289,6 +336,54 @@
             {{ label }}
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════ LR FAILED ════════════════════════════ -->
+    <div v-else-if="step === 'lr-failed'" class="cl-screen cl-center-col">
+      <div class="cl-lr-pulse-wrap">
+        <div class="cl-lr-inner" style="background: #fef2f2; color: #b91c1c">⚠️</div>
+      </div>
+      <h1 class="cl-h1" style="text-align: center">Ownership not confirmed</h1>
+      <p class="cl-body" style="text-align: center; max-width: 320px">
+        {{
+          lrErrorMessage ||
+          'HM Land Registry could not confirm you own this property.'
+        }}
+      </p>
+
+      <div
+        v-if="
+          lrResult?.status === 'ADDITIONAL_INFO_NEEDED' ||
+          lrResult?.matchResult === 'NO_MATCHES'
+        "
+        class="cl-card cl-mb-sm cl-w-full"
+        style="max-width: 360px"
+      >
+        <div class="cl-eyebrow cl-mb-sm">What HM Land Registry returned</div>
+        <div class="cl-lrf-rows">
+          <div v-if="lrResult?.titleNumber" class="cl-lrf-row">
+            <span class="cl-lrf-l">Title number</span>
+            <span class="cl-lrf-v">{{ lrResult.titleNumber }}</span>
+          </div>
+          <div v-if="lrResult?.matchResult" class="cl-lrf-row">
+            <span class="cl-lrf-l">Match result</span>
+            <span class="cl-lrf-v">{{ lrResult.matchResult }}</span>
+          </div>
+          <div v-if="lrResult?.historical" class="cl-lrf-row">
+            <span class="cl-lrf-l">Status</span>
+            <span class="cl-lrf-v">Historical proprietor</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="cl-w-full" style="max-width: 360px; display: flex; gap: 8px">
+        <button class="cl-btn-ghost" style="flex: 1" @click="step = 'search'">
+          Try another property
+        </button>
+        <button class="cl-btn-brand" style="flex: 1" @click="runLrSearch()">
+          Retry
+        </button>
       </div>
     </div>
 
@@ -461,12 +556,19 @@
       :initial-is-hmo="chosenIsHmo"
       @confirm="onPassportTypeConfirmed"
     />
+
+    <FoundingMemberModal
+      v-model="showFoundingModal"
+      :number-label="founderNumberLabel"
+      :passport-path="issuedPassportPath"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
+import type { Stripe, StripeCardElement } from '@stripe/stripe-js'
 import PropertySearchInput from '~/components/property/PropertySearchInput.vue'
 import PhoneInput from '~/components/form/PhoneInput.vue'
 import ProfileMenu from '~/components/core/ProfileMenu.vue'
@@ -477,19 +579,20 @@ import AddressHelp from '~/components/claim/AddressHelp.vue'
 import { toTitleCase } from '~/utils/form-helpres'
 import { FLOW_HOME } from '~/utils/appFlow'
 import { CLAIM_STEPS } from '~/utils/claimSteps'
-import { useAppToast } from '~/composables/useCustomToast'
-
 definePageMeta({ middleware: 'auth' })
 
 type ClaimStep =
   | 'search'
   | 'confirm'
+  | 'payment'
   | 'kyc-explainer'
   | 'kyc-verified'
   | 'lr-searching'
+  | 'lr-failed'
   | 'lr-found'
 
 import ClaimPassportTypeDrawer from '~/components/property/ClaimPassportTypeDrawer.vue'
+import FoundingMemberModal from '~/components/claim/FoundingMemberModal.vue'
 
 const route = useRoute()
 const config = useRuntimeConfig()
@@ -501,6 +604,12 @@ const config = useRuntimeConfig()
 const showTypeDrawer = ref(false)
 const chosenPassportType = ref<'seller' | 'landlord' | null>(null)
 const chosenIsHmo = ref(false)
+
+// Founding Homeowner congrats modal, shown once the passport is issued —
+// see issuePassport() below.
+const showFoundingModal = ref(false)
+const founderNumberLabel = ref<string | null>(null)
+const issuedPassportPath = ref('')
 function onPassportTypeConfirmed(payload: { type: 'seller' | 'landlord'; isHmo: boolean }) {
   chosenPassportType.value = payload.type
   chosenIsHmo.value = payload.isHmo
@@ -614,7 +723,9 @@ onMounted(async () => {
 })
 
 // ── Topbar logic ──────────────────────────────────────────────
-const showCta = computed(() => step.value !== 'lr-searching')
+const showCta = computed(
+  () => !['lr-searching', 'lr-failed', 'payment'].includes(step.value),
+)
 
 // `stage` is the step of the overall journey (utils/claimSteps.ts) each screen
 // belongs to, so the tracker keeps counting from the claim start page instead
@@ -622,9 +733,11 @@ const showCta = computed(() => step.value !== 'lr-searching')
 const stepMeta: Record<ClaimStep, { title: string; stage: number }> = {
   search: { title: 'Find your property', stage: 1 },
   confirm: { title: 'Confirm property', stage: 1 },
+  payment: { title: 'Verification fee', stage: 1 },
   'kyc-explainer': { title: 'Verify identity', stage: 2 },
   'kyc-verified': { title: 'Identity verified', stage: 3 },
   'lr-searching': { title: 'Searching Land Registry', stage: 3 },
+  'lr-failed': { title: 'Ownership not confirmed', stage: 3 },
   'lr-found': { title: 'Ownership confirmed', stage: 3 },
 }
 const topbarTitle = computed(() => stepMeta[step.value].title)
@@ -679,11 +792,16 @@ function onBack() {
     case 'confirm':
       step.value = 'search'
       return
+    case 'payment':
+      // Payment now runs right after 'confirm' (before KYC/HMLR), so
+      // that's the only step before it in this order.
+      step.value = 'confirm'
+      return
     case 'kyc-explainer':
       step.value = 'confirm'
       return
     case 'kyc-verified':
-      step.value = 'kyc-explainer'
+      step.value = 'confirm'
       return
     case 'lr-found':
       step.value = 'kyc-verified'
@@ -744,22 +862,156 @@ function onPrimary() {
   }
 }
 
-// ── confirm → start-verification → kyc-explainer (or skip if already verified) ─────────────
+// ── confirm → start-verification → create the (unpaid) claim → pay ─────
+// Payment happens BEFORE KYC/HM Land Registry run, matching the mobile
+// app: we don't want to incur either cost on a user who confirms then
+// never pays. The KYC-explainer / HMLR-search steps happen once
+// payClaimFee() below confirms the Stripe charge succeeded.
 async function confirmProperty() {
   verificationError.value = ''
-  if (!selectedProperty.value?.id) {
+  const pId = selectedProperty.value?.id
+  if (!pId) {
     step.value = 'kyc-explainer'
     return
   }
   verifyLoading.value = true
   try {
     await $fetch(
-      `${base}/property/${selectedProperty.value.id}/start-verification`,
+      `${base}/property/${pId}/start-verification`,
       { method: 'POST', headers: authHeaders() },
     )
 
-    // Per-user KYC: if the user has already passed Persona on a previous
-    // claim, jump straight past identity verification.
+    // No passport type yet — that's asked once HM Land Registry verifies
+    // ownership (see the 'lr-found' step further down). The backend
+    // creates this as an untyped PENDING_PAYMENT record.
+    const { claimPassport } = usePassportClaim()
+    const res = await claimPassport(
+      pId,
+      selectedProperty.value?.addressLine1 ?? '',
+      selectedProperty.value?.postcode ?? '',
+    )
+    const passportId = res.passportId
+    if (!passportId) throw new Error('Passport could not be created')
+
+    if (res.status === 'PENDING_PAYMENT') {
+      claimPassportId.value = passportId
+      await openPaymentStep(passportId)
+      return
+    }
+
+    // Already active — a resumed or previously-completed claim on this
+    // property. No fresh payment or verification needed.
+    await navigateTo(`/passportview/${passportId}`, { replace: true })
+  } catch (e: any) {
+    verificationError.value =
+      e?.data?.message || 'Could not start verification. Please try again.'
+  } finally {
+    verifyLoading.value = false
+  }
+}
+
+// ── Owner-claim payment (Stripe) ────────────────────────────────
+const claimPassportId = ref<string | null>(null)
+const claimClientSecret = ref('')
+const claimAmountPence = ref<number | null>(null)
+const paymentError = ref('')
+const paymentLoading = ref(false)
+const cardReady = ref(false)
+let stripeInstance: Stripe | null = null
+let cardElement: StripeCardElement | null = null
+
+const claimPriceDisplay = computed(() =>
+  claimAmountPence.value != null
+    ? `£${(claimAmountPence.value / 100).toFixed(2)}`
+    : '',
+)
+// The backend picks the tier — infer which one just from the amount so the
+// copy explains what's being charged without duplicating the pricing logic.
+const claimPriceReason = computed(() => {
+  if (claimAmountPence.value == null) return ''
+  return claimAmountPence.value >= 3599
+    ? 'Identity verification (KYC) and HM Land Registry ownership check'
+    : 'HM Land Registry ownership check'
+})
+
+async function openPaymentStep(passportId: string) {
+  paymentError.value = ''
+  step.value = 'payment'
+  try {
+    const { createClaimPaymentIntent } = usePassportClaim()
+    const { clientSecret, amount } = await createClaimPaymentIntent(passportId)
+    claimClientSecret.value = clientSecret
+    claimAmountPence.value = amount
+    await nextTick()
+    await mountClaimStripe()
+  } catch (e: any) {
+    paymentError.value =
+      e?.data?.message ||
+      e?.message ||
+      'Could not start payment. Please try again.'
+  }
+}
+
+async function mountClaimStripe() {
+  if (stripeInstance) return
+  const { loadStripe } = await import('@stripe/stripe-js')
+  stripeInstance = await loadStripe(config.public.stripeKey as string)
+  if (!stripeInstance) return
+
+  const elements = stripeInstance.elements()
+  cardElement = elements.create('card', {
+    hidePostalCode: true,
+    style: {
+      base: {
+        fontSize: '16px',
+        fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif',
+        color: '#1a1a1a',
+        '::placeholder': { color: '#aab7c4' },
+      },
+      invalid: { color: '#e53e3e' },
+    },
+  })
+  const mountEl = document.getElementById('claim-stripe-card-element')
+  if (mountEl) {
+    cardElement.mount(mountEl)
+    cardElement.on('change', (e) => {
+      paymentError.value = e.error?.message ?? ''
+      cardReady.value = e.complete
+    })
+  }
+}
+
+async function payClaimFee() {
+  if (
+    !stripeInstance ||
+    !cardElement ||
+    !claimClientSecret.value ||
+    !claimPassportId.value
+  ) {
+    paymentError.value = 'Card form not ready. Please try again.'
+    return
+  }
+  paymentLoading.value = true
+  paymentError.value = ''
+  try {
+    const { error, paymentIntent } = await stripeInstance.confirmCardPayment(
+      claimClientSecret.value,
+      { payment_method: { card: cardElement } },
+    )
+    if (error) {
+      paymentError.value = error.message ?? 'Payment failed. Please try again.'
+      return
+    }
+    if (paymentIntent?.status !== 'succeeded') {
+      paymentError.value = 'Payment not completed. Please try again.'
+      return
+    }
+
+    // Payment's confirmed — the passport stays PENDING_PAYMENT until
+    // activatePassport() (called from issuePassport, once HM Land Registry
+    // comes back VERIFIED below) also sees KYC approved. Skip straight to
+    // the HMLR check if this user already had approved KYC before this
+    // claim, otherwise walk them through the Persona explainer.
     try {
       const { getKycStatus } = useKyc()
       const r = await getKycStatus()
@@ -770,13 +1022,14 @@ async function confirmProperty() {
     } catch {
       // If status lookup fails, fall through to the explainer screen.
     }
-
     step.value = 'kyc-explainer'
   } catch (e: any) {
-    verificationError.value =
-      e?.data?.message || 'Could not start verification. Please try again.'
+    paymentError.value =
+      e?.data?.message ||
+      e?.message ||
+      'Could not confirm payment. Please try again.'
   } finally {
-    verifyLoading.value = false
+    paymentLoading.value = false
   }
 }
 
@@ -896,97 +1149,188 @@ watch(
     if (s === 'lr-found' && !chosenPassportType.value) showTypeDrawer.value = true
   },
 )
+// Set by the real Business Gateway Online Owner Verification call below.
+interface LrCheckResult {
+  status: 'VERIFIED' | 'ADDITIONAL_INFO_NEEDED' | 'FAILED' | 'IN_PROGRESS'
+  matchResult?: string
+  titleNumber?: string
+  historical?: boolean
+  rejection?: { reason?: string; code?: string }
+  acknowledgement?: { expectedResponseDateTime?: string }
+}
+const lrResult = ref<LrCheckResult | null>(null)
+const lrErrorMessage = ref('')
+
 async function runLrSearch() {
   lrStep.value = 0
-  await new Promise((r) => setTimeout(r, 700))
-  lrStep.value = 1
-  await new Promise((r) => setTimeout(r, 800))
-  lrStep.value = 2
-  await new Promise((r) => setTimeout(r, 900))
-  lrStep.value = 3
-  await new Promise((r) => setTimeout(r, 600))
-  if (step.value === 'lr-searching') step.value = 'lr-found'
-}
-
-// ── Issue passport (complete-verification + claim) ────────────
-async function issuePassport() {
-  issueError.value = ''
+  lrResult.value = null
+  lrErrorMessage.value = ''
   const pId = selectedProperty.value?.id
   if (!pId) {
-    issueError.value = 'No property selected.'
+    lrErrorMessage.value = 'No property selected.'
+    step.value = 'lr-failed'
     return
   }
+
+  // Animate the first two pacing steps while the real call is in flight so
+  // the user never sees an idle spinner — deliberately slower than the real
+  // call most of the time; if HMLR is faster we still let the user see the
+  // address-matched / register-retrieved beats.
+  const animation = (async () => {
+    await new Promise((r) => setTimeout(r, 700))
+    if (step.value === 'lr-searching') lrStep.value = 1
+    await new Promise((r) => setTimeout(r, 800))
+    if (step.value === 'lr-searching') lrStep.value = 2
+  })()
+
+  // Real Business Gateway Online Owner Verification call.
+  let result: LrCheckResult
+  try {
+    result = await $fetch<LrCheckResult>(
+      `${base}/property/${pId}/land-registry-check`,
+      { method: 'POST', headers: authHeaders() },
+    )
+  } catch (e: any) {
+    lrErrorMessage.value =
+      e?.data?.message ||
+      e?.message ||
+      "We couldn't reach HM Land Registry. Please try again."
+    step.value = 'lr-failed'
+    return
+  }
+
+  // Make sure the animation has at least played its first two beats so the
+  // UI doesn't snap straight to the result.
+  await animation
+  lrResult.value = result
+
+  if (result.status === 'VERIFIED') {
+    lrStep.value = 3
+    await new Promise((r) => setTimeout(r, 500))
+    if (step.value === 'lr-searching') step.value = 'lr-found'
+    return
+  }
+
+  lrErrorMessage.value = describeLrFailure(result)
+  step.value = 'lr-failed'
+}
+
+function describeLrFailure(lr: LrCheckResult): string {
+  if (lr.status === 'IN_PROGRESS') {
+    const eta = lr.acknowledgement?.expectedResponseDateTime
+    return (
+      "HM Land Registry is currently out of service hours - we've queued " +
+      'your ownership check' +
+      (eta ? ` (expected back by ${eta})` : '') +
+      '. Please try again shortly.'
+    )
+  }
+  if (lr.status === 'ADDITIONAL_INFO_NEEDED') {
+    if (lr.matchResult === 'MULTIPLE_MATCHES') {
+      return (
+        'HM Land Registry returned multiple possible titles for this ' +
+        'address. Please contact support so we can confirm the right one.'
+      )
+    }
+    if (lr.historical) {
+      return (
+        'HM Land Registry shows your name on this title historically, but ' +
+        "you're no longer listed as the current owner. If you've recently " +
+        "sold or transferred this property, that's expected."
+      )
+    }
+    return (
+      "We found a partial match against HM Land Registry but couldn't " +
+      'fully confirm ownership. Double-check the name on your profile ' +
+      'matches the name on the title deeds, then try again.'
+    )
+  }
+  if (lr.status === 'FAILED') {
+    if (lr.rejection?.code === 'bg.postcode.invalid') {
+      return "HM Land Registry didn't accept the property postcode. Please correct it on the property and try again."
+    }
+    if (lr.rejection?.code === 'bg.properties.nopropertyfound') {
+      return "HM Land Registry couldn't find a title at this address. Double-check the address details."
+    }
+    if (lr.rejection?.reason) {
+      return `HM Land Registry rejected the check: ${lr.rejection.reason}`
+    }
+    if (lr.matchResult === 'NO_MATCHES') {
+      return (
+        "Your name doesn't match the registered owner of this property on " +
+        'HM Land Registry. If this is wrong (e.g. you bought it recently ' +
+        "and the register hasn't updated), please contact support."
+      )
+    }
+    return 'HM Land Registry could not confirm your ownership of this property. Please contact support.'
+  }
+  return 'Ownership check did not succeed. Please try again.'
+}
+
+// ── lr-found → pick a type, set it, activate the already-paid passport,
+//    then navigate ──────────────────────────────────────────────────
+// The passport was already created and paid for back in confirmProperty() /
+// payClaimFee() above (payment runs BEFORE this point). This confirms HM
+// Land Registry came back VERIFIED, sets the seller/landlord choice (asked
+// for the first time only now — see the step watcher above), then seeds
+// the passport's sections.
+async function issuePassport() {
+  issueError.value = ''
   issueLoading.value = true
   try {
-    // 1) complete-verification. Non-fatal - the backend may already
-    // consider this done (idempotent retry) and failing the whole claim
-    // over it would be worse than a passport that opens with an
-    // unconfirmed ownership flag - but it must never be silent: this is
-    // the actual ownership-verification step, so if it genuinely failed
-    // the user should know rather than land on a "successful" passport
-    // with no idea anything's off.
-    let verificationConfirmed = true
-    try {
-      await $fetch(`${base}/property/${pId}/complete-verification`, {
-        method: 'POST',
-        headers: authHeaders(),
-      })
-    } catch (err) {
-      verificationConfirmed = false
-      console.error('[claim] complete-verification failed for property', pId, err)
+    // HM Land Registry verification already ran during the lr-searching
+    // step — runLrSearch() blocks the user from reaching here unless the
+    // verdict was VERIFIED. Belt-and-braces guard in case state got out of
+    // sync (e.g. via deep-link / back-nav).
+    if (lrResult.value?.status !== 'VERIFIED') {
+      issueError.value =
+        'Ownership has not been verified against HM Land Registry yet.'
+      return
     }
-
-    // 2) Gate the claim on the user's passport-type pick.
-    // We deliberately do NOT short-circuit on getPassportStatus() here:
-    // that endpoint only returns SELLER passports (it's buyer-facing), so
-    // reusing its id would land a landlord claim on a seller passport.
-    // The backend's createPassport dedupes per (owner, property, type)
-    // and returns the existing same-type passport if one already exists.
+    if (!claimPassportId.value) {
+      issueError.value =
+        'Something went wrong with your claim - please start again.'
+      return
+    }
     if (!chosenPassportType.value) {
-      issueLoading.value = false
+      // Shouldn't normally happen — the step watcher above opens the type
+      // drawer as soon as this step is reached — but guard in case it was
+      // dismissed without choosing.
       showTypeDrawer.value = true
       return
     }
-    const { claimPassport } = usePassportClaim()
-    const res = await claimPassport(
-      pId,
-      selectedProperty.value?.addressLine1 ?? '',
-      selectedProperty.value?.postcode ?? '',
-      { type: chosenPassportType.value, isHmo: chosenIsHmo.value },
+
+    const { setPassportType, activatePassport } = usePassportClaim()
+    await setPassportType(
+      claimPassportId.value,
+      chosenPassportType.value,
+      chosenIsHmo.value,
     )
-    const passportId = res.passportId
-    if (!passportId) throw new Error('Passport could not be created')
+    await activatePassport(claimPassportId.value)
+    const passportId = claimPassportId.value
 
-    // Surface (not block on) either non-fatal failure above - the user is
-    // about to be routed straight to a "success" screen, and would
-    // otherwise have zero indication that ownership verification or
-    // passport activation didn't actually complete.
-    if (!verificationConfirmed || !res.activated) {
-      const { showToast } = useAppToast()
-      showToast({
-        message: !res.activated
-          ? "Your Passport was claimed, but some sections may take a moment to appear - refresh if they're missing."
-          : "Your Passport was claimed - we'll double check ownership verification shortly.",
-        iconEmoji: '⚠️',
-        duration: 5000,
-      })
-    }
-
-    // 3) Show the Founding Homeowner certificate first (the client's
-    // launch incentive for the first 1M claimants), with a "Continue to
-    // your Passport" CTA that lands on the seller view (with its Buyer/
-    // Seller switch) or the landlord view, per the type chosen. Certificate
-    // page handles the actual number/email assignment (idempotent - only
-    // fires once per user, ever). replace: true throughout so the back
-    // button doesn't drop the user mid-KYC.
-    const passportPath =
+    issuedPassportPath.value =
       chosenPassportType.value === 'landlord'
         ? `/passportview/landlord/${passportId}`
         : `/passportview/${passportId}`
-    await navigateTo(
-      `/certificate?justClaimed=1&next=${encodeURIComponent(passportPath)}`,
-      { replace: true },
-    )
+
+    // Assigns (or reads) the founder number and - on the very first call for
+    // this user - fires the certificate email in the background, reusing
+    // the exact same endpoint the Certificate page itself calls. Non-fatal:
+    // a failure here (e.g. no name on the profile yet) shouldn't block the
+    // claim that already succeeded - just skip the celebration and go
+    // straight to the passport.
+    try {
+      const details = await $fetch<{ founderNumberLabel: string }>(
+        '/api/certificate/me',
+        { headers: authHeaders(), query: { format: 'json' } },
+      )
+      founderNumberLabel.value = details.founderNumberLabel
+      showFoundingModal.value = true
+    } catch (err) {
+      console.error('[claim] founder certificate details fetch failed:', err)
+      await navigateTo(issuedPassportPath.value, { replace: true })
+    }
   } catch (e: any) {
     issueError.value =
       e?.data?.message ||
@@ -2324,6 +2668,54 @@ async function issuePassport() {
   animation: cl-spin 0.7s linear infinite;
 }
 @keyframes cl-spin { to { transform: rotate(360deg); } }
+.cl-btn-ghost {
+  width: min(100%, 620px);
+  padding: 14px 18px;
+  background: #fff;
+  color: #231d45;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.cl-btn-ghost:hover {
+  border-color: #d1d5db;
+}
+.cl-owned {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 4px 0 20px;
+}
+.cl-owned-illus {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+.cl-owned-t {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #231d45;
+  letter-spacing: -0.3px;
+}
+.cl-owned-s {
+  font-size: 0.875rem;
+  color: #75757c;
+  font-weight: 500;
+  margin-top: 3px;
+}
+.cl-stripe-box {
+  background: #fff;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 14px 16px;
+  transition: border-color 0.2s;
+}
+.cl-stripe-box:focus-within {
+  border-color: #00a19a;
+}
 
 @media (prefers-reduced-motion: reduce) {
   .cl-screen,
