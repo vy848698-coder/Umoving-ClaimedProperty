@@ -1,7 +1,7 @@
 <template>
   <details class="ah">
     <summary class="ah-summary">
-      <img src="/homescore-icon/magnifier.png" alt="" class="ah-ic" />
+      <img src="/flow-icons/magnifier.png" alt="" class="ah-ic" />
       Can't find your address?
       <svg class="ah-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="6 9 12 15 18 9" />

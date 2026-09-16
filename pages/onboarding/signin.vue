@@ -14,23 +14,11 @@
         <p class="signin-welcome-sub">Good to see you again — your Property Passport is right where you left it.</p>
 
         <div class="signin-home-card">
-          <div class="signin-home-thumb">
-            <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <!-- roof -->
-              <path d="M24 9 8 22h32L24 9Z" fill="#231d45" />
-              <!-- house body -->
-              <path d="M11 21h26v17a1 1 0 0 1-1 1H12a1 1 0 0 1-1-1V21Z" fill="#00a19a" />
-              <!-- door -->
-              <rect x="17" y="28" width="7" height="11" rx="1" fill="#2f6df0" />
-              <!-- window -->
-              <rect x="27" y="27" width="6" height="6" rx="1" fill="#bfe6e1" />
-            </svg>
-          </div>
+          <img src="/build/umu-passport-sm.png" alt="" class="signin-home-thumb" />
           <div class="signin-home-meta">
             <span class="signin-home-kicker">Your home</span>
             <strong class="signin-home-addr">55, Woodfield Road</strong>
             <div class="signin-home-tags">
-              <span class="signin-home-tag signin-home-tag--score">HomeScore 74</span>
               <span class="signin-home-tag signin-home-tag--passport">Passport ready</span>
             </div>
           </div>
@@ -668,17 +656,17 @@ const onPrimary = () => {
   background: rgba(255, 255, 255, 0.045);
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
+/* The real Seller Passport cover - the same artwork the claim flow's "ready"
+   card uses (pages/claim/[id].vue). It is portrait book art at ~5:7, so it is
+   sized as one rather than squashed into a square, and the shadow grounds it
+   against the dark panel instead of the light card it sits on there. */
 .signin-home-thumb {
   flex-shrink: 0;
-  width: 56px;
-  height: 56px;
-  border-radius: 14px;
-  background: #fff;
-  color: #231d45;
-  display: grid;
-  place-items: center;
+  width: 46px;
+  height: 64px;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.45));
 }
-.signin-home-thumb svg { width: 38px; height: 38px; }
 .signin-home-meta { min-width: 0; }
 .signin-home-kicker {
   display: block;
@@ -702,11 +690,6 @@ const onPrimary = () => {
   font-weight: 700;
   padding: 4px 10px;
   border-radius: 7px;
-}
-.signin-home-tag--score {
-  background: rgba(0, 161, 154, 0.2);
-  color: #2fd0c6;
-  border: 1px solid rgba(0, 161, 154, 0.4);
 }
 .signin-home-tag--passport {
   background: rgba(217, 154, 43, 0.16);

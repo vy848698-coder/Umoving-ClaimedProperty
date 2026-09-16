@@ -106,9 +106,7 @@
                    One consistent colour across all four states so a dense
                    list doesn't read as a wall of different colours. The
                    padlock is only locked for 'private' — nothing is withheld
-                   in any other state. EPC is deliberately absent here:
-                   HomeScore already folds it in as a fallback, so showing
-                   both was duplicate information on one row. -->
+                   in any other state. -->
               <div class="psi-drop-passport">
                 <img
                   :src="passportStateOf(r) !== 'private'
@@ -122,30 +120,8 @@
               </div>
             </div>
 
-            <div
-              v-if="(r.homeScore ?? r.epcScore) != null"
-              class="psi-drop-hs"
-            >
-              <span class="psi-drop-hs-cap">HomeScore</span>
-              <div class="psi-drop-hs-gauge">
-                <svg viewBox="0 0 40 40">
-                  <circle class="psi-drop-hs-bg" cx="20" cy="20" r="16" />
-                  <circle
-                    class="psi-drop-hs-fill"
-                    cx="20"
-                    cy="20"
-                    r="16"
-                    :stroke="hsColor(r.homeScore ?? r.epcScore)"
-                    stroke-dasharray="100.5"
-                    :stroke-dashoffset="100.5 - (Math.min(r.homeScore ?? r.epcScore, 100) / 100) * 100.5"
-                  />
-                </svg>
-                <span
-                  class="psi-drop-hs-num"
-                  :style="{ color: hsColor(r.homeScore ?? r.epcScore) }"
-                >{{ r.homeScore ?? r.epcScore }}</span>
-              </div>
-            </div>
+            <!-- The HomeScore gauge that used to sit on the right of each
+                 result has been removed - HomeScore is not part of this app. -->
           </div>
 
           <!-- Loading more indicator -->
@@ -427,15 +403,6 @@ function epcColor(rating: string): string {
     G: '#ff0000',
   }
   return map[(rating ?? '').toUpperCase()] ?? '#8e8e93'
-}
-
-function hsColor(score: number | null | undefined): string {
-  if (score == null) return '#8e8e93'
-  if (score >= 75) return '#008a84'
-  if (score >= 60) return '#65a30d'
-  if (score >= 45) return '#ca8a04'
-  if (score >= 30) return '#92400e'
-  return '#dc2626'
 }
 
 // closeDropdown, unlike clearQuery, leaves the typed text in place - it only
@@ -762,53 +729,6 @@ defineExpose({ clearQuery, closeDropdown, focus, getQuery })
   height: 20px;
   object-fit: contain;
   flex-shrink: 0;
-}
-
-.psi-drop-hs {
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-}
-.psi-drop-hs-cap {
-  font-size: 8px;
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: #9c98ad;
-}
-.psi-drop-hs-gauge {
-  position: relative;
-  width: 38px;
-  height: 38px;
-  flex-shrink: 0;
-}
-.psi-drop-hs-gauge svg {
-  width: 100%;
-  height: 100%;
-  transform: rotate(-90deg);
-}
-.psi-drop-hs-bg {
-  fill: none;
-  stroke: #ededf3;
-  stroke-width: 4;
-}
-.psi-drop-hs-fill {
-  fill: none;
-  stroke-width: 4;
-  stroke-linecap: round;
-  transition: stroke-dashoffset 0.3s;
-}
-.psi-drop-hs-num {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  font-weight: 800;
-  font-feature-settings: 'tnum';
 }
 
 .psi-drop-loading {

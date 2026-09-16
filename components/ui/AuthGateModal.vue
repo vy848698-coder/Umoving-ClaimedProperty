@@ -21,7 +21,7 @@
 
 <script setup lang="ts">
 // Shared "Create account / Sign in" gate — same overlay pattern already
-// used inline on pages/homescore/[id].vue (.hs-authgate-*) and
+// used inline on the property page (.hs-authgate-*) and
 // components/property/PassportClaimBox.vue (.authd-*), factored out so
 // new call sites (starting with discover.vue) don't copy-paste a third
 // inline version. Those two existing flows are left untouched — this is

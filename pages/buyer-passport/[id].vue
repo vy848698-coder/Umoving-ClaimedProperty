@@ -79,12 +79,6 @@
 
             <div class="bp-hero-stats">
               <div class="bp-hero-stat">
-                <div class="bp-hero-stat-val bp-hero-stat-val--brand">
-                  {{ heroHsScore }}
-                </div>
-                <div class="bp-hero-stat-lbl">HomeScore</div>
-              </div>
-              <div class="bp-hero-stat">
                 <div class="bp-hero-stat-val">{{ heroDocsCount }}</div>
                 <div class="bp-hero-stat-lbl">Documents</div>
               </div>
@@ -791,11 +785,6 @@ const passportProgress = computed(() => {
 
 // ── Premium hero stat strip ──────────────────────────────────────
 const overallProgressPct = computed(() => passportProgress.value)
-const heroHsScore = computed(() => {
-  const score =
-    data.value?.property?.homeScore ?? data.value?.property?.epcScore
-  return typeof score === 'number' ? score : '—'
-})
 const heroDocsCount = computed(() => {
   if (!data.value?.sections) return 0
   let n = 0
@@ -1319,7 +1308,6 @@ async function deleteNote(noteId: string) {
   line-height: 1;
   letter-spacing: -0.02em;
 }
-.bp-hero-stat-val--brand { color: var(--teal-bright); }
 .bp-hero-stat-val--ready { color: var(--teal-bright); }
 .bp-hero-stat-lbl {
   font-size: 10px;

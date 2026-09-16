@@ -1161,7 +1161,7 @@ const handleContinue = () => {
   align-items: stretch;
 }
 
-/* ── Web nav (shared HomeScore pattern) ───────────────────────────── */
+/* ── Web nav ───────────────────────────── */
 .hsw-shell {
   width: min(1180px, calc(100% - 48px));
   margin: 0 auto;

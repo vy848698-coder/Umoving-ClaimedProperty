@@ -130,7 +130,7 @@
             <strong>umovingu</strong>
             <span style="font-size:9.5px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:#2fd0c6;background:rgba(0,161,154,.16);border:1px solid rgba(47,208,198,.35);border-radius:6px;padding:2px 7px;margin-left:2px;">BETA</span>
           </div>
-          <p>The consumer-side property passport. Free HomeScore, solicitor-grade Passport, ready before your first viewing.</p>
+          <p>The consumer-side property passport. A solicitor-grade Passport, ready before your first viewing.</p>
           <div class="lg-foot-chips">
             <span>OPDA standard</span>
             <span>Property Redress Scheme</span>

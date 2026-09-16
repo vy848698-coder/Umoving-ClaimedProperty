@@ -1189,7 +1189,7 @@
             <div class="mlabel" style="margin-top:16px">Inventory type</div>
             <div class="lp-inv-chiprow">
               <button type="button" class="lp-inv-chip" :class="{ on: invType === 'checkin' }" @click="invType = 'checkin'"><img src="/op-icons/legionella/checkIn.png" alt="" class="lp-inv-chip-ic" loading="lazy" /><span>Check-in</span></button>
-              <button type="button" class="lp-inv-chip" :class="{ on: invType === 'interim' }" @click="invType = 'interim'"><img src="/op-icons/homescore/magnifier.png" alt="" class="lp-inv-chip-ic" loading="lazy" /><span>Interim</span></button>
+              <button type="button" class="lp-inv-chip" :class="{ on: invType === 'interim' }" @click="invType = 'interim'"><img src="/flow-icons/magnifier.png" alt="" class="lp-inv-chip-ic" loading="lazy" /><span>Interim</span></button>
               <button type="button" class="lp-inv-chip" :class="{ on: invType === 'checkout' }" @click="invType = 'checkout'"><img src="/op-icons/legionella/checkOut.png" alt="" class="lp-inv-chip-ic" loading="lazy" /><span>Check-out</span></button>
             </div>
             <div class="mlabel" style="margin-top:16px">Prepared by</div>
@@ -2631,7 +2631,7 @@ const LEG_QUESTIONS: LegQuestion[] = [
     h: 'What kind of hot water system does the property have?',
     s: 'Stored and recirculated water is the biggest Legionella factor. Mains-fed combi systems with no storage are lowest risk.',
     opts: [
-      { t: 'Combi boiler - no stored water', d: 'Heated on demand, cold straight off the mains', ic: '/op-icons/homescore/boiler.png', w: 0 },
+      { t: 'Combi boiler - no stored water', d: 'Heated on demand, cold straight off the mains', ic: '/flow-icons/boiler.png', w: 0 },
       { t: 'Hot water cylinder / tank', d: 'Stored hot water in a cylinder', ic: '/op-icons/legionella/hotWaterCylinder.png', w: 2 },
       { t: 'Cold water storage / header tank', d: 'A tank in the loft feeds the system', ic: '/op-icons/misc/waterDroplet.png', w: 3 },
       { t: 'Not sure', d: "We'll treat it as higher risk to be safe", ic: '/op-icons/misc/question.png', w: 2, flagPro: true },
@@ -2643,7 +2643,7 @@ const LEG_QUESTIONS: LegQuestion[] = [
     s: 'Water sitting still in pipes lets bacteria grow - especially in spare rooms, outbuildings, or between tenancies.',
     opts: [
       { t: 'No - everything is used regularly', d: 'Water turns over across the system', ic: '/op-icons/rewards/pointsCheck.png', w: 0 },
-      { t: 'One or two rarely-used outlets', d: 'e.g. a spare bathroom or outside tap', ic: '/op-icons/homescore/tap.png', w: 1 },
+      { t: 'One or two rarely-used outlets', d: 'e.g. a spare bathroom or outside tap', ic: '/flow-icons/tap.png', w: 1 },
       { t: 'Yes - or empty between lets', d: 'Void periods let water stagnate', ic: '/op-icons/legionella/voidPeriod.png', w: 2 },
     ],
   },
@@ -2653,7 +2653,7 @@ const LEG_QUESTIONS: LegQuestion[] = [
     s: 'Showers create fine droplets (aerosols) that can be inhaled - the main route of exposure. Scaled heads harbour bacteria.',
     opts: [
       { t: 'No showers, or descaled recently', d: 'Low aerosol risk', ic: '/op-icons/rewards/pointsCheck.png', w: 0 },
-      { t: 'Showers present, condition unknown', d: 'Not descaled recently', ic: '/op-icons/homescore/tap.png', w: 1 },
+      { t: 'Showers present, condition unknown', d: 'Not descaled recently', ic: '/flow-icons/tap.png', w: 1 },
       { t: 'Visibly scaled or grimy heads', d: 'Needs descaling & disinfecting', ic: '/op-icons/legionella/scaledShowerhead.png', w: 2 },
     ],
   },
@@ -2682,7 +2682,7 @@ const LEG_QUESTIONS: LegQuestion[] = [
     s: 'Rust, scale and sediment feed the bacteria. If you have a cold tank, is it covered and clean?',
     opts: [
       { t: 'No - clean, clear, tanks covered', d: 'No obvious nutrient sources', ic: '/op-icons/rewards/pointsCheck.png', w: 0 },
-      { t: "Some scale / can't inspect tank", d: 'Worth a closer look', ic: '/op-icons/homescore/magnifier.png', w: 1 },
+      { t: "Some scale / can't inspect tank", d: 'Worth a closer look', ic: '/flow-icons/magnifier.png', w: 1 },
       { t: 'Visible rust, sludge or debris', d: 'Nutrient source present', ic: '/op-icons/legionella/rustSludge.png', w: 2 },
     ],
   },
@@ -2745,11 +2745,11 @@ const legFlags = computed(() => {
 })
 const legActions = computed(() => {
   const A: { ic: string; t: string; s: string; f: string }[] = []
-  A.push({ ic: '/op-icons/homescore/tap.png', t: 'Flush unused outlets weekly', s: 'Run rarely-used taps and showers for a couple of minutes to stop water stagnating - and always before a new tenant moves in.', f: 'Weekly + before every let' })
+  A.push({ ic: '/flow-icons/tap.png', t: 'Flush unused outlets weekly', s: 'Run rarely-used taps and showers for a couple of minutes to stop water stagnating - and always before a new tenant moves in.', f: 'Weekly + before every let' })
   A.push({ ic: '/op-icons/legionella/waterThermometer.png', t: 'Keep hot hot, cold cold', s: 'Hot water should reach 50°C within a minute; cold should stay below 20°C.', f: 'Ongoing' })
   if ((legAnswers.value.shower ?? 0) > 0) A.push({ ic: '/op-icons/legionella/descaleClean.png', t: 'Descale & disinfect shower heads', s: 'Remove, soak and clean shower heads and hoses to clear scale and biofilm.', f: 'Every 3 months' })
   if ((legAnswers.value.temp ?? 0) > 0) A.push({ ic: '/op-icons/legionella/waterThermometer.png', t: 'Measure your water temperatures', s: 'Run the taps and check hot and cold, so your next assessment records real figures.', f: 'Do this now' })
-  if ((legAnswers.value.system ?? 0) >= 2 || (legAnswers.value.cond ?? 0) > 0) A.push({ ic: '/op-icons/homescore/magnifier.png', t: 'Inspect & keep the tank clean', s: 'Check any storage/header tank has a close-fitting lid and no rust, sludge or debris.', f: 'At each review' })
+  if ((legAnswers.value.system ?? 0) >= 2 || (legAnswers.value.cond ?? 0) > 0) A.push({ ic: '/flow-icons/magnifier.png', t: 'Inspect & keep the tank clean', s: 'Check any storage/header tank has a close-fitting lid and no rust, sludge or debris.', f: 'At each review' })
   A.push({ ic: '/op-icons/legionella/tellTenant.png', t: 'Tell your tenant', s: "Ask them to flush taps and showers if the home's been empty for a week or more.", f: 'At move-in' })
   return A
 })
@@ -4796,7 +4796,7 @@ const SectionCard = defineComponent({
   mask-image: linear-gradient(180deg, #000, transparent 86%);
 }
 
-/* ── Web nav (shared HomeScore pattern) ───────────────────────────── */
+/* ── Web nav ───────────────────────────── */
 .hsw-shell {
   width: min(1180px, calc(100% - 48px));
   margin: 0 auto;
