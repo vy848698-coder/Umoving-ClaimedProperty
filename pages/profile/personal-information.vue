@@ -1130,10 +1130,21 @@ const ringStyle = computed(() => ({
   .pi-welcome-title { font-size: 26px; }
   .pi-avatar { width: 80px; height: 80px; font-size: 27px; }
 }
+/* The switch is drawn at the usual 44x24, but 24px is a thin thing to hit on
+   a phone. An invisible overlay takes the hit area to 44x44 without changing
+   how the switch looks. */
+.pir-toggle::before {
+  content: '';
+  position: absolute;
+  inset: -10px 0;
+}
+
 @media (max-width: 560px) {
   .pi-welcome { grid-template-columns: 1fr; text-align: center; justify-items: center; }
   .pi-welcome-sub { margin: 0 auto; }
   .pi-completion-row { justify-content: center; }
+  /* 6px of vertical padding left these at 33px. */
+  .pi-card-action { padding: 10px 12px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

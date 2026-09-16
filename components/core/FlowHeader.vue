@@ -127,11 +127,30 @@ const goBack = useGoBack(FLOW_HOME)
    the header and getting clipped off the right edge (Profile unreachable).
    Icon-only brand + icon-only Back recovers the ~90px needed. */
 @media (max-width: 480px) {
+  /* Hidden visually but kept in the accessibility tree — the wordmark is the
+     only name this button has, so display:none would leave it unlabelled. */
   .fh-brand span:not(.fh-brand-beta) {
-    display: none;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  /* Down to the bare mark both of these shrink below a comfortable tap, so
+     they get an explicit box matching the buttons beside them. */
+  .fh-brand {
+    gap: 0;
+    min-width: 42px;
+    min-height: 42px;
+    justify-content: center;
+    margin-left: -8px;
   }
   .fh-back {
-    padding: 0 10px;
+    width: 42px;
+    padding: 0;
+    gap: 0;
+    justify-content: center;
   }
   .fh-back-label {
     display: none;
