@@ -3927,4 +3927,41 @@ function formatStamp(iso) {
   .pp-share-row { flex-direction: column; }
   .pp-share-copy { width: 100%; }
 }
+
+/* ── Small screens ─────────────────────────────────────────────────────
+   These have to sit after the pill-style .pp-subtabs/.pp-subtab overrides
+   further up, which drop the row out of `flex: 1` and let it size to its
+   content — 425px for four icon-and-label tabs, wider than any phone, and
+   the app shell clips the overflow so "Timeline" simply vanished. Four tabs
+   will not fit at this width, so the row scrolls sideways instead, which
+   keeps every tab and its icon reachable. */
+@media (max-width: 700px) {
+  .pp-subtabs {
+    display: flex;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .pp-subtabs::-webkit-scrollbar {
+    display: none;
+  }
+  /* Nothing else signals that the row runs past the edge, so it fades out on
+     the right — otherwise the last tab reads as if it were the last one. */
+  .pp-subtabs {
+    -webkit-mask-image: linear-gradient(to right, #000 82%, transparent 99%);
+    mask-image: linear-gradient(to right, #000 82%, transparent 99%);
+  }
+  .pp-subtab {
+    flex: 0 0 auto;
+    padding: 10px 14px;
+    white-space: nowrap;
+  }
+  /* Was 34px — the only control in the hero's corner. */
+  .pp-hero-switch {
+    width: 40px;
+    height: 40px;
+  }
+}
 </style>

@@ -210,3 +210,68 @@ html {
     flex-shrink: 0;
   }
 }
+
+/* The passport collection builds the same navbar under its own class names
+   (.ppn-*) and adds a tour button, so it gets the same treatment. Its
+   "Claim Passport" CTA is already hidden below 900px by the page itself. */
+@media (max-width: 700px) {
+  .ppn-nav .ppn-nav-inner {
+    gap: 12px;
+  }
+  .ppn-nav .ppn-nav-inner .ppn-brand {
+    gap: 8px;
+    min-width: 0;
+  }
+  .ppn-nav .ppn-nav-inner .ppn-brand-logo {
+    height: 26px;
+  }
+  .ppn-nav .ppn-nav-inner .ppn-actions {
+    gap: 8px;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 440px) {
+  .ppn-nav .ppn-nav-inner .ppn-brand-name {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .ppn-nav .ppn-nav-inner .ppn-brand {
+    gap: 0;
+    min-width: 42px;
+    min-height: 42px;
+    justify-content: center;
+    margin-left: -8px;
+  }
+}
+
+/* Smallest phones. The passport screens carry a tour button in this row as
+   well, so the two text buttons give up some padding to keep everything on
+   one line. Four-class selectors here because ProfileMenu's own
+   `.pm-trigger:has(.pm-chev)` is already a three-level match once scoped,
+   and this sheet loads before component styles. */
+@media (max-width: 400px) {
+  .hsw-nav .hsw-nav-inner .hsw-actions .pn-btn,
+  .hsw-nav .hsw-nav-inner .hsw-actions .pm-trigger,
+  .ppn-nav .ppn-nav-inner .ppn-actions .pn-btn,
+  .ppn-nav .ppn-nav-inner .ppn-actions .pm-trigger {
+    font-size: 13.5px;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+  .hsw-nav .hsw-nav-inner .hsw-actions .pm-trigger,
+  .ppn-nav .ppn-nav-inner .ppn-actions .pm-trigger {
+    padding-right: 9px;
+    gap: 5px;
+  }
+  .hsw-nav .hsw-nav-inner .hsw-actions .hsw-tour,
+  .ppn-nav .ppn-nav-inner .ppn-actions .ppn-tour {
+    width: 40px;
+    height: 40px;
+    font-size: 15px;
+  }
+}

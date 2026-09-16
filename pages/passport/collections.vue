@@ -1420,6 +1420,9 @@ const executeDelete = async () => {
 .ppw-search-input {
   flex: 1;
   min-width: 0;
+  /* Fills the pill rather than sitting as a band through its middle, so a tap
+     anywhere in the field lands on the input. */
+  align-self: stretch;
   border: none;
   outline: none;
   background: transparent;
@@ -1427,6 +1430,9 @@ const executeDelete = async () => {
   font-size: 14px;
   font-weight: 600;
   color: var(--ink);
+  /* The placeholder is longer than the field on a phone — end it cleanly
+     rather than slicing it mid-word at the pill's edge. */
+  text-overflow: ellipsis;
 }
 
 .ppw-search-input::placeholder {
@@ -1472,6 +1478,9 @@ const executeDelete = async () => {
 
 .ppw-sort-select {
   appearance: none;
+  /* Same as the search field: fill the control's height so the whole pill is
+     the hit area, not a 20px strip through its middle. */
+  align-self: stretch;
   border: 0;
   background: transparent;
   font-family: inherit;
@@ -2200,6 +2209,13 @@ const executeDelete = async () => {
     flex-direction: column;
     align-items: stretch;
   }
+  /* `.ppw-search { flex: 1 }` was written for the horizontal row, where it
+     grows the field across the spare width. Stacked, the main axis is
+     vertical, so that same rule became `flex-basis: 0%` on the HEIGHT and
+     overrode `height: 50px` — the search field collapsed to a 20px sliver. */
+  .ppw-search {
+    flex: none;
+  }
   .ppw-sort {
     justify-content: space-between;
   }
@@ -2208,6 +2224,62 @@ const executeDelete = async () => {
   }
   .ppw-stat {
     min-width: calc(50% - 7px);
+  }
+
+  /* The hero is built for a 500px frame: a 340px book rotated -6deg with the
+     two chips floating over its corners and hanging 20px outside the frame.
+     On a phone the frame is the whole content box, so the book alone is wider
+     than the screen and the overhang falls outside it. Scaling the float down
+     only moved the collision inward — the chips ended up across the address
+     printed on the cover. The visual is decorative (aria-hidden), so here the
+     chips come out of the float and sit in a row beneath the book instead.
+     Book + one chip is wider than the box, so they wrap onto their own line
+     without any ordering tricks. */
+  .ppw-visual {
+    max-width: none;
+    min-height: 0;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding-bottom: 6px;
+  }
+  .ppw-visual-glow {
+    width: 230px;
+    height: 230px;
+  }
+  .ppw-book {
+    width: 196px;
+    margin-bottom: 4px;
+  }
+  .ppw-chip,
+  .ppw-chip--compliance {
+    position: static;
+    flex: 0 0 calc(50% - 5px);
+    width: auto;
+    min-width: 0;
+    padding: 10px 12px;
+    border-radius: 13px;
+    animation: none;
+    /* The frame centres its items, which left the shorter chip floating
+       against the taller one. Side by side they should match. */
+    align-self: stretch;
+  }
+  /* The float's hover nudges have nothing to nudge away from now. */
+  .ppw-visual:hover .ppw-chip--docs,
+  .ppw-visual:hover .ppw-chip--compliance {
+    transform: none;
+  }
+  .ppw-chip-sub {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 400px) {
+  .ppw-book {
+    width: 172px;
+  }
+  .ppw-visual-glow {
+    width: 200px;
+    height: 200px;
   }
 }
 

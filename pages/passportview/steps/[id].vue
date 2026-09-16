@@ -1403,5 +1403,20 @@ const handleViewProfile = () => {
   .task-pct {
     display: none;
   }
+  /* flex-shrink:0 kept this at its full text width, so the line ran 350px
+     wide in a 296px card and the overflow was clipped by the app shell.
+     It wraps instead here. */
+  .prog-text {
+    flex-shrink: 1;
+  }
+  /* Breadcrumb links were a 20px-tall hit area; the padding is negated on the
+     row so the crumbs keep sitting on the same baseline. */
+  .stw-crumbs {
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+  }
+  .stw-crumbs button {
+    padding: 10px 0;
+  }
 }
 </style>

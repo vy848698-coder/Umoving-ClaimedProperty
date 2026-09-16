@@ -1290,6 +1290,9 @@ const handleContinue = () => {
 /* ── Left dark sidebar ─────────────────────────────────────────────── */
 .tk-side {
   align-self: stretch;
+  /* Grid items default to min-width:auto, so a wide child here would stretch
+     the column past the viewport instead of wrapping. */
+  min-width: 0;
   min-height: calc(100dvh - 66px);
   padding: 40px 34px;
   color: #fff;
