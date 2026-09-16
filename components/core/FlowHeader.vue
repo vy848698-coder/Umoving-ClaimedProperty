@@ -10,7 +10,7 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="15 18 9 12 15 6" />
           </svg>
-          Back
+          <span class="fh-back-label">Back</span>
         </button>
         <PassportNavButton />
         <ProfileMenu />
@@ -119,6 +119,25 @@ const goBack = useGoBack(FLOW_HOME)
   }
   .fh-brand-beta {
     display: none;
+  }
+}
+
+/* At phone widths, Back + Passport + Profile no longer fit alongside the
+   full wordmark - the "umovingu" text and the "Back" label were overflowing
+   the header and getting clipped off the right edge (Profile unreachable).
+   Icon-only brand + icon-only Back recovers the ~90px needed. */
+@media (max-width: 480px) {
+  .fh-brand span:not(.fh-brand-beta) {
+    display: none;
+  }
+  .fh-back {
+    padding: 0 10px;
+  }
+  .fh-back-label {
+    display: none;
+  }
+  .fh-actions {
+    gap: 8px;
   }
 }
 </style>

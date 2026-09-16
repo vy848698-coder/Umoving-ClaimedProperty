@@ -3,7 +3,7 @@
     <div v-if="modelValue" class="fmm-overlay" @click.self="viewPassport">
       <div class="fmm-modal">
         <div class="fmm-handle" />
-        <div class="fmm-icon"><img src="/icons/Trophy.png" alt="" /></div>
+        <div class="fmm-icon"><img src="/homescore-icon/trophy.png" alt="" /></div>
 
         <div class="fmm-eyebrow">Founding Homeowner</div>
         <h2 class="fmm-title">

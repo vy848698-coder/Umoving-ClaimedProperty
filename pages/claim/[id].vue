@@ -594,7 +594,7 @@ const issuedPassportPath = ref('')
 
 const readyPassport = {
   image: '/build/umu-passport-sm.png',
-  title: 'Your Seller Passport is ready',
+  title: 'Your Property Passport is ready',
 }
 const base = config.public.apiBase as string
 
@@ -897,7 +897,7 @@ const claimPriceDisplay = computed(() =>
 // copy explains what's being charged without duplicating the pricing logic.
 const claimPriceReason = computed(() => {
   if (claimAmountPence.value == null) return ''
-  return claimAmountPence.value >= 3599
+  return claimAmountPence.value >= 1999
     ? 'Identity verification (KYC) and HM Land Registry ownership check'
     : 'HM Land Registry ownership check'
 })
