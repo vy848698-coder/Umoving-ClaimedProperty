@@ -13,7 +13,10 @@ export const CLAIM_STEPS: ClaimStepInfo[] = [
     title: 'Find your property',
     short: 'Find property',
     text: 'Search your postcode and pick your exact address.',
-    image: '/build/houseWithPin.png',
+    // Same house render the selected-address card uses
+    // (components/claim/SelectedAddressCard.vue), so the property is drawn the
+    // same way everywhere in the claim journey.
+    image: '/dashboard-art/searchHouse.png',
   },
   {
     title: 'Verify your identity',
@@ -31,6 +34,8 @@ export const CLAIM_STEPS: ClaimStepInfo[] = [
     title: 'Get your Property Passport',
     short: 'Get Passport',
     text: 'Your Passport is issued, ready to build and share.',
-    image: '/build/passport.png',
+    // The real Seller Passport cover render, so the last step shows the thing
+    // the user is actually being given.
+    image: '/op-icons/passport-covers/seller_tilted_right_on_tile.png',
   },
 ]

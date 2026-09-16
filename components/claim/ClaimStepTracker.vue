@@ -53,9 +53,9 @@ defineProps<{ current: number }>()
 .cst-step:not(:first-child)::before {
   content: '';
   position: absolute;
-  top: 23px;
-  left: calc(-50% + 32px);
-  right: calc(50% + 32px);
+  top: 31px;
+  left: calc(-50% + 40px);
+  right: calc(50% + 40px);
   height: 3px;
   border-radius: 3px;
   background: #dbe7f5;
@@ -67,22 +67,25 @@ defineProps<{ current: number }>()
 
 .cst-ic {
   position: relative;
-  width: 48px;
-  height: 48px;
-  border-radius: 14px;
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
   display: grid;
   place-items: center;
   background: #fff;
   border: 1px solid #e7ecf2;
-  box-shadow: 0 4px 12px rgba(17, 52, 88, 0.06);
+  box-shadow: 0 6px 16px rgba(17, 52, 88, 0.08);
   transition: border-color 0.2s, box-shadow 0.2s;
 }
+/* The artwork is detailed 3D render, so it is given most of the tile and only
+   lightly dulled when the step is still ahead - the old 0.55 opacity over a
+   0.35 grayscale washed the houses out until they were hard to make out. */
 .cst-ic img {
-  width: 36px;
-  height: 36px;
+  width: 50px;
+  height: 50px;
   object-fit: contain;
-  opacity: 0.55;
-  filter: grayscale(0.35);
+  opacity: 0.82;
+  filter: grayscale(0.12);
   transition: opacity 0.2s, filter 0.2s;
 }
 .cst-step.done .cst-ic img,
@@ -97,10 +100,10 @@ defineProps<{ current: number }>()
 
 .cst-badge {
   position: absolute;
-  top: -6px;
-  right: -6px;
-  width: 20px;
-  height: 20px;
+  top: -7px;
+  right: -7px;
+  width: 23px;
+  height: 23px;
   border-radius: 50%;
   display: grid;
   place-items: center;
@@ -136,18 +139,18 @@ defineProps<{ current: number }>()
 
 @media (max-width: 560px) {
   .cst-ic {
-    width: 40px;
-    height: 40px;
-    border-radius: 12px;
+    width: 52px;
+    height: 52px;
+    border-radius: 15px;
   }
   .cst-ic img {
-    width: 28px;
-    height: 28px;
+    width: 40px;
+    height: 40px;
   }
   .cst-step:not(:first-child)::before {
-    top: 19px;
-    left: calc(-50% + 26px);
-    right: calc(50% + 26px);
+    top: 25px;
+    left: calc(-50% + 33px);
+    right: calc(50% + 33px);
   }
   .cst-label {
     font-size: 11px;

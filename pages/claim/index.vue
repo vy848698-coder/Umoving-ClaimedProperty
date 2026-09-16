@@ -30,7 +30,7 @@
       <div class="clw-layout">
         <!-- Search card -->
         <section class="clw-card">
-          <div class="cl-icon-square"><img src="/build/houseWithPin.png" alt="" /></div>
+          <div class="cl-icon-square"><img src="/dashboard-art/searchHouse.png" alt="" /></div>
           <h2 class="cl-h2">Which property are you claiming?</h2>
           <p class="cl-body">
             Enter your postcode and select your address. We'll verify ownership
@@ -203,7 +203,7 @@ function continueToClaim() {
   mask-image: linear-gradient(180deg, #000, transparent 86%);
 }
 
-/* ── Web nav (shared HomeScore pattern) ───────────────────────────── */
+/* ── Web nav ───────────────────────────── */
 .hsw-shell {
   width: min(1180px, calc(100% - 48px));
   margin: 0 auto;
@@ -439,23 +439,23 @@ function continueToClaim() {
     inset 0 1px 0 rgba(255, 255, 255, 0.96);
 }
 
+/* The house render carries its own transparent background, so it sits straight
+   on the card. The white plate only boxed it in against an already-white card,
+   and its overflow:hidden clipped the art's corners. The lift moves onto the
+   artwork itself so the house still reads as raised off the page. */
 .cl-icon-square {
-  width: 76px;
-  height: 76px;
-  background: #fff;
-  border: 1px solid rgba(0, 161, 154, 0.22);
-  border-radius: 22px;
+  width: 92px;
+  height: 92px;
   display: grid;
   place-items: center;
-  margin: 0 0 20px;
-  overflow: hidden;
-  box-shadow: 0 10px 24px rgba(0, 161, 154, 0.14);
+  margin: 0 0 16px;
 }
 
 .cl-icon-square img {
-  width: 64px;
-  height: 64px;
+  width: 92px;
+  height: 92px;
   object-fit: contain;
+  filter: drop-shadow(0 10px 18px rgba(0, 110, 104, 0.2));
 }
 
 .cl-h2 {
@@ -611,19 +611,19 @@ function continueToClaim() {
 .clw-step-ic {
   position: relative;
   flex-shrink: 0;
-  width: 48px;
-  height: 48px;
-  border-radius: 14px;
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
   display: grid;
   place-items: center;
   background: #fff;
   border: 1px solid #e7ecf2;
-  box-shadow: 0 4px 12px rgba(17, 52, 88, 0.06);
+  box-shadow: 0 6px 16px rgba(17, 52, 88, 0.08);
 }
 
 .clw-step-ic img {
-  width: 36px;
-  height: 36px;
+  width: 50px;
+  height: 50px;
   object-fit: contain;
 }
 

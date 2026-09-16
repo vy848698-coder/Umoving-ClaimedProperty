@@ -3,7 +3,7 @@
     <!-- ── Left brand / illustration panel ── -->
     <aside class="otp-aside">
       <div class="otp-brand" style="cursor: default">
-        <img src="/op-icons/logo.png" alt="" class="otp-brand-logo" />
+        <span class="otp-brand-logo"><img src="/op-icons/logo.svg" alt="" /></span>
         <span class="otp-brand-name">umovingu</span>
         <span class="otp-brand-beta">Beta</span>
       </div>
@@ -104,14 +104,24 @@ if (typeof definePageMeta === 'function') {
   cursor: pointer;
   padding: 4px;
 }
+/* logo.svg is the white + teal mark drawn for dark grounds. The .png next to
+   it is 62% #221D45, which is the same navy as this panel - on here it left
+   the house and the "m" invisible. The 9px corner matches the squared
+   progress dots below and the Beta chip's border. */
 .otp-brand-logo {
-  width: 46px;
-  height: 46px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 1.5px solid rgba(255, 255, 255, 0.14);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+  width: 44px;
+  height: 44px;
+  border-radius: 9px;
+  background: rgba(47, 191, 182, 0.13);
+  border: 1px solid rgba(47, 191, 182, 0.34);
+  display: grid;
+  place-items: center;
   flex-shrink: 0;
+}
+.otp-brand-logo img {
+  width: 25px;
+  height: auto;
+  display: block;
 }
 .otp-brand-name {
   font-size: 22px;
