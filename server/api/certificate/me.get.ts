@@ -22,14 +22,27 @@ export default defineEventHandler(async (event) => {
   const api = <T>(path: string) =>
     $fetch<T>(`${backendBase}${path}`, { headers: { Authorization: auth } })
 
-  const profile = await api<AnyRecord>('/profile/me').catch((err) => {
-    const status = err?.statusCode ?? err?.response?.status
-    throw createError(
-      status === 401 || status === 403
-        ? { statusCode: 401, statusMessage: 'Your session has expired. Sign in again.' }
-        : { statusCode: 502, statusMessage: 'Could not load your profile. Try again in a moment.' },
-    )
-  })
+  // profile/me, profile/passports and founder-number don't depend on one
+  // another - run them together instead of one after another. This endpoint
+  // used to take 5 fully sequential backend round-trips before it could even
+  // start rendering; three of those never needed to wait for each other.
+  const [profile, passports, founder] = await Promise.all([
+    api<AnyRecord>('/profile/me').catch((err) => {
+      const status = err?.statusCode ?? err?.response?.status
+      throw createError(
+        status === 401 || status === 403
+          ? { statusCode: 401, statusMessage: 'Your session has expired. Sign in again.' }
+          : { statusCode: 502, statusMessage: 'Could not load your profile. Try again in a moment.' },
+      )
+    }),
+    // Owned (seller / landlord) passports only - not ones the user watches as
+    // a buyer - and only ones actually claimed (not PENDING_PAYMENT: a draft
+    // row that exists after KYC+HMLR but before the owner-claim charge, with
+    // no seeded sections yet - certifying a claim that isn't actually
+    // complete).
+    api<AnyRecord[]>('/profile/passports').catch(() => [] as AnyRecord[]),
+    getOrAssignFounderNumber(backendBase, auth),
+  ])
 
   const userId = String(profile?.id ?? profile?.userId ?? profile?.email ?? '')
   const name = [profile?.firstName, profile?.lastName]
@@ -47,12 +60,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // Owned (seller / landlord) passports only - not ones the user watches as a
-  // buyer - and only ones actually claimed (not PENDING_PAYMENT: a draft row
-  // that exists after KYC+HMLR but before the owner-claim charge, with no
-  // seeded sections yet - certifying a claim that isn't actually complete).
-  const passports = (await api<AnyRecord[]>('/profile/passports').catch(() => [])) ?? []
-  const owned = passports.filter(
+  const owned = (passports ?? []).filter(
     (p) => p?.id && p?.type !== 'BUYER' && p?.status !== 'PENDING_PAYMENT',
   )
 
@@ -98,7 +106,6 @@ export default defineEventHandler(async (event) => {
   const postcode = formatPostcode(passport.postcode ?? chosen.postcode ?? property.postcode ?? '')
   const addressLine2 = [town, postcode].filter(Boolean).join(', ')
 
-  const founder = await getOrAssignFounderNumber(backendBase, auth)
   // The day the certificate was first issued - today on the first request,
   // then fixed for good. Passport records can be created long before the claim,
   // so their createdAt showed the wrong day.

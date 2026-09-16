@@ -6,7 +6,7 @@
       <div class="hsw-shell hsw-nav-inner">
         <button class="hsw-brand" type="button" @click="navigateTo(FLOW_HOME)">
           <img src="/op-icons/logo.png" alt="" class="hsw-brand-logo" />
-          <span>umovingu</span><span class="hsw-brand-beta">BETA</span>
+          <span>umovingu</span>
         </button>
         <div class="hsw-actions">
           <PassportNavButton />

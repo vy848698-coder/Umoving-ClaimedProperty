@@ -31,6 +31,42 @@ export default defineNuxtConfig({
     devStorage: {
       founders: { driver: 'fs', base: './.data/founders' },
     },
+    // @napi-rs/canvas ships its native binary alongside a data file it loads
+    // at runtime (icudtl.dat) from a path next to the binary, not via JS
+    // `require()` — Nitro's file-tracer only follows JS requires, so a
+    // traced/bundled build silently drops icudtl.dat and the certificate
+    // renderer hard-crashes in production ("SkIcuLoader: datafile missing",
+    // "fatal error: check(fUnicode)") even though it works in dev, where the
+    // package is loaded straight from node_modules. Marking it external
+    // keeps the whole package as a real runtime dependency rather than
+    // tracing it, but Nitro's own node_modules copy step for externals
+    // still only picks up package.json + the .node binary — the hook below
+    // copies icudtl.dat across explicitly for whichever platform package(s)
+    // are actually installed (only one, matching the build/deploy OS).
+    externals: {
+      external: ['@napi-rs/canvas'],
+    },
+    hooks: {
+      async compiled(nitro) {
+        const fs = await import('node:fs')
+        const path = await import('node:path')
+        const platformPkgs = [
+          'canvas-win32-x64-msvc',
+          'canvas-linux-x64-gnu',
+          'canvas-linux-arm64-gnu',
+          'canvas-darwin-x64',
+          'canvas-darwin-arm64',
+        ]
+        for (const pkg of platformPkgs) {
+          const src = path.join(process.cwd(), 'node_modules/@napi-rs', pkg, 'icudtl.dat')
+          const destDir = path.join(nitro.options.output.serverDir, 'node_modules/@napi-rs', pkg)
+          if (fs.existsSync(src) && fs.existsSync(destDir)) {
+            fs.copyFileSync(src, path.join(destDir, 'icudtl.dat'))
+            console.log(`[nitro] copied icudtl.dat for ${pkg}`)
+          }
+        }
+      },
+    },
   },
 
   modules: ['@nuxt/ui', '@pinia/nuxt', '@vite-pwa/nuxt'],

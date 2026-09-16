@@ -6,7 +6,6 @@
         <button class="ppn-brand" type="button" @click="navigateTo(FLOW_HOME)">
           <img src="/op-icons/logo.png" alt="" class="ppn-brand-logo" />
           <span class="ppn-brand-name">umovingu</span>
-          <span class="ppn-brand-beta">BETA</span>
         </button>
         <div class="ppn-actions">
           <button

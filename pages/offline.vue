@@ -31,7 +31,7 @@
 
     <div class="offline-brand">
       <img src="/op-icons/logo.png" alt="UmovingU" class="offline-logo" />
-      <span>umovingu</span><span class="offline-beta">BETA</span>
+      <span>umovingu</span>
     </div>
   </div>
 </template>

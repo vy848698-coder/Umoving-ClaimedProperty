@@ -3,7 +3,7 @@
     <div class="fh-inner">
       <button class="fh-brand" type="button" @click="navigateTo(FLOW_HOME)">
         <img src="/op-icons/logo.png" alt="" class="fh-brand-logo" />
-        <span>umovingu</span><span class="fh-brand-beta">BETA</span>
+        <span>umovingu</span>
       </button>
       <div class="fh-actions">
         <button class="fh-back" type="button" @click="goBack">

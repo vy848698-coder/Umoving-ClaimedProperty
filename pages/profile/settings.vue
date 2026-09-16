@@ -132,44 +132,6 @@
           </div>
         </section>
 
-        <!-- Appearance & language -->
-        <section class="st-card">
-          <div class="st-card-head">
-            <span class="st-card-chip teal">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="13.5" cy="6.5" r=".5" fill="currentColor" /><circle cx="17.5" cy="10.5" r=".5" fill="currentColor" /><circle cx="8.5" cy="7.5" r=".5" fill="currentColor" /><circle cx="6.5" cy="12.5" r=".5" fill="currentColor" /><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.555C21.965 6.012 17.461 2 12 2z" />
-              </svg>
-            </span>
-            <h2 class="st-card-title">Appearance &amp; Language</h2>
-          </div>
-          <div class="st-group">
-            <div class="st-row st-row--block">
-              <div class="st-row-content">
-                <div class="st-row-label">Theme</div>
-                <div class="st-row-meta">Choose how the app looks</div>
-              </div>
-              <div class="st-segment">
-                <button
-                  v-for="opt in themeOptions"
-                  :key="opt.value"
-                  class="st-segment-btn"
-                  :class="{ active: theme === opt.value }"
-                  @click="setTheme(opt.value)"
-                >
-                  {{ opt.label }}
-                </button>
-              </div>
-            </div>
-            <button class="st-row">
-              <div class="st-row-content">
-                <div class="st-row-label">Language</div>
-                <div class="st-row-meta">English (UK)</div>
-              </div>
-              <span class="st-row-chev">›</span>
-            </button>
-          </div>
-        </section>
-
         <!-- Privacy & data -->
         <section class="st-card">
           <div class="st-card-head">
@@ -181,13 +143,6 @@
             <h2 class="st-card-title">Privacy &amp; Data</h2>
           </div>
           <div class="st-group">
-            <div class="st-row">
-              <div class="st-row-content">
-                <div class="st-row-label">Contact visibility</div>
-                <div class="st-row-meta">Sellers see your details only when you message them</div>
-              </div>
-              <div class="st-toggle" :class="{ on: prefs.contactVisible }" @click="setPref('contactVisible', !prefs.contactVisible)" />
-            </div>
             <button class="st-row">
               <div class="st-row-content">
                 <div class="st-row-label">Download your data</div>
@@ -345,19 +300,11 @@ definePageMeta({ title: 'Settings - UmovingU', middleware: 'auth' })
 
 const config = useRuntimeConfig()
 const { profile, fetchProfile } = useProfile()
-const { theme, setTheme: applyTheme } = useTheme()
-
-const themeOptions = [
-  { value: 'light', label: 'Light' },
-  { value: 'dark', label: 'Dark' },
-  { value: 'auto', label: 'Auto' },
-] as const
 
 const prefs = reactive({
   pushNotifications: true,
   emailNewsletter: true,
   smsNotifications: false,
-  contactVisible: true,
 })
 const toast = ref('')
 
@@ -419,7 +366,6 @@ onMounted(async () => {
   prefs.pushNotifications = profile.value?.pushNotifications ?? true
   prefs.emailNewsletter = profile.value?.emailNewsletter ?? true
   prefs.smsNotifications = profile.value?.smsNotifications ?? false
-  prefs.contactVisible = profile.value?.contactVisible ?? true
 })
 
 async function setPref(key: keyof typeof prefs, value: boolean) {
@@ -437,11 +383,6 @@ async function setPref(key: keyof typeof prefs, value: boolean) {
   } catch {
     showToast('Could not save')
   }
-}
-
-function setTheme(next: 'light' | 'dark' | 'auto') {
-  applyTheme(next)
-  showToast(`Theme: ${next.charAt(0).toUpperCase() + next.slice(1)}`)
 }
 
 function showToast(msg: string) {
