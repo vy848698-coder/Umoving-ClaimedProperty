@@ -13,6 +13,10 @@
       />
       <button class="btn" @click="$emit('update', text)">Find URN</button>
     </div>
+
+    <p v-if="prefilled" class="address-hint">
+      Filled in from your Passport — edit it if this isn't right.
+    </p>
   </div>
 </template>
 
@@ -21,14 +25,52 @@ import { ref, watch } from 'vue'
 const props = defineProps({
   question: { type: Object, required: true },
   answer: { type: String, default: '' },
+  // The address held on the passport record, passed down from the task page.
+  // Used only to seed an empty field: a saved answer always wins, because the
+  // seller may have corrected it.
+  propertyAddress: { type: String, default: '' },
 })
 const emit = defineEmits(['update'])
+
 const text = ref(props.answer || '')
+// Whether what's in the box came from the passport rather than the seller, so
+// the hint below is only shown when it is actually theirs to check.
+const prefilled = ref(false)
+
+// The address arrives asynchronously (the task page fetches it on mount), so
+// this has to react to it landing rather than read it once on setup.
+function seedFromProperty() {
+  if (text.value) return
+  const addr = (props.propertyAddress || '').trim()
+  if (!addr) return
+  text.value = addr
+  prefilled.value = true
+  // Emit so the answer is recorded without the seller having to touch the
+  // field — filling the box but leaving it unsaved would defeat the point.
+  emit('update', addr)
+}
+
+watch(() => props.propertyAddress, seedFromProperty, { immediate: true })
+
 watch(
   () => props.answer,
-  (v) => (text.value = v || ''),
+  (v) => {
+    // A saved answer always replaces a seeded value.
+    if (v) {
+      text.value = v
+      prefilled.value = false
+    } else {
+      text.value = ''
+      seedFromProperty()
+    }
+  },
 )
-const onInput = () => emit('update', text.value)
+
+const onInput = () => {
+  // Once the seller edits it, it is their answer, not ours.
+  prefilled.value = false
+  emit('update', text.value)
+}
 </script>
 
 <style scoped>
@@ -55,6 +97,9 @@ const onInput = () => emit('update', text.value)
   margin-bottom: 8px;
   color: #111;
 }
+.address-hint {
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  color: #6b6783;
+}
 </style>
-
-

@@ -176,6 +176,7 @@
           :answer="getPartAnswer(part)"
           :display="getPartDisplay(part)"
           :passport-id="part.passportId || ''"
+          :property-address="propertyAddress"
           :hide-question-display="true"
           @update="(val) => updatePartAnswer(part.partKey, val)"
         />
@@ -284,6 +285,9 @@ const props = defineProps({
   question: { type: Object, required: true },
   answer: { type: [Object, String], default: () => ({}) },
   passportId: { type: String, default: '' },
+  // The property's own address, forwarded to sub-questions that ask for it
+  // (see AddressQuestion) so the seller doesn't retype what we already know.
+  propertyAddress: { type: String, default: '' },
   displayedQuestion: { type: String, default: '' },
   showQuestionCursor: { type: Boolean, default: false },
   displayedDescription: { type: String, default: '' },

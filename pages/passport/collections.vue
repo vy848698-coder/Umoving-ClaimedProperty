@@ -58,15 +58,6 @@
                 </div>
                 <span class="ppw-stat-label">Documents secured</span>
               </div>
-              <div class="ppw-stat">
-                <div class="ppw-stat-top">
-                  <span class="ppw-stat-num">{{ pointsEarned }}</span>
-                  <span class="ppw-stat-ic ppw-stat-ic--gold">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15 9 22 9.3 16.5 14 18.5 21 12 17 5.5 21 7.5 14 2 9.3 9 9" /></svg>
-                  </span>
-                </div>
-                <span class="ppw-stat-label">Points earned</span>
-              </div>
             </div>
           </div>
 
@@ -692,7 +683,7 @@ const collectionsTourSteps = [
   {
     selector: '[data-tour="stats"]',
     title: 'Snapshot',
-    body: 'Number of properties, total documents secured across all passports, and points earned for completing tasks.',
+    body: 'Number of properties and total documents secured across all passports.',
   },
   {
     selector: '[data-tour="resume"]',

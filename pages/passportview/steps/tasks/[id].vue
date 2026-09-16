@@ -172,17 +172,6 @@
             <span>{{ remainingQuestions }} remaining</span>
           </div>
 
-          <QuestionPointsCard
-            ref="pointsCardEl"
-            :balance="runningBalance"
-            :question-points="currentQuestion?.points || 0"
-            :question-number="currentQuestionIndex + 1"
-            :total-questions="totalQuestions"
-            :saved="justSaved"
-            :saved-points="lastSavedPoints"
-            :balance-before="balanceBeforeSave"
-          />
-
           <div class="question-section">
             <div v-if="currentQuestion" class="question-content">
               <div
@@ -205,6 +194,7 @@
                       currentQuestion.display || currentQuestion.type?.toLowerCase()
                     "
                     :passport-id="route.query.propertyId || ''"
+                    :property-address="propertyAddress"
                     :displayed-question="displayedQuestion"
                     :show-question-cursor="showQuestionCursor"
                     :displayed-description="displayedDescription"
@@ -224,6 +214,7 @@
                     currentQuestion.display || currentQuestion.type?.toLowerCase()
                   "
                   :passport-id="route.query.propertyId || ''"
+                  :property-address="propertyAddress"
                   :displayed-question="displayedQuestion"
                   :show-question-cursor="showQuestionCursor"
                   :displayed-description="displayedDescription"
@@ -298,7 +289,6 @@
 
 <script setup>
 import { usePassportRuntime } from '~/composables/usePassportRuntime'
-import QuestionPointsCard from '~/components/passport-view/QuestionPointsCard.vue'
 import SectionCompleteCelebration from '~/components/passport-view/SectionCompleteCelebration.vue'
 import RadioQuestion from '~/components/passport-view/questions/RadioQuestion.vue'
 import TextUploadQuestion from '~/components/passport-view/questions/TextUploadQuestion.vue'
@@ -383,6 +373,31 @@ function recordPointsEarned(pointsAwarded) {
   justSavedTimeout = setTimeout(() => {
     justSaved.value = false
   }, 3200)
+}
+
+// The property's own address, so questions that ask for it can pre-fill
+// instead of making the seller retype what the passport already knows.
+// route.query.propertyId carries the PASSPORT id (see navigateToStep in
+// pages/passportview/[id].vue), which is the same record the passport header
+// reads its address from.
+const propertyAddress = ref('')
+
+async function loadPropertyAddress() {
+  const id = route.query.propertyId
+  const token =
+    typeof window !== 'undefined' ? localStorage.getItem('token') : null
+  if (!id || !token) return
+  try {
+    const cfg = useRuntimeConfig()
+    const res = await $fetch(`${cfg.public.apiBase}/passport/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    propertyAddress.value = [res?.addressLine1, res?.postcode]
+      .filter(Boolean)
+      .join(', ')
+  } catch {
+    /* non-critical — the field just stays empty and the seller types it */
+  }
 }
 
 async function loadRunningBalance() {
@@ -504,6 +519,8 @@ onMounted(async () => {
   if (!currentStep.value) {
     await loadPassport(route.query.propertyId)
   }
+
+  loadPropertyAddress()
 
   setCurrentStep(stepId)
   setCurrentTask(taskId)
@@ -1302,18 +1319,22 @@ const handleContinue = () => {
   background: #2fd0c6;
 }
 
+/* The teal plate plus brightness(0) invert(1) turned a detailed 3D render
+   into a flat white blob - the navy cover and teal ribbon of the ownership
+   book were being thrown away. Shown at full colour on the dark panel
+   instead, larger, with a shadow to lift it. */
 .side-icon {
-  width: 84px;
-  height: 84px;
-  border-radius: 22px;
+  width: 96px;
+  height: 96px;
   margin: 28px 0 24px;
   display: grid;
   place-items: center;
-  background: linear-gradient(150deg, #12b3a6, #05867f);
-  box-shadow: 0 18px 34px -12px rgba(0, 161, 154, 0.6);
 }
 .side-icon :deep(img) {
-  filter: brightness(0) invert(1);
+  width: 96px;
+  height: 96px;
+  object-fit: contain;
+  filter: drop-shadow(0 14px 26px rgba(0, 0, 0, 0.45));
 }
 
 .side-title {

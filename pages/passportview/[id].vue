@@ -97,68 +97,21 @@
             </div>
             <div v-else class="pp-hero-dash-issued pp-hero-dash-issued--draft">
               <span class="pp-hero-dash-dot" />
-              Draft
+              Passport in progress
             </div>
           </div>
 
           <div class="pp-hero-actions">
             <button
               class="pp-hero-btn pp-hero-btn--primary"
-              :class="{ 'is-loading': publishLoading }"
-              :disabled="publishLoading"
-              @click="onPublishClick"
+              @click="openShare"
             >
               <OPIcon name="publishPassport" class="pp-hero-btn-ic" />
-              {{ publishButtonLabel }}
-            </button>
-            <button
-              class="pp-hero-btn pp-hero-btn--ghost"
-              @click="setTab('buyers')"
-            >
-              <OPIcon name="matchToBuyers" class="pp-hero-btn-ic" />
-              Match to buyers
-              <span v-if="matchedBuyers.length" class="pp-hero-btn-badge">{{
-                matchedBuyers.length
-              }}</span>
+              Share Passport
             </button>
           </div>
         </div>
       </div>
-
-      <!-- ── Publish-readiness band ──────────────────────────────────
-           Deliberately separate from the progress bar in the hero:
-           that bar tracks the whole passport, this tracks only the
-           disclosures a buyer pays to unlock, so it can reach 100% well
-           before the passport itself is fully filled in. ── -->
-      <button
-        v-if="readiness && !readiness.canPublish"
-        type="button"
-        class="pp-ready"
-        @click="openReadinessChecklist"
-      >
-        <span class="pp-ready-ic"><Icon name="i-lucide-rocket" /></span>
-        <span class="pp-ready-body">
-          <span class="pp-ready-head">
-            <span class="pp-ready-label">Ready to publish</span>
-            <span class="pp-ready-pct">{{ readiness.readinessPct }}%</span>
-          </span>
-          <span class="pp-ready-bar">
-            <span
-              class="pp-ready-fill"
-              :style="{ width: readiness.readinessPct + '%' }"
-            />
-          </span>
-          <span class="pp-ready-note">
-            {{ readiness.missingBlockers.length }}
-            required
-            {{ readiness.missingBlockers.length === 1 ? 'question' : 'questions' }}
-            left before you can publish — click to see them
-          </span>
-        </span>
-        <span class="pp-ready-chev">
-          <Icon name="i-lucide-chevron-right" />
-        </span>
-      </button>
 
       <!-- ── Collaborators row ── -->
       <div class="pp-collab-row" @click="openCollaboratorModal">
@@ -203,16 +156,6 @@
         >
           <OPIcon name="tabStreet" class="pp-subtab-ic" />
           Street
-        </button>
-        <button
-          :class="['pp-subtab', activeTab === 'buyers' ? 'active' : '']"
-          @click="setTab('buyers')"
-        >
-          <OPIcon name="tabBuyers" class="pp-subtab-ic" />
-          Buyers
-          <span v-if="matchedBuyers.length" class="pp-subtab-badge">{{
-            matchedBuyers.length
-          }}</span>
         </button>
         <button
           :class="['pp-subtab', activeTab === 'vault' ? 'active' : '']"
@@ -288,9 +231,6 @@
             </div>
             <div class="step-info">
               <h3 class="step-title">{{ toSmartTitleCase(step.title) }}</h3>
-              <p class="step-points">
-                {{ getStepPoints(step) }} points earned so far
-              </p>
               <div class="step-counts">
                 <span class="step-count-pill step-count-docs">
                   <Icon name="i-lucide-paperclip" />
@@ -347,7 +287,7 @@
             }"
             @click="navigateToProperty(sp.id)"
           >
-            <div class="pp-street-icon"><img src="/passport-seller-and-buyer-icon/house-person.png" alt="" loading="lazy" /></div>
+            <div class="pp-street-icon"><img src="/dashboard-art/searchHouse.png" alt="" loading="lazy" /></div>
             <div class="pp-street-body">
               <div class="pp-street-addr">{{ sp.addressLine1 }}</div>
               <div class="pp-street-meta">
@@ -430,99 +370,6 @@
               <strong>18 days faster</strong>.</span
             >
           </div>
-        </div>
-        <div style="height: 80px" />
-      </div>
-
-      <!-- Buyers tab -->
-      <div v-if="activeTab === 'buyers'" class="pp-tab-content">
-        <!-- Hero -->
-        <div class="pp-buyers-head">
-          <div class="pp-buyers-head-text">
-            <div class="pp-buyers-eyebrow">
-              <span class="pp-buyers-eyebrow-ic">
-                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.8 1.7 7-6.3-3.8-6.3 3.8 1.7-7L2 9.2l7.1-.6z" /></svg>
-              </span>
-              MATCHED BUYERS
-            </div>
-            <h2 class="pp-buyers-title">Buyers are already waiting for this home.</h2>
-            <p class="pp-buyers-lede">
-              As your Passport fills out, we match it to verified buyers. Reach
-              out privately and gauge interest first — then publish when you're
-              ready to go public.
-            </p>
-          </div>
-          <img
-            src="/passport-seller-and-buyer-icon/house-person.png"
-            alt=""
-            class="pp-buyers-illustration"
-            loading="lazy"
-          />
-        </div>
-
-        <!-- Hint -->
-        <div class="pp-buyers-hint">
-          <span class="pp-buyers-hint-ic" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5z" />
-            </svg>
-          </span>
-          <span><b>Tap any buyer</b> to see how well they match your property.</span>
-        </div>
-
-        <div v-if="matchedBuyers.length" class="pp-buyer-list">
-          <div
-            v-for="buyer in matchedBuyers"
-            :key="buyer.name"
-            class="pp-buyer-card"
-            role="button"
-            tabindex="0"
-            @click="onBuyerSelect(buyer)"
-            @keydown.enter="onBuyerSelect(buyer)"
-            @keydown.space.prevent="onBuyerSelect(buyer)"
-          >
-            <div class="pp-buyer-avatar">{{ buyerInitial(buyer.name) }}</div>
-            <div class="pp-buyer-info">
-              <div class="pp-buyer-name">{{ buyer.name }}</div>
-              <div class="pp-buyer-criteria">
-                {{ buyer.area }} · {{ buyer.budget }} · {{ buyer.timeline }}
-              </div>
-              <span class="pp-buyer-pill" :class="matchPillClass(buyer.matchScore)">
-                {{ matchLabel(buyer.matchScore) }}
-                <svg v-if="buyer.matchScore >= 55" viewBox="0 0 24 24" fill="currentColor" class="pp-buyer-star">
-                  <path d="M12 2l2.9 6.6 7.1.6-5.4 4.8 1.7 7-6.3-3.8-6.3 3.8 1.7-7L2 9.2l7.1-.6z" />
-                </svg>
-              </span>
-            </div>
-            <div class="pp-buyer-gauge">
-              <svg viewBox="0 0 80 80">
-                <circle class="pp-mg-track" cx="40" cy="40" r="32" stroke-width="6" fill="none" />
-                <circle
-                  class="pp-mg-fill"
-                  cx="40" cy="40" r="32"
-                  :stroke="matchStrokeColor(buyer.matchScore)"
-                  stroke-width="6" fill="none"
-                  stroke-dasharray="201.06"
-                  :stroke-dashoffset="201.06 - (buyer.matchScore / 100) * 201.06"
-                  stroke-linecap="round" transform="rotate(-90 40 40)"
-                />
-              </svg>
-              <div class="pp-buyer-gauge-num">{{ buyer.matchScore }}<small>%</small></div>
-            </div>
-            <svg class="pp-buyer-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="9 18 15 12 9 6" />
-            </svg>
-          </div>
-        </div>
-        <div v-else class="pp-empty">
-          <div class="pp-empty-ic"><Icon name="i-lucide-users" /></div>
-          <p>
-            {{
-              propertyId
-                ? 'Loading matched buyers…'
-                : 'Property not linked — no buyer data available.'
-            }}
-          </p>
         </div>
         <div style="height: 80px" />
       </div>
@@ -705,6 +552,53 @@
       @close="buyerActionKind = null"
       @done="onBuyerActionDone"
     />
+
+    <!-- Share link — read-only public view of this passport -->
+    <div v-if="shareOpen" class="pp-share-overlay" @click.self="shareOpen = false">
+      <div class="pp-share-modal" role="dialog" aria-modal="true" aria-labelledby="pp-share-title">
+        <div class="pp-share-head">
+          <h2 id="pp-share-title">Share your Passport</h2>
+          <button type="button" class="pp-share-close" aria-label="Close" @click="shareOpen = false">×</button>
+        </div>
+
+        <p class="pp-share-intro">
+          Anyone with this link can view a read-only copy of your Passport —
+          they don't need an account.
+        </p>
+
+        <div v-if="shareLoading" class="pp-share-state">Creating your link…</div>
+
+        <div v-else-if="shareUrl" class="pp-share-row">
+          <input
+            id="pp-share-url"
+            :value="shareUrl"
+            readonly
+            class="pp-share-input"
+            aria-label="Share link"
+            @focus="$event.target.select()"
+          />
+          <button type="button" class="pp-share-copy" @click="copyShare">
+            {{ shareCopied ? 'Copied' : 'Copy' }}
+          </button>
+        </div>
+
+        <p v-if="shareError" class="pp-share-error" role="alert">{{ shareError }}</p>
+
+        <div class="pp-share-foot">
+          <button type="button" class="pp-share-btn pp-share-btn--ghost" @click="shareOpen = false">
+            Close
+          </button>
+          <button
+            type="button"
+            class="pp-share-btn"
+            :disabled="shareLoading"
+            @click="generateShare"
+          >
+            {{ shareLoading ? 'Creating…' : shareUrl ? 'New link' : 'Create link' }}
+          </button>
+        </div>
+      </div>
+    </div>
 
     <!-- Publish confirmation + readiness checklist -->
     <PublishPassportDrawer
@@ -1088,35 +982,57 @@ function onGoToChecklistItem(item) {
   })
 }
 
-function onPublishClick() {
-  // Unpublishing stays a one-click action; publishing shows the explainer
-  // (or the outstanding-disclosures checklist) first.
-  if (isPublished.value) {
-    togglePublish()
-  } else {
-    publishDrawerOpen.value = true
-    fetchReadiness()
+// ── Share link ─────────────────────────────────────────────────────────
+// Same endpoint and shape the landlord view already uses
+// (pages/passportview/landlord/[id].vue): POST /passport/:id/share returns
+// { url } for a read-only public page served by pages/shared/[token].vue.
+// The backend owns the token, its scope and its expiry - we only ever display
+// the url it hands back rather than assembling one here, so a change to the
+// link format needs no change on this side.
+const shareOpen = ref(false)
+const shareUrl = ref('')
+const shareError = ref('')
+const shareCopied = ref(false)
+const shareLoading = ref(false)
+
+function openShare() {
+  shareOpen.value = true
+  shareCopied.value = false
+  // Generate on open so the common case is one click, not two.
+  if (!shareUrl.value) generateShare()
+}
+
+async function generateShare() {
+  if (shareLoading.value) return
+  shareLoading.value = true
+  shareError.value = ''
+  try {
+    const token =
+      typeof window !== 'undefined' ? localStorage.getItem('token') : null
+    const result = await $fetch(
+      `${config.public.apiBase}/passport/${route.params.id}/share`,
+      { method: 'POST', headers: { Authorization: `Bearer ${token}` } },
+    )
+    shareUrl.value = result?.url ?? ''
+    if (!shareUrl.value) shareError.value = 'No link came back — please try again.'
+  } catch (e) {
+    shareError.value =
+      e?.data?.message ?? e?.message ?? 'Could not create a link. Please try again.'
+  } finally {
+    shareLoading.value = false
   }
 }
 
-// The readiness bar itself is clickable — lets a seller see exactly what's
-// outstanding without first going through the Publish button.
-function openReadinessChecklist() {
-  publishDrawerOpen.value = true
-  fetchReadiness()
-}
-
-// Reflects readiness state right on the button so a seller isn't surprised
-// by the drawer — the plain "Publish Passport" label only shows once we know
-// they're ready (or haven't checked yet, to avoid a loading flash).
-const publishButtonLabel = computed(() => {
-  if (publishLoading.value) return '…'
-  if (isPublished.value) return 'Unpublish'
-  if (readiness.value && !readiness.value.canPublish) {
-    return `Publish — ${readiness.value.readinessPct}% ready`
+async function copyShare() {
+  if (!shareUrl.value) return
+  try {
+    await navigator.clipboard.writeText(shareUrl.value)
+    shareCopied.value = true
+    setTimeout(() => (shareCopied.value = false), 1800)
+  } catch {
+    shareError.value = 'Copy failed — select the link and copy it manually.'
   }
-  return 'Publish Passport'
-})
+}
 
 async function onPublishConfirm() {
   await togglePublish()
@@ -2380,10 +2296,14 @@ function formatStamp(iso) {
   color: #00a19a;
   transform: translateX(2px);
 }
+/* The same house render the claim flow and the selected-address card use
+   (dashboard-art/searchHouse.png), so a property is drawn the same way
+   everywhere. The plate stays here because its colour carries the row's
+   published / started state. */
 .pp-street-icon {
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
+  width: 50px;
+  height: 50px;
+  border-radius: 13px;
   display: grid;
   place-items: center;
   font-size: 20px;
@@ -2391,7 +2311,7 @@ function formatStamp(iso) {
   background: #f1f5f9;
   box-shadow: inset 0 0 0 1px rgba(15, 36, 62, 0.05);
 }
-.pp-street-icon img { width: 34px; height: 34px; object-fit: contain; }
+.pp-street-icon img { width: 44px; height: 44px; object-fit: contain; }
 .pp-street-row.is-published .pp-street-icon {
   background: linear-gradient(135deg, #e8f7f2 0%, #d6f0ea 100%);
   box-shadow: inset 0 0 0 1px rgba(0, 161, 154, 0.18);
@@ -3671,89 +3591,6 @@ function formatStamp(iso) {
 
 /* ── Publish-readiness band — amber on purpose, so it never reads as a
       second copy of the teal completion ring in the hero above it. ─── */
-.pp-ready {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  width: 100%;
-  margin-bottom: 16px;
-  padding: 16px 20px;
-  text-align: left;
-  font-family: inherit;
-  cursor: pointer;
-  border-radius: 18px;
-  background: linear-gradient(180deg, #fffaf1 0%, #fff7e8 100%);
-  border: 1px solid #fbe4bd;
-  box-shadow: 0 8px 22px rgba(180, 83, 9, 0.06);
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
-}
-.pp-ready:hover {
-  border-color: #f5cf94;
-  box-shadow: 0 10px 26px rgba(180, 83, 9, 0.11);
-}
-.pp-ready-ic {
-  flex-shrink: 0;
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
-  display: grid;
-  place-items: center;
-  font-size: 20px;
-  color: #b45309;
-  background: #fff1d9;
-  border: 1px solid #fbe4bd;
-}
-.pp-ready-body {
-  flex: 1;
-  min-width: 0;
-  display: block;
-}
-.pp-ready-head {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  margin-bottom: 7px;
-}
-.pp-ready-label {
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #92400e;
-}
-.pp-ready-pct {
-  font-size: 15px;
-  font-weight: 800;
-  color: #b45309;
-}
-.pp-ready-bar {
-  display: block;
-  height: 6px;
-  border-radius: 999px;
-  background: #fdead0;
-  overflow: hidden;
-}
-.pp-ready-fill {
-  display: block;
-  height: 100%;
-  border-radius: 999px;
-  background: linear-gradient(90deg, #f59e0b, #fbbf24);
-  transition: width 0.4s ease;
-}
-.pp-ready-note {
-  display: block;
-  margin-top: 8px;
-  font-size: 12.5px;
-  font-weight: 600;
-  line-height: 1.45;
-  color: #92400e;
-}
-.pp-ready-chev {
-  flex-shrink: 0;
-  font-size: 18px;
-  color: #c98a3c;
-}
-
 .pp-empty-ic {
   font-size: 30px;
   line-height: 1;
@@ -3968,5 +3805,126 @@ function formatStamp(iso) {
 .pp-hero-main .pp-hero-dash-issued--draft .pp-hero-dash-dot {
   background: #ffb066;
   box-shadow: 0 0 0 2.5px rgba(255, 176, 102, 0.18);
+}
+
+/* ── Share link modal ─────────────────────────────────────────────
+   The read-only link is issued by the backend (POST /passport/:id/share);
+   this only displays and copies it. */
+.pp-share-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(20, 16, 44, 0.55);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+.pp-share-modal {
+  width: min(460px, 100%);
+  background: #fff;
+  border-radius: 16px;
+  padding: 22px;
+  box-shadow: 0 24px 60px rgba(20, 16, 44, 0.3);
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+.pp-share-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.pp-share-head h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #231d45;
+}
+.pp-share-close {
+  border: 0;
+  background: none;
+  font-size: 24px;
+  line-height: 1;
+  color: #8a8698;
+  cursor: pointer;
+  padding: 0 2px;
+}
+.pp-share-close:hover { color: #231d45; }
+.pp-share-intro {
+  margin: 8px 0 16px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: #6b6783;
+}
+.pp-share-state {
+  font-size: 13.5px;
+  color: #6b6783;
+  padding: 12px 0;
+}
+.pp-share-row {
+  display: flex;
+  gap: 8px;
+}
+.pp-share-input {
+  flex: 1;
+  min-width: 0;
+  height: 42px;
+  padding: 0 12px;
+  border: 1px solid #e3e0ea;
+  border-radius: 10px;
+  background: #faf9fc;
+  font-family: inherit;
+  font-size: 13px;
+  color: #231d45;
+}
+.pp-share-copy {
+  flex-shrink: 0;
+  height: 42px;
+  padding: 0 16px;
+  border: 1px solid #00857f;
+  border-radius: 10px;
+  background: #fff;
+  color: #00665f;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.pp-share-copy:hover { background: #f1faf6; }
+.pp-share-error {
+  margin: 10px 0 0;
+  font-size: 12.5px;
+  color: #b4231a;
+}
+.pp-share-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+.pp-share-btn {
+  height: 42px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 10px;
+  background: #00a19a;
+  color: #fff;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.pp-share-btn:hover { background: #00857f; }
+.pp-share-btn:disabled { opacity: 0.55; cursor: default; }
+.pp-share-btn--ghost {
+  background: #fff;
+  color: #4a4563;
+  border: 1px solid #e3e0ea;
+}
+.pp-share-btn--ghost:hover { background: #f6f5f9; }
+
+@media (max-width: 480px) {
+  .pp-share-row { flex-direction: column; }
+  .pp-share-copy { width: 100%; }
 }
 </style>

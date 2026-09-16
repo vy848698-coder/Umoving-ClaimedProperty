@@ -172,21 +172,6 @@
         </section>
 
         <aside class="stw-aside">
-          <!-- Points balance, level and streak for this seller — a
-               point-in-time read of GET /rewards/progress, plus the
-               "finish this section for a bonus" nudge. -->
-          <SectionProgressCard
-            :balance="progressBalance"
-            :section-title="currentStep?.title || ''"
-            :completed-count="completedTaskCount"
-            :total-count="totalTaskCount"
-            :section-complete="completedTaskCount >= totalTaskCount && totalTaskCount > 0"
-            :section-bonus-points="sectionBonusPoints"
-            :level="progressLevel"
-            :streak="progressStreak"
-            @finish-section="goToNextTask"
-          />
-
           <!-- Expert guidance -->
           <section class="expert-card">
             <span class="expert-badge"><span class="dot"></span> Under review</span>
@@ -263,7 +248,6 @@
 <script setup>
 import { usePassportRuntime } from '~/composables/usePassportRuntime'
 import OPIcon from '~/components/ui/OPIcon.vue'
-import SectionProgressCard from '@/components/passport-view/SectionProgressCard.vue'
 import HelpDrawer from '@/components/passport-view/HelpDrawer.vue'
 import VideoModal from '@/components/passport-view/VideoModal.vue'
 import ProfileMenu from '~/components/core/ProfileMenu.vue'
@@ -1044,26 +1028,25 @@ const handleViewProfile = () => {
   letter-spacing: 0.02em;
   width: 22px;
 }
+/* These are detailed 3D renders, not line art. The section icons are mostly
+   WHITE (the ownership book is white pages on a navy cover), so the old
+   #f4f3f7 plate made them all but invisible - and the done/progress states
+   ran brightness(0) invert(1), which flattened the render to a featureless
+   white silhouette. No plate and no filter: the artwork carries its own
+   colour and shadow, and status still reads from the badge pill, the
+   progress track and the arrow. */
 .task-icon {
   flex-shrink: 0;
-  width: 52px;
-  height: 52px;
-  border-radius: 15px;
+  width: 64px;
+  height: 64px;
   display: grid;
   place-items: center;
-  background: #f4f3f7;
 }
-.task-icon.done {
-  background: linear-gradient(135deg, #00a19a, #05867f);
-}
-.task-icon.done :deep(img) {
-  filter: brightness(0) invert(1);
-}
-.task-icon.progress {
-  background: linear-gradient(135deg, #f6b63f, #e79a2b);
-}
-.task-icon.progress :deep(img) {
-  filter: brightness(0) invert(1);
+.task-icon :deep(img) {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 12px rgba(35, 29, 69, 0.18));
 }
 .task-info {
   flex: 1;
@@ -1320,17 +1303,19 @@ const handleViewProfile = () => {
   transform: translateY(-2px);
   box-shadow: 0 14px 28px rgba(0, 161, 154, 0.16);
 }
+/* Same reason as .task-icon: the plate + invert flattened the render. */
 .upnext-ic {
-  width: 44px;
-  height: 44px;
+  width: 52px;
+  height: 52px;
   flex-shrink: 0;
-  border-radius: 13px;
-  background: linear-gradient(135deg, #00a19a, #05867f);
   display: grid;
   place-items: center;
 }
 .upnext-ic :deep(img) {
-  filter: brightness(0) invert(1);
+  width: 46px;
+  height: 46px;
+  object-fit: contain;
+  filter: drop-shadow(0 5px 10px rgba(35, 29, 69, 0.18));
 }
 .upnext-text {
   flex: 1;

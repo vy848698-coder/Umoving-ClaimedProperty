@@ -20,36 +20,6 @@
 
         <div class="scc-divider" />
 
-        <div class="scc-stats">
-          <div class="scc-stat">
-            <span class="scc-stat-badge scc-stat-badge--bonus">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2l2.9 6.3 6.9.8-5.1 4.8 1.4 6.8L12 17.3 5.9 20.7l1.4-6.8L2.2 9.1l6.9-.8L12 2z" />
-              </svg>
-            </span>
-            <div class="scc-stat-label">Section bonus</div>
-            <div class="scc-stat-value">+{{ sectionBonusPoints }} pts</div>
-          </div>
-
-          <div class="scc-stat-sep" />
-
-          <div class="scc-stat">
-            <span class="scc-stat-badge scc-stat-badge--total">
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M7 4h10v4.5a5 5 0 0 1-10 0V4Z" />
-                <path d="M7 5.5H4.5a1 1 0 0 0-1 1.1c.2 1.8 1.2 3.6 3.5 4.1M17 5.5h2.5a1 1 0 0 1 1 1.1c-.2 1.8-1.2 3.6-3.5 4.1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" fill="none" />
-                <path d="M10.5 20h3M12 17v3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
-                <path d="M12 6.3l.6 1.3 1.4.2-1 1 .2 1.4-1.2-.7-1.2.7.2-1.4-1-1 1.4-.2z" fill="#fff" />
-              </svg>
-            </span>
-            <div class="scc-stat-label">Total points</div>
-            <div class="scc-stat-value scc-stat-value--total">{{ totalPointsAfter }} pts</div>
-            <div class="scc-stat-was">(was {{ totalPointsBefore }} pts)</div>
-          </div>
-        </div>
-
-        <div class="scc-divider" />
-
         <p class="scc-tip">
           <span class="scc-tip-icon">✦</span>
           Great progress — another section complete.
