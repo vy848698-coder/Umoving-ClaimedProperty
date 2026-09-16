@@ -85,8 +85,8 @@
             <div class="ppw-chip ppw-chip--docs">
               <span class="ppw-chip-eyebrow">Documents</span>
               <div class="ppw-chip-row">
-                <span class="ppw-chip-ic ppw-chip-ic--docs">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5" /></svg>
+                <span class="ppw-chip-ic">
+                  <img src="/buyer-profile-icon/verifiedDoc.png" alt="" />
                 </span>
                 <strong>{{ documentsSecured }} <em>secured</em></strong>
               </div>
@@ -96,8 +96,8 @@
             <div class="ppw-chip ppw-chip--compliance">
               <span class="ppw-chip-eyebrow">Compliance</span>
               <div class="ppw-chip-row">
-                <span class="ppw-chip-ic ppw-chip-ic--compliance">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6v6c0 5 3.4 7.8 8 9 4.6-1.2 8-4 8-9V6l-8-3Z" /><path d="m9 12 2 2 4-4" /></svg>
+                <span class="ppw-chip-ic">
+                  <img src="/build/shield.png" alt="" />
                 </span>
                 <strong class="ppw-chip-ok">On track</strong>
               </div>
@@ -128,7 +128,7 @@
                 </div>
                 <div class="coll-resume-content">
                   <div class="coll-resume-eyebrow">Pick up where you left off</div>
-                  <div class="coll-resume-name">{{ resumeCard.addressLine1 }}</div>
+                  <div class="coll-resume-name">{{ formatAddressLine(resumeCard.addressLine1) }}</div>
                   <div class="coll-resume-meta">
                     <b
                       >{{ resumeCard.sectionsToGo }} section{{
@@ -331,7 +331,7 @@
                     </div>
                     <div class="prop-card-info">
                       <p class="prop-card-name">{{ shortAddress(passport.addressLine1) }}</p>
-                      <p class="prop-card-sub">{{ passport.postcode }}</p>
+                      <p class="prop-card-sub">{{ formatPostcodeDisplay(passport.postcode) }}</p>
                     </div>
                   </div>
 
@@ -467,6 +467,7 @@ import OnboardingTour from '~/components/ui/OnboardingTour.vue'
 import ProfileMenu from '~/components/core/ProfileMenu.vue'
 import PassportNavButton from '~/components/core/PassportNavButton.vue'
 import { FLOW_HOME } from '~/utils/appFlow'
+import { formatAddressLine, formatPostcodeDisplay } from '~/utils/addressDisplay'
 
 const { profile } = useProfile()
 
@@ -759,9 +760,15 @@ const openCollection = (collection) => {
   showDetailModal.value = true
 }
 
+// The label under a book should read the same as the label printed on it, so
+// this runs the address through the same tidy-up the cover uses
+// (utils/addressDisplay.ts) - which is what drops the house-number comma in
+// "104, Dulverton Avenue". Anything past a second comma is still trimmed: a
+// full "Flat 3, 10 Mellowship Road, Coventry" would wrap the card title.
 const shortAddress = (addr) => {
-  const parts = (addr || '').split(',')
-  return parts.length > 1 ? `${parts[0]},${parts[1]}` : addr
+  const tidy = formatAddressLine(addr)
+  const parts = tidy.split(',')
+  return parts.length > 1 ? `${parts[0]},${parts[1]}`.trim() : tidy
 }
 
 const stackStyle = (index) => {
@@ -1121,11 +1128,11 @@ const executeDelete = async () => {
 .ppw-visual {
   position: relative;
   width: 100%;
-  /* Grown with the book. The floating chips are anchored to this box's edges
-     and deliberately overlap the book (they sit at z-index 2, the book at 1),
+  /* Grown with the book. The floating chips are anchored to this box's edges,
      so enlarging the book alone would have walked them over the address
-     printed on the cover. Widening the frame by the same amount keeps the
-     original overlap. */
+     printed on the cover — the frame was widened by the same amount. They now
+     sit clear of the artwork rather than overlapping it; see .ppw-chip--docs
+     for the geometry. */
   max-width: 500px;
   margin: 0 auto;
   min-height: 400px;
@@ -1161,8 +1168,12 @@ const executeDelete = async () => {
   z-index: 1;
   /* The book is this page's hero object and carries the address on its
      cover, so it is sized for the address to be readable rather than to a
-     tidy round number. */
-  width: 300px;
+     tidy round number. At hero size the address is width-bound by the
+     cover's printable face rather than by PassportCard's ratio cap, so book
+     width is the only lever on it: 300 -> 340px takes a typical street from
+     ~14px to ~15.9px. The chip positions below were re-checked against this
+     width. */
+  width: 340px;
   transform: rotate(-6deg);
   animation: ppw-sway 7s ease-in-out infinite;
   transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
@@ -1267,28 +1278,22 @@ const executeDelete = async () => {
   margin: 4px 0 2px;
 }
 
+/* 3D icon renders from /public rather than line art, matching the artwork on
+   the passport itself. They carry their own colour and shadow, so the tinted
+   plate the flat SVGs needed is gone. */
 .ppw-chip-ic {
-  width: 32px;
-  height: 32px;
-  border-radius: 10px;
+  width: 38px;
+  height: 38px;
   display: grid;
   place-items: center;
   flex-shrink: 0;
 }
 
-.ppw-chip-ic svg {
-  width: 16px;
-  height: 16px;
-}
-
-.ppw-chip-ic--docs {
-  background: rgba(120, 99, 240, 0.12);
-  color: #6d5ce0;
-}
-
-.ppw-chip-ic--compliance {
-  background: rgba(0, 161, 154, 0.12);
-  color: var(--teal);
+.ppw-chip-ic img {
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+  display: block;
 }
 
 .ppw-chip strong {
@@ -1321,8 +1326,22 @@ const executeDelete = async () => {
   transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+/* Both chips sit clear of the artwork. The book is 300px centred in this
+   500px box and rotated -6deg; the compliance chip spans x 362-520, which
+   clears the book's cover but ran across the corner of its plinth - that is
+   what made it read as stuck to the image. Raising it was preferred to
+   pushing it further right, which already overhangs the box by 20px and
+   would risk the viewport edge on a narrow screen.
+
+   Values checked by rasterising the rotated artwork and counting opaque
+   pixels under each chip rect. The float animation only travels upward, so
+   the resting position is the lowest the chip ever sits and is what has to
+   clear: 124px overlaps by 16px, 126px is the first fully clear, and 128px
+   keeps a small buffer for sub-pixel layout differences. (It was 28px, which
+   put 1177px of plinth under the chip.) Re-check if the book's size or
+   rotation changes. */
 .ppw-chip--docs {
-  top: 96px;
+  top: 64px;
   left: -22px;
   animation: ppw-float-a 5.4s ease-in-out infinite;
 }
@@ -1332,14 +1351,15 @@ const executeDelete = async () => {
 }
 
 .ppw-chip--compliance {
-  bottom: 28px;
+  bottom: 128px;
   right: -20px;
   width: 158px;
   animation: ppw-float-c 5.7s ease-in-out infinite;
 }
+/* Drifts up-and-out on hover, not down - down walked it back onto the plinth. */
 .ppw-visual:hover .ppw-chip--compliance {
   animation-play-state: paused;
-  transform: translate(10px, 6px);
+  transform: translate(10px, -4px);
 }
 
 @keyframes ppw-float-a {
@@ -1487,9 +1507,11 @@ const executeDelete = async () => {
 /* ── Property card grid ───────────────────────────────────────────── */
 .passport-grid {
   /* Wider cells than before: the passport book is the point of this grid, so
-     it gets room to render at a readable size rather than a 58px thumbnail. */
+     it gets room to render at a readable size rather than a 58px thumbnail.
+     The address printed on the cover is sized from the book's own width, so
+     cell width is what governs whether it reads - see .prop-book. */
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
   gap: 22px;
 }
 
@@ -1525,10 +1547,17 @@ const executeDelete = async () => {
   gap: 12px;
 }
 
+/* The cover's printed address is sized from the book's rendered width (the
+   plate is 52% of it), so this number is what decides whether that address is
+   legible. PassportCard now caps the address ratio so every card renders at
+   the same size rather than one scaled to each address's length, and this
+   width is what makes that shared size a readable one: at 190px the plate is
+   ~99px, putting the street near 9.4px — larger than the ~8px the longest
+   addresses used to get, while the short ones no longer balloon past it. */
 .prop-book {
   position: relative;
-  width: 132px;
-  height: 132px;
+  width: 190px;
+  height: 190px;
   flex-shrink: 0;
   filter: drop-shadow(0 10px 18px rgba(0, 140, 134, 0.2));
 }
@@ -1552,12 +1581,12 @@ const executeDelete = async () => {
    these thumbnails look wrong. */
 
 .prop-book--stack {
-  width: 132px;
+  width: 190px;
 }
 
 .prop-book--stack .prop-book-layer {
-  width: 132px;
-  height: 132px;
+  width: 190px;
+  height: 190px;
 }
 
 .prop-card-info {
