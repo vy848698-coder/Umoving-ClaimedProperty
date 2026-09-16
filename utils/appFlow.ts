@@ -18,10 +18,10 @@ const APP_ROUTES: RegExp[] = [
   // Passport collection - every passport the user has claimed, opened from the
   // navbar's Passport button. /passport itself only redirects there.
   /^\/passport(\/collections)?$/,
-  // Seller / landlord Passport and the pages that build it section by section.
-  /^\/passportview\/(landlord\/[^/]+|steps\/tasks\/[^/]+|steps\/[^/]+|[^/]+)$/,
-  // Buyer view of a Passport, reached from the Buyer/Seller switch.
-  /^\/buyer-passport\/(section\/task\/[^/]+|section\/[^/]+|[^/]+)$/,
+  // Seller Passport and the pages that build it section by section. The
+  // landlord view is deliberately not listed - this app only issues Seller
+  // Passports, so /passportview/landlord/:id is unreachable.
+  /^\/passportview\/(steps\/tasks\/[^/]+|steps\/[^/]+|[^/]+)$/,
   /^\/profile\/(personal-information|settings)$/,
   // Founding Homeowner certificate, from the Profile menu.
   /^\/certificate$/,

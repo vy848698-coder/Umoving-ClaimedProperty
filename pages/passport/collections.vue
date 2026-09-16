@@ -93,25 +93,6 @@
               <span class="ppw-chip-sub">Keep your important documents safe</span>
             </div>
 
-            <div class="ppw-chip ppw-chip--score">
-              <span class="ppw-chip-eyebrow">HomeScore</span>
-              <span class="ppw-score-ring">
-                <svg viewBox="0 0 64 64">
-                  <circle class="ppw-ring-bg" cx="32" cy="32" r="27" />
-                  <circle
-                    class="ppw-ring-meter"
-                    cx="32"
-                    cy="32"
-                    r="27"
-                    :stroke-dasharray="ringCirc"
-                    :stroke-dashoffset="ringOffset"
-                  />
-                </svg>
-                <span class="ppw-score-val"><strong>{{ heroScore }}</strong><small>/100</small></span>
-              </span>
-              <span class="ppw-chip-sub">Good, nearly HomeScore ready</span>
-            </div>
-
             <div class="ppw-chip ppw-chip--compliance">
               <span class="ppw-chip-eyebrow">Compliance</span>
               <div class="ppw-chip-row">
@@ -200,41 +181,9 @@
                 </button>
               </div>
 
-              <!-- Watching list -->
-              <div v-if="watchingList.length > 0" class="watching-section">
-                <div class="watching-header">
-                  <span class="watching-title">Watching</span>
-                  <span class="watching-count">{{ watchingList.length }}</span>
-                </div>
-                <div class="watching-list">
-                  <div
-                    v-for="w in watchingList"
-                    :key="w.id"
-                    class="watching-card"
-                    @click="router.push(`/buyer-passport/${w.passportId}`)"
-                  >
-                    <div class="watching-card-ic">📘</div>
-                    <div class="watching-card-body">
-                      <div class="watching-card-addr">{{ w.addressLine1 }}</div>
-                      <div class="watching-card-sub">
-                        {{ w.postcode
-                        }}<template v-if="w.property?.epcRating">
-                          · EPC {{ w.property.epcRating }}</template
-                        >
-                      </div>
-                      <div class="watching-card-meta">
-                        <span class="watching-pill watching-pill-published"
-                          >📘 Published</span
-                        >
-                        <span class="watching-purchased">
-                          Unlocked {{ formatPurchasedAt(w.purchasedAt) }}
-                        </span>
-                      </div>
-                    </div>
-                    <div class="watching-card-arrow">→</div>
-                  </div>
-                </div>
-              </div>
+              <!-- The "Watching" list used to sit here. It is the buyer side of
+                   the product - each card opened /buyer-passport/:id - so it is
+                   hidden along with every other route into the buyer view. -->
             </aside>
 
             <section class="ppw-content">
@@ -393,9 +342,6 @@
                     <div class="prop-icons">
                       <span class="prop-ic prop-ic--docs" title="Documents">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5" /></svg>
-                      </span>
-                      <span class="prop-ic prop-ic--energy" title="HomeScore">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 2 4 14 11 14 10 22 20 9 13 9 13 2" /></svg>
                       </span>
                       <span class="prop-ic prop-ic--compliance" title="Compliance">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6v6c0 5 3.4 7.8 8 9 4.6-1.2 8-4 8-9V6l-8-3Z" /></svg>
@@ -634,10 +580,10 @@ const hasAnyItems = computed(() => {
   const hasUncollected = Array.isArray(uncollectedPassports.value)
     ? uncollectedPassports.value.length > 0
     : false
-  const hasWatching = Array.isArray(watchingList.value)
-    ? watchingList.value.length > 0
-    : false
-  return inCollections || hasUncollected || hasWatching
+  // Watched (buyer-side) properties deliberately do not count: they are no
+  // longer shown, so counting them would leave the page looking non-empty
+  // with nothing on it.
+  return inCollections || hasUncollected
 })
 
 const cityChips = computed(() => {
@@ -681,7 +627,7 @@ const pointsEarned = computed(() => {
   )
 })
 
-// Hero passport book + score mirror the most recent passport when available.
+// Hero passport book mirrors the most recent passport when available.
 const heroBook = computed(() => {
   const p = resumeCard.value
   return {
@@ -690,16 +636,6 @@ const heroBook = computed(() => {
     type: p?.type || 'SELLER',
   }
 })
-const heroScore = computed(() => {
-  const p = allPassports.value.find((x) => Number(x?.homeScore ?? x?.score) > 0)
-  return Number(p?.homeScore ?? p?.score ?? 74)
-})
-// Stroke geometry for the HomeScore ring (r = 27).
-const ringCirc = 2 * Math.PI * 27
-const ringOffset = computed(
-  () => ringCirc * (1 - Math.max(0, Math.min(100, heroScore.value)) / 100),
-)
-
 // "Pick up where you left off" card
 const resumeCard = computed(() => {
   const list = allPassports.value
@@ -1395,71 +1331,6 @@ const executeDelete = async () => {
   transform: translate(-10px, -4px);
 }
 
-.ppw-chip--score {
-  top: 4px;
-  right: -12px;
-  align-items: center;
-  text-align: center;
-  width: 134px;
-  padding: 14px 14px 16px;
-  animation: ppw-float-b 6s ease-in-out infinite;
-}
-.ppw-visual:hover .ppw-chip--score {
-  animation-play-state: paused;
-  transform: translate(10px, -6px);
-}
-
-.ppw-score-ring {
-  position: relative;
-  width: 68px;
-  height: 68px;
-  margin: 6px 0 4px;
-  display: grid;
-  place-items: center;
-}
-
-.ppw-score-ring svg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  transform: rotate(-90deg);
-}
-
-.ppw-ring-bg {
-  fill: none;
-  stroke: rgba(0, 161, 154, 0.14);
-  stroke-width: 6;
-}
-
-.ppw-ring-meter {
-  fill: none;
-  stroke: var(--teal);
-  stroke-width: 6;
-  stroke-linecap: round;
-  transition: stroke-dashoffset 0.8s ease;
-}
-
-.ppw-score-val {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  line-height: 1;
-}
-
-.ppw-score-val strong {
-  font-size: 22px;
-  font-weight: 800;
-  color: var(--navy);
-}
-
-.ppw-score-val small {
-  font-size: 9px;
-  font-weight: 700;
-  color: var(--ink-faint);
-  margin-top: 1px;
-}
-
 .ppw-chip--compliance {
   bottom: 28px;
   right: -20px;
@@ -1474,10 +1345,6 @@ const executeDelete = async () => {
 @keyframes ppw-float-a {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-8px); }
-}
-@keyframes ppw-float-b {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(7px); }
 }
 @keyframes ppw-float-c {
   0%, 100% { transform: translateY(0); }
@@ -1786,11 +1653,6 @@ const executeDelete = async () => {
 .prop-ic--docs {
   background: rgba(120, 99, 240, 0.12);
   color: #6d5ce0;
-}
-
-.prop-ic--energy {
-  background: rgba(214, 158, 46, 0.14);
-  color: #cf9b2c;
 }
 
 .prop-ic--compliance {

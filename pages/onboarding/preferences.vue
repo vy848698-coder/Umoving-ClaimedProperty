@@ -346,7 +346,9 @@ const selectedRole = ref('')
 {
   const qRole = route.query.role
   const qStep = route.query.step
-  if (typeof qRole === 'string' && ['buy', 'sell', 'landlord', 'both'].includes(qRole)) {
+  // 'landlord' is not accepted: the role has no card, so honouring it would
+  // leave the picker with nothing selected and jump to landlord questions.
+  if (typeof qRole === 'string' && ['buy', 'sell', 'both'].includes(qRole)) {
     selectedRole.value = qRole
   }
   if (qStep === '2' && selectedRole.value) {
@@ -467,17 +469,6 @@ const a = reactive<Record<string, any>>({
   sellChain: '',
   sellValue: '',
   sellTimeline: '',
-  // Landlord
-  portfolio: '',
-  management: '',
-  strategy: [],
-  landlordBudget: '',
-  financing: '',
-  targetYield: '',
-  workAppetite: '',
-  letType: '',
-  llocation: '',
-  landlordMustHaves: [],
 })
 
 const expanded = reactive<Record<string, boolean>>({})
@@ -501,13 +492,9 @@ const roles = [
     label: "I'm selling my home",
     desc: 'Build your Passport, get verified, move faster',
   },
-  {
-    key: 'landlord',
-    iconClass: 'navy',
-    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15" r="4"/><path d="m10.85 12.15 8.4-8.4"/><path d="m17 5 3 3"/><path d="m14 8 3 3"/></svg>',
-    label: "I'm a landlord",
-    desc: 'Manage compliance, certs & tenant safety in one place',
-  },
+  // The landlord role is deliberately absent: this app only issues Seller
+  // Passports, so there is nothing to tailor a landlord answer to. Its
+  // question set and label-map entries were removed with it.
   {
     key: 'both',
     iconClass: '',
@@ -673,7 +660,7 @@ const buyQuestions: Question[] = [
     id: 'energyImportance',
     type: 'chips',
     label: 'HOW IMPORTANT IS ENERGY EFFICIENCY?',
-    hint: 'Affects HomeScore weighting and running cost estimates',
+    hint: 'Affects running cost estimates',
     opts: [
       { v: 'Very — low bills matter' },
       { v: 'Somewhat' },
@@ -790,160 +777,12 @@ const sellQuestions: Question[] = [
   },
 ]
 
-const landlordQuestions: Question[] = [
-  H('💼 Your existing portfolio'),
-  {
-    id: 'portfolio',
-    type: 'chips',
-    label: 'HOW MANY PROPERTIES DO YOU CURRENTLY OWN?',
-    opts: [
-      { v: 'None — first purchase', icon: '🏠' },
-      { v: '1–2', icon: '🏘' },
-      { v: '3–5', icon: '🏢' },
-      { v: '6–10', icon: '🏗' },
-      { v: '10+', icon: '🏙', expandKey: 'portfolio' },
-    ],
-    expandOpts: [
-      { v: '11–25', icon: '🏘' },
-      { v: '26–50', icon: '🏢' },
-      { v: '51–100', icon: '🏗' },
-      { v: '100+', icon: '🏙' },
-    ],
-  },
-  {
-    id: 'management',
-    type: 'chips',
-    label: 'HOW DO YOU CURRENTLY MANAGE?',
-    opts: [
-      { v: 'Self-managed', icon: '🔑' },
-      { v: 'Letting agent', icon: '🏢' },
-      { v: 'Mix of both' },
-      { v: 'First purchase' },
-    ],
-  },
-  H("🎯 What you're looking to buy"),
-  {
-    id: 'strategy',
-    type: 'chips',
-    label: 'INVESTMENT STRATEGY',
-    multiSelect: true,
-    opts: [
-      { v: 'Buy-to-let yield', icon: '💰' },
-      { v: 'Capital growth', icon: '📈' },
-      { v: 'Yield + growth', icon: '🎯' },
-      { v: 'Below market value', icon: '🏷' },
-      { v: 'Refurb & hold', icon: '🔨' },
-      { v: 'Refurb & flip', icon: '🔄' },
-      { v: 'HMO conversion', icon: '🏘' },
-      { v: 'Short-term / Airbnb', icon: '🏖' },
-    ],
-  },
-  {
-    id: 'landlordBudget',
-    type: 'chips',
-    label: 'PURCHASE BUDGET',
-    opts: [
-      { v: 'Under £100k' },
-      { v: '£100k–£200k' },
-      { v: '£200k–£350k' },
-      { v: '£350k–£500k' },
-      { v: '£500k–£1m' },
-      { v: '£1m+', expandKey: 'landlordBudget' },
-    ],
-    expandOpts: [
-      { v: '£1m–£2m' },
-      { v: '£2m–£5m' },
-      { v: '£5m–£10m' },
-      { v: '£10m–£20m' },
-      { v: '£20m–£30m' },
-      { v: '£30m+' },
-    ],
-  },
-  {
-    id: 'financing',
-    type: 'chips',
-    label: 'HOW ARE YOU BUYING?',
-    opts: [
-      { v: 'Cash buyer', icon: '💵' },
-      { v: 'BTL mortgage', icon: '🏦' },
-      { v: 'Bridging finance', icon: '⚡' },
-      { v: 'Limited company', icon: '🏢' },
-      { v: 'Not sure yet' },
-    ],
-  },
-  {
-    id: 'targetYield',
-    type: 'chips',
-    label: 'TARGET GROSS YIELD',
-    opts: [
-      { v: '4–5%' },
-      { v: '6–7%' },
-      { v: '8–10%' },
-      { v: '10%+' },
-      { v: 'Capital growth over yield' },
-      { v: 'Not sure yet' },
-    ],
-  },
-  {
-    id: 'workAppetite',
-    type: 'chips',
-    label: 'WORK APPETITE',
-    opts: [
-      { v: 'Turnkey — ready to let', icon: '✅' },
-      { v: 'Light cosmetic work', icon: '🎨' },
-      { v: 'Full refurb', icon: '🔨' },
-      { v: 'Structural / development', icon: '🏗' },
-    ],
-  },
-  {
-    id: 'letType',
-    type: 'chips',
-    label: 'PREFERRED LET TYPE',
-    opts: [
-      { v: 'Single let', icon: '🏠' },
-      { v: 'HMO / multi-room', icon: '🏘' },
-      { v: 'Student let', icon: '🎓' },
-      { v: 'Short-term / holiday', icon: '🏖' },
-      { v: 'Commercial', icon: '🏪' },
-    ],
-  },
-  {
-    id: 'llocation',
-    type: 'chips',
-    label: 'LOCATION STRATEGY',
-    opts: [
-      { v: 'Local to me', icon: '📍' },
-      { v: 'High-yield North', icon: '🏙' },
-      { v: 'London & SE', icon: '🌆' },
-      { v: 'University towns', icon: '🎓' },
-      { v: 'Coastal', icon: '🌊' },
-      { v: 'Flexible', icon: '🗺' },
-    ],
-  },
-  {
-    id: 'landlordMustHaves',
-    type: 'chips',
-    label: 'MUST-HAVES',
-    multiSelect: true,
-    opts: [
-      { v: 'Vacant possession', icon: '🔓' },
-      { v: 'Sitting tenant', icon: '🤝' },
-      { v: 'No chain', icon: '⛓️' },
-      { v: 'EPC D or above', icon: '🌿' },
-      { v: 'Planning potential', icon: '📋' },
-      { v: 'BMV — below market value', icon: '🏷' },
-      { v: 'Off-market deals', icon: '🤫' },
-    ],
-  },
-]
-
 // ── Active question list ──────────────────────────────────────────────────
 
 const activeQuestions = computed((): Question[] => {
   const r = selectedRole.value
   if (r === 'buy') return [...buyQuestions, passportQuestion]
   if (r === 'sell') return sellQuestions
-  if (r === 'landlord') return landlordQuestions
   if (r === 'both') {
     return [
       H("🏠 The property you're selling"),
@@ -964,7 +803,6 @@ const headerLabel = computed(() => {
   const map: Record<string, string> = {
     buy: 'Step 2 of 2 — Your preferences',
     sell: 'Step 2 of 2 — Your property',
-    landlord: 'Step 2 of 2 — Investment criteria',
     both: 'Step 2 of 2 — Your move',
   }
   return map[selectedRole.value] ?? ''
@@ -976,7 +814,6 @@ const stepIndicator = computed(() => {
   const subtitleMap: Record<string, string> = {
     buy: '',
     sell: '· Your property',
-    landlord: '· Investment criteria',
     both: '· Your move',
   }
   const sub = subtitleMap[selectedRole.value] ?? ''
@@ -989,7 +826,6 @@ const eyebrowLabel = computed(() => {
   const map: Record<string, string> = {
     buy: 'Your preferences',
     sell: 'Build your Passport',
-    landlord: 'Tailored deal flow',
     both: 'Coordinated move',
   }
   return map[selectedRole.value] ?? 'Your preferences'
@@ -1000,7 +836,6 @@ const detailCtaLabel = computed(() => {
   const map: Record<string, string> = {
     buy: "I'm ready to explore",
     sell: 'Build my Passport',
-    landlord: 'Show me deals',
     both: 'Coordinate my move',
   }
   return map[selectedRole.value] ?? "I'm ready to explore"
@@ -1106,7 +941,6 @@ const moveSubLabel = computed(() => {
     both: 'Buying & selling',
     buy: 'Your search',
     sell: 'Your property',
-    landlord: 'Investment criteria',
   }
   return map[selectedRole.value] ?? 'Tell us about both sides'
 })
@@ -1115,7 +949,6 @@ const headerTitle = computed(() => {
   const map: Record<string, string> = {
     buy: 'Tell us about your search',
     sell: 'About your property',
-    landlord: 'Your investment profile',
     both: 'Your move — buying & selling',
   }
   return map[selectedRole.value] ?? ''
@@ -1126,8 +959,6 @@ const headerSub = computed(() => {
   const map: Record<string, string> = {
     buy: "We'll match you with properties and flag risk before you offer.",
     sell: "We'll get your Passport started and connect you with the right people.",
-    landlord:
-      "Tell us what you're after — we'll surface the right deals and data.",
     both: 'Tell us about both sides so we can coordinate everything.',
   }
   return map[selectedRole.value] ?? ''
@@ -1212,7 +1043,6 @@ async function save() {
       selectedRole.value === 'buy' || selectedRole.value === 'both'
     const isSeller =
       selectedRole.value === 'sell' || selectedRole.value === 'both'
-    const isLandlord = selectedRole.value === 'landlord'
 
     const budgetRange =
       isBuyer && a.buyBudget ? budgetToRange[a.buyBudget] : null
@@ -1248,14 +1078,6 @@ async function save() {
               targetAreas: a.sellLocation?.length ? a.sellLocation : undefined,
             }
           : {}),
-        ...(isLandlord
-          ? {
-              importantFeatures: [
-                ...(a.strategy ?? []),
-                ...(a.landlordMustHaves ?? []),
-              ].filter(Boolean),
-            }
-          : {}),
       },
     })
   } catch {
@@ -1265,7 +1087,7 @@ async function save() {
     const isBuyerRole =
       selectedRole.value === 'buy' || selectedRole.value === 'both'
     // Honor a pending redirect (e.g. user was sent to signup from a
-    // HomeScore property page via "I'm interested" / "I'm the owner")
+    // property page via "I'm interested" / "I'm the owner")
     // Welcome screen consumes any pending redirectAfterLogin when the user
     // taps "Let's start exploring", so leave it in storage here.
     await navigateTo('/onboarding/welcome')
@@ -1707,10 +1529,6 @@ onMounted(() => {
 .pf-role.tint-sell .pf-role-ic {
   color: #c98a1e;
   background: rgba(224, 164, 58, 0.16);
-}
-.pf-role.tint-landlord .pf-role-ic {
-  color: #7a6fb0;
-  background: rgba(122, 111, 176, 0.16);
 }
 .pf-role.tint-both .pf-role-ic {
   color: #16a34a;
@@ -2306,7 +2124,7 @@ onMounted(() => {
   line-height: 1.35;
 }
 
-/* ── Section group header (landlord & combined flows) ────────────── */
+/* ── Section group header (combined flow) ────────────────────────── */
 .section-group {
   margin: 18px 22px 4px;
   padding-bottom: 8px;

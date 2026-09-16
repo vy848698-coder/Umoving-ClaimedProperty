@@ -35,13 +35,6 @@
             every answer ready before anyone asks.
           </p>
         </div>
-        <div class="ppv-role-switch">
-          <SegmentedSwitch
-            v-model="selectedRole"
-            :options="roleOptions"
-            @update:modelValue="onRoleSwitch"
-          />
-        </div>
       </div>
 
     <div class="passport-content">
@@ -75,13 +68,6 @@
           </div>
 
           <div class="pp-hero-stats">
-            <div class="pp-hero-stat">
-              <div class="pp-hero-stat-val">{{ heroHsScore }}</div>
-              <!-- heroHsScore is the property's HomeScore, not reward points
-                   (those are per-task, see getStepPoints). It was labelled
-                   "Points", which made the hero state something untrue. -->
-              <div class="pp-hero-stat-lbl">HomeScore</div>
-            </div>
             <div class="pp-hero-stat">
               <div class="pp-hero-stat-val">{{ heroDocsCount }}</div>
               <div class="pp-hero-stat-lbl">Documents</div>
@@ -764,7 +750,7 @@ const passportTourSteps = [
   {
     selector: '.pp-hero',
     title: 'Your Property Passport',
-    body: 'This card shows your address, the live HomeScore, document count and overall progress at a glance.',
+    body: 'This card shows your address, document count and overall progress at a glance.',
   },
   {
     selector: '.pp-resume-cta',
@@ -837,7 +823,6 @@ const publishLoading = ref(false)
 // overallProgress: this tracks only the disclosures required before a buyer
 // can be charged for this passport.
 const readiness = ref(null)
-const propertyHomeScore = ref(null)
 
 // Resume state — populated by GET /passport/:id/resume on mount and after
 // every save / publish toggle so the "Pick up where you left off" CTA stays
@@ -884,24 +869,8 @@ function matchStrokeColor(score) {
 }
 
 onMounted(async () => {
-  // Quickly probe the passport type so we can hand landlord passports off
-  // to the dedicated landlord view before we kick off the heavy seller-side
-  // data loaders below.
-  try {
-    const token =
-      typeof window !== 'undefined' ? localStorage.getItem('token') : null
-    const probe = await $fetch(
-      `${config.public.apiBase}/passport/${route.params.id}`,
-      { headers: { Authorization: `Bearer ${token}` } },
-    )
-    if (probe?.type === 'LANDLORD') {
-      navigateTo(`/passportview/landlord/${route.params.id}`, { replace: true })
-      return
-    }
-  } catch {
-    /* fall through to normal seller load */
-  }
-
+  // The landlord hand-off that used to run here has been removed: this app
+  // only issues Seller Passports, so every passport loads the seller view.
   loadSections()
   await loadCollaborators()
   // Load readiness up front — the "Ready to publish" bar and the Publish
@@ -929,7 +898,6 @@ onMounted(async () => {
     if (passport.propertyId) {
       fetchStreetData(passport.propertyId)
       fetchBuyerData(passport.propertyId)
-      fetchPropertyHomeScore(passport.propertyId)
     }
     fetchResumeTarget()
   } catch (e) {
@@ -978,14 +946,6 @@ function goToResume() {
   router.push(
     `/passportview/steps/tasks/${resumeTarget.value.taskId}?stepId=${resumeTarget.value.sectionId}&propertyId=${route.params.id}`,
   )
-}
-
-async function fetchPropertyHomeScore(pid) {
-  try {
-    const r = await $fetch(`${config.public.apiBase}/property/${pid}`)
-    const score = r?.homeScore ?? r?.epcScore ?? null
-    if (typeof score === 'number') propertyHomeScore.value = score
-  } catch {}
 }
 
 async function fetchStreetData(pid) {
@@ -1247,12 +1207,9 @@ const completeSectionCount = computed(
 )
 
 // const { steps } = usePassportSteps()
-const selectedRole = ref('seller')
-
-const roleOptions = [
-  { label: 'Buyer', value: 'buyer', icon: 'buyer' },
-  { label: 'Seller', value: 'seller', icon: 'seller' },
-]
+// The Buyer/Seller role switch that used to sit in the header has been
+// removed - this app only issues and shows Seller Passports, so there is no
+// buyer view to switch into.
 
 const overallProgress = computed(() => {
   const totalTasks = steps.value.reduce(
@@ -1266,10 +1223,7 @@ const overallProgress = computed(() => {
   return Math.round((completedTasks / totalTasks) * 100) || 0
 })
 
-// ── Hero stat strip (HS / Docs / Sections / Ready) ───────────────
-const heroHsScore = computed(() =>
-  typeof propertyHomeScore.value === 'number' ? propertyHomeScore.value : '—',
-)
+// ── Hero stat strip (Docs / Sections / Ready) ───────────────────
 const heroDocsCount = computed(() =>
   steps.value.reduce(
     (sum, step) => sum + step.tasks.filter((t) => t.completed).length,
@@ -1368,12 +1322,6 @@ const navigateToStep = (stepId) => {
 
 const switchPassport = (passportId) => {
   router.push(`/passportview/${passportId}`)
-}
-
-const onRoleSwitch = (role) => {
-  if (role === 'buyer') {
-    router.push(`/buyer-passport/${route.params.id}`)
-  }
 }
 
 // ── Vault ──────────────────────────────────────────────────────
@@ -1530,7 +1478,7 @@ function formatStamp(iso) {
   mask-image: linear-gradient(180deg, #000, transparent 86%);
 }
 
-/* ── Web nav (shared HomeScore pattern) ───────────────────────────── */
+/* ── Web nav ───────────────────────────── */
 .hsw-shell {
   width: min(1180px, calc(100% - 48px));
   margin: 0 auto;
@@ -1736,10 +1684,6 @@ function formatStamp(iso) {
   filter: drop-shadow(0 24px 36px rgba(31, 61, 98, 0.16));
   pointer-events: none;
   user-select: none;
-}
-
-.ppv-role-switch {
-  margin-bottom: 18px;
 }
 
 .ppv-mobile-nav {
@@ -3509,13 +3453,7 @@ function formatStamp(iso) {
   background: #00a19a;
 }
 
-/* Compact, pill-style segmented switches (role + list/map) */
-.ppv-role-switch {
-  margin-bottom: 0;
-  flex-shrink: 0;
-  display: inline-flex;
-}
-.ppv-role-switch :deep(.switch-container),
+/* Compact, pill-style segmented switch (list/map) */
 .view-toggle :deep(.switch-container) {
   width: auto;
   display: inline-flex;
@@ -3524,7 +3462,6 @@ function formatStamp(iso) {
   border: 1px solid #e6e3dd;
   background: #fff;
 }
-.ppv-role-switch :deep(.switch-btn),
 .view-toggle :deep(.switch-btn) {
   flex: 0 0 auto;
   border-radius: 999px !important;
@@ -3533,16 +3470,8 @@ function formatStamp(iso) {
   color: #6b6885;
   padding: 8px 22px;
 }
-.ppv-role-switch :deep(.btn-icon) {
-  display: none;
-}
-.ppv-role-switch :deep(.switch-btn:not(.active)),
 .view-toggle :deep(.switch-btn:not(.active)) {
   background: transparent;
-}
-.ppv-role-switch :deep(.switch-btn.active) {
-  background: #231d45;
-  color: #fff;
 }
 .view-toggle {
   margin: 0;

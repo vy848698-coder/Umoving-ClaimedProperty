@@ -45,7 +45,7 @@
     <!-- ════════════════════════════ SEARCH ════════════════════════════ -->
     <div v-if="step === 'search'" class="cl-screen">
       <div class="cl-hero">
-        <div class="cl-hero-ic"><img src="/build/houseWithPin.png" alt="" /></div>
+        <div class="cl-hero-ic"><img src="/dashboard-art/searchHouse.png" alt="" /></div>
         <h1 class="cl-h1">Which property are you claiming?</h1>
         <p class="cl-body">
           Enter your postcode and select your address. We'll verify ownership via
@@ -461,14 +461,6 @@
             to start building its record.
           </div>
         </div>
-        <button
-          type="button"
-          class="cl-ready-change"
-          :disabled="issueLoading"
-          @click="showTypeDrawer = true"
-        >
-          {{ chosenPassportType ? 'Change' : 'Choose type' }}
-        </button>
       </div>
 
       <div v-if="issueError" class="cl-err-banner">
@@ -550,13 +542,6 @@
       </div>
     </main>
 
-    <ClaimPassportTypeDrawer
-      v-model="showTypeDrawer"
-      :initial-type="chosenPassportType"
-      :initial-is-hmo="chosenIsHmo"
-      @confirm="onPassportTypeConfirmed"
-    />
-
     <FoundingMemberModal
       v-model="showFoundingModal"
       :number-label="founderNumberLabel"
@@ -591,43 +576,26 @@ type ClaimStep =
   | 'lr-failed'
   | 'lr-found'
 
-import ClaimPassportTypeDrawer from '~/components/property/ClaimPassportTypeDrawer.vue'
 import FoundingMemberModal from '~/components/claim/FoundingMemberModal.vue'
 
 const route = useRoute()
 const config = useRuntimeConfig()
 
-// Passport-type choice. The drawer opens once ownership is verified (the
-// 'lr-found' step), just before "Issue my Passport": choosing only records the
-// type - the user then issues the Passport themselves. It can be reopened from
-// the ready card to change the choice, and issuing without one opens it too.
-const showTypeDrawer = ref(false)
-const chosenPassportType = ref<'seller' | 'landlord' | null>(null)
-const chosenIsHmo = ref(false)
+// Every claim issues a Seller Passport. The drawer that used to ask seller vs
+// landlord here has been removed: the user pays, verifies, issues, and lands on
+// their Seller Passport without being asked to pick a type.
+const PASSPORT_TYPE = 'seller' as const
 
 // Founding Homeowner congrats modal, shown once the passport is issued —
 // see issuePassport() below.
 const showFoundingModal = ref(false)
 const founderNumberLabel = ref<string | null>(null)
 const issuedPassportPath = ref('')
-function onPassportTypeConfirmed(payload: { type: 'seller' | 'landlord'; isHmo: boolean }) {
-  chosenPassportType.value = payload.type
-  chosenIsHmo.value = payload.isHmo
-  showTypeDrawer.value = false
-}
 
-const readyPassport = computed(() => {
-  if (chosenPassportType.value === 'landlord') {
-    return {
-      image: '/build/landlordPassport-sm.png',
-      title: chosenIsHmo.value ? 'Your Landlord Passport (HMO) is ready' : 'Your Landlord Passport is ready',
-    }
-  }
-  if (chosenPassportType.value === 'seller') {
-    return { image: '/build/umu-passport-sm.png', title: 'Your Seller Passport is ready' }
-  }
-  return { image: '/build/umu-passport-sm.png', title: 'Your Property Passport is ready' }
-})
+const readyPassport = {
+  image: '/build/umu-passport-sm.png',
+  title: 'Your Seller Passport is ready',
+}
 const base = config.public.apiBase as string
 
 const propertyId = route.params.id as string
@@ -1145,8 +1113,6 @@ watch(
   () => step.value,
   (s) => {
     if (s === 'lr-searching') runLrSearch()
-    // Ownership verified: ask which passport to set up before "Issue my Passport".
-    if (s === 'lr-found' && !chosenPassportType.value) showTypeDrawer.value = true
   },
 )
 // Set by the real Business Gateway Online Owner Verification call below.
@@ -1292,27 +1258,12 @@ async function issuePassport() {
         'Something went wrong with your claim - please start again.'
       return
     }
-    if (!chosenPassportType.value) {
-      // Shouldn't normally happen — the step watcher above opens the type
-      // drawer as soon as this step is reached — but guard in case it was
-      // dismissed without choosing.
-      showTypeDrawer.value = true
-      return
-    }
-
     const { setPassportType, activatePassport } = usePassportClaim()
-    await setPassportType(
-      claimPassportId.value,
-      chosenPassportType.value,
-      chosenIsHmo.value,
-    )
+    await setPassportType(claimPassportId.value, PASSPORT_TYPE, false)
     await activatePassport(claimPassportId.value)
     const passportId = claimPassportId.value
 
-    issuedPassportPath.value =
-      chosenPassportType.value === 'landlord'
-        ? `/passportview/landlord/${passportId}`
-        : `/passportview/${passportId}`
+    issuedPassportPath.value = `/passportview/${passportId}`
 
     // Assigns (or reads) the founder number and - on the very first call for
     // this user - fires the certificate email in the background, reusing
@@ -1397,7 +1348,7 @@ async function issuePassport() {
   mask-image: linear-gradient(180deg, #000, transparent 86%);
 }
 
-/* ── Web nav (shared HomeScore pattern) ───────────────────────────── */
+/* ── Web nav ───────────────────────────── */
 .hsw-shell {
   width: min(1180px, calc(100% - 48px));
   margin: 0 auto;
@@ -1629,9 +1580,9 @@ async function issuePassport() {
 }
 .claim-aside-ic {
   flex-shrink: 0;
-  width: 34px;
-  height: 34px;
-  border-radius: 11px;
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
   background: #f2faf8;
   border: 1px solid #e5f4f2;
   display: grid;
@@ -2528,34 +2479,6 @@ async function issuePassport() {
   flex: 1;
   min-width: 0;
 }
-/* Reopens the passport-type drawer; same outline language as the nav buttons. */
-.cl-ready-change {
-  flex-shrink: 0;
-  align-self: center;
-  height: 34px;
-  padding: 0 12px;
-  border-radius: 9px;
-  border: 1px solid rgba(0, 133, 127, 0.35);
-  background: #fff;
-  color: #00665f;
-  font-family: inherit;
-  font-size: 12.5px;
-  font-weight: 800;
-  cursor: pointer;
-  transition: background 0.18s, border-color 0.18s;
-}
-.cl-ready-change:hover {
-  background: #f1faf6;
-  border-color: #00857f;
-}
-.cl-ready-change:focus-visible {
-  outline: 2px solid #00a19a;
-  outline-offset: 2px;
-}
-.cl-ready-change:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
 .cl-ready-t {
   font-size: 15px;
   font-weight: 800;
@@ -2685,17 +2608,18 @@ async function issuePassport() {
 .cl-owned {
   display: flex;
   align-items: center;
-  gap: 14px;
-  margin: 4px 0 20px;
+  gap: 18px;
+  margin: 4px 0 24px;
 }
 .cl-owned-illus {
-  width: 56px;
-  height: 56px;
+  width: 84px;
+  height: 84px;
   object-fit: contain;
   flex-shrink: 0;
+  filter: drop-shadow(0 8px 16px rgba(0, 110, 104, 0.18));
 }
 .cl-owned-t {
-  font-size: 1.2rem;
+  font-size: 1.35rem;
   font-weight: 800;
   color: #231d45;
   letter-spacing: -0.3px;
@@ -2808,7 +2732,7 @@ async function issuePassport() {
 .cl-lr-inner img { width: 70%; height: 70%; object-fit: contain; }
 .claim-aside-trust span { display: inline-flex; align-items: center; gap: 6px; }
 .claim-aside-trust span img { width: 16px; height: 16px; object-fit: contain; }
-.claim-aside-ic img { width: 20px; height: 20px; object-fit: contain; }
+.claim-aside-ic img { width: 32px; height: 32px; object-fit: contain; }
 
 /* Identity-verified hero illustration (standalone, with its own sparkles) */
 .cl-hero-img {
