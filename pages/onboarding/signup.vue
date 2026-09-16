@@ -11,7 +11,10 @@
 
       <div class="signup-aside-body">
         <p class="signup-eyebrow">Create your account</p>
-        <h1 class="signup-welcome">Start with<br />your home<span class="signup-q">.</span></h1>
+        <!-- The space before the break is trimmed at end of line on desktop and
+             survives when the phone rules hide the <br>, so the line reflows to
+             "Start with your home." rather than running the words together. -->
+        <h1 class="signup-welcome">Start with <br />your home<span class="signup-q">.</span></h1>
         <p class="signup-welcome-sub">A few details and you're in. Your details stay with you — we never share them with third parties.</p>
 
         <ol class="signup-steps">
@@ -319,6 +322,7 @@ const handleSubmit = async () => {
     radial-gradient(circle at 90% 95%, rgba(0, 161, 154, 0.22) 0%, rgba(0, 161, 154, 0) 42%),
     linear-gradient(165deg, #2c2456 0%, #231d45 55%, #1a1535 100%);
   overflow: hidden;
+  min-width: 0;
 }
 .signup-aside-top {
   display: flex;
@@ -452,8 +456,12 @@ const handleSubmit = async () => {
   padding: 48px 40px;
   background: #f3f2ef;
   overflow-y: auto;
+  /* Grid items default to min-width:auto, so a wide child would stretch this
+     track past the viewport; the app shell clips overflow-x, so that shows up
+     as cut-off content rather than a scrollbar. */
+  min-width: 0;
 }
-.signup-main-inner { width: 100%; max-width: 420px; }
+.signup-main-inner { width: 100%; max-width: 420px; min-width: 0; }
 
 .signup-form-head { margin-bottom: 24px; }
 .signup-form-title {
@@ -519,7 +527,7 @@ const handleSubmit = async () => {
 }
 .form-input::placeholder { color: #a39fb2; font-weight: 500; }
 .form-input.with-icon { padding-left: 42px; }
-.form-input.with-action { padding-right: 44px; }
+.form-input.with-action { padding-right: 48px; }
 .form-input-icon {
   position: absolute;
   left: 14px;
@@ -531,11 +539,11 @@ const handleSubmit = async () => {
 .form-input-icon svg { width: 16px; height: 16px; display: block; }
 .form-input-action {
   position: absolute;
-  right: 8px;
+  right: 4px;
   top: 50%;
   transform: translateY(-50%);
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
   border-radius: 8px;
   background: transparent;
   border: none;
@@ -762,14 +770,79 @@ const handleSubmit = async () => {
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* ── Responsive: stack to single column ── */
+/* ── Responsive: stack to single column ──
+   Stacked, the brand panel is a header band above the form rather than a
+   second full screen — at 320px the full-size panel ran ~1180px, putting the
+   first field almost two screens down. Its content is trimmed in steps, and
+   the hero and form share one centred column so they line up. */
 @media (max-width: 880px) {
-  .signup-split { grid-template-columns: 1fr; }
-  .signup-aside { padding: 28px 28px 36px; }
-  .signup-aside-top { margin-bottom: 32px; }
+  .signup-split {
+    grid-template-columns: 1fr;
+    /* Band sized to content, form panel fills the rest of the viewport. */
+    grid-template-rows: auto 1fr;
+  }
+  .signup-aside { padding: 28px 28px 32px; }
+  .signup-aside-top,
+  .signup-aside-body,
+  .signup-aside-foot {
+    width: 100%;
+    max-width: 460px;
+    margin-inline: auto;
+  }
+  .signup-aside-top { margin-bottom: 26px; }
   .signup-aside-body { justify-content: flex-start; }
-  .signup-welcome { font-size: clamp(38px, 11vw, 52px); }
-  .signup-steps { margin-top: 28px; }
-  .signup-aside-foot { margin-top: 28px; }
+  .signup-aside-foot { display: flex; margin-top: 26px; }
+  .signup-welcome { font-size: clamp(34px, 8vw, 46px); }
+  .signup-steps { margin-top: 26px; }
   .signup-main { padding: 32px 24px 48px; }
+  .signup-main-inner { max-width: 460px; }
+}
+
+/* Phones — the brand panel collapses to a compact header. */
+@media (max-width: 600px) {
+  .signup-aside { padding: 20px 20px 22px; }
+  .signup-aside-top { margin-bottom: 18px; }
+  .signup-logo { gap: 10px; }
+  .signup-logo-mark {
+    width: 36px;
+    height: 36px;
+    box-shadow: 0 0 0 3px rgba(0, 161, 154, 0.12);
+  }
+  .signup-logo-mark img { width: 20px; }
+  .signup-logo strong { font-size: 17px; }
+
+  .signup-eyebrow { margin-bottom: 10px; font-size: 11px; letter-spacing: 1.5px; }
+  .signup-welcome {
+    font-size: clamp(25px, 7.4vw, 31px);
+    line-height: 1.08;
+  }
+  /* "Start with / your home." is hard-wrapped for the desktop column; at this
+     size it should wrap on its own. */
+  .signup-welcome br { display: none; }
+  .signup-welcome-sub { margin-top: 8px; font-size: 13.5px; line-height: 1.5; max-width: none; }
+
+  .signup-steps { margin-top: 16px; gap: 10px; }
+  .signup-steps li { gap: 11px; }
+  .signup-step-n { width: 26px; height: 26px; border-radius: 8px; font-size: 12px; }
+  .signup-steps p { font-size: 13.5px; line-height: 1.35; padding-top: 2px; }
+  .signup-aside-foot { margin-top: 16px; font-size: 12px; gap: 7px; }
+
+  .signup-main { padding: 26px 20px 40px; }
+  .signup-form-head { margin-bottom: 18px; }
+  .signup-form-title { font-size: 23px; letter-spacing: -0.6px; }
+  .signup-form-sub { font-size: 13.5px; }
+  .form-field { margin-bottom: 15px; }
+  /* 16px is the floor that stops iOS Safari zooming the page in on focus. */
+  .form-input { padding: 14px 13px; font-size: 16px; }
+  .form-input.with-icon { padding-left: 40px; }
+}
+
+/* Smallest phones (320px class). */
+@media (max-width: 380px) {
+  .signup-aside { padding: 16px 16px 18px; }
+  .signup-main { padding: 22px 16px 36px; }
+  .signup-welcome { font-size: 24px; }
+  .signup-welcome-sub { font-size: 13px; }
+  .signup-form-title { font-size: 21px; }
 }
 </style>

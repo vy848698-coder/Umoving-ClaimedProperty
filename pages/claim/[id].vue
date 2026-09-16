@@ -1647,8 +1647,10 @@ async function issuePassport() {
   gap: 8px;
 }
 .cl-back {
-  width: 36px;
-  height: 36px;
+  /* 40px so the only back affordance on the page clears a thumb. */
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
   border-radius: 50%;
   border: 1px solid #ececef;
   background: #fff;

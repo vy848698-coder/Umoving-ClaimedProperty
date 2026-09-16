@@ -1782,48 +1782,6 @@ onMounted(() => {
 }
 
 /* ── Responsive ── */
-@media (max-width: 980px) {
-  .pf-body {
-    flex-direction: column;
-  }
-  .pf-side {
-    flex: none;
-    width: 100%;
-    padding: 32px 24px;
-  }
-  .pf-side-inner {
-    max-width: none;
-    margin: 0;
-  }
-  .pf-main {
-    padding: 32px 24px 56px;
-  }
-  .pf-roles {
-    grid-template-columns: 1fr;
-  }
-}
-@media (max-width: 560px) {
-  .pf-top {
-    flex-wrap: wrap;
-    gap: 12px;
-  }
-  .pf-top-progress {
-    order: 3;
-    flex-basis: 100%;
-    max-width: none;
-  }
-  .pf-actions {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .pf-actions-right {
-    justify-content: space-between;
-  }
-  .pf-cta {
-    flex: 1;
-    justify-content: center;
-  }
-}
 
 /* ── Light header (replaces the old purple block) ────────────────── */
 .ob-header {
@@ -2388,5 +2346,103 @@ onMounted(() => {
   to {
     transform: rotate(360deg);
   }
+}
+
+@media (max-width: 980px) {
+  .pf-body {
+    flex-direction: column;
+  }
+  .pf-side {
+    flex: none;
+    width: 100%;
+    padding: 32px 24px;
+  }
+  .pf-side-inner {
+    max-width: none;
+    margin: 0;
+  }
+  .pf-main {
+    padding: 32px 24px 56px;
+  }
+  .pf-roles {
+    grid-template-columns: 1fr;
+  }
+}
+/* Phones and small tablets — the context sidebar becomes a slim brand band.
+   Stacked, it sat above the question as a ~1200px preamble, so the actual
+   options started two screens down. Everything dropped here is already on the
+   main panel: the side title repeats .pf-sub verbatim, and the step tracker
+   repeats the "STEP 1 OF 2" label and progress bar in .pf-top. The trust
+   cards are reassurance that does not need to come before the question. */
+@media (max-width: 700px) {
+  .pf-side { padding: 14px 20px; }
+  .pf-side-title,
+  .pf-steps,
+  .pf-info,
+  .pf-stats { display: none; }
+  .pf-welcome { margin-bottom: 0; }
+  .pf-main { padding: 22px 20px 44px; }
+}
+
+@media (max-width: 560px) {
+  .pf-top {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .pf-top-progress {
+    order: 3;
+    flex-basis: 100%;
+    max-width: none;
+  }
+  .pf-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .pf-actions-right {
+    justify-content: space-between;
+  }
+  .pf-cta {
+    flex: 1;
+    justify-content: center;
+  }
+  .pf-title { font-size: 26px; letter-spacing: -0.8px; }
+  .pf-sub { font-size: 14px; }
+  .pf-top { margin-bottom: 26px; }
+  /* Was a 30x21 text button — too small to hit reliably on a phone. */
+  .pf-skip { padding: 10px 6px; margin-right: -6px; }
+  /* One column here, so the cards can be shallower: a 52px icon left a text
+     column narrow enough to break "I'm looking to buy" across two lines. */
+  .pf-roles { gap: 12px; }
+  .pf-role { padding: 16px; gap: 12px; border-radius: 15px; }
+  .pf-role-ic { width: 40px; height: 40px; border-radius: 11px; }
+  .pf-role-ic :deep(svg) { width: 20px; height: 20px; }
+  .pf-role-title { font-size: 15.5px; }
+  .pf-role-desc { font-size: 13px; line-height: 1.4; }
+  .pf-radio { width: 22px; height: 22px; }
+  /* 6px of right padding let a long placeholder run under the pill's edge and
+     get sliced mid-word; ellipsis is the graceful end instead. */
+  .pref-input { padding-right: 14px; }
+  .pref-input input { text-overflow: ellipsis; }
+  /* 8px of vertical padding made these 36px tall — below a comfortable tap. */
+  .chip { padding: 10px 14px; }
+  /* 32px of card padding on top of the page gutter left little room for the
+     chips themselves at this width. */
+  .pf-card { padding: 22px 18px 24px; border-radius: 18px; }
+  /* 16px is the floor that stops iOS Safari zooming the page in on focus. */
+  .pf-main input[type='text'],
+  .pf-main input[type='number'],
+  .pf-main input[type='email'],
+  .pf-main input[type='tel'],
+  .pf-main select,
+  .pf-main textarea { font-size: 16px; }
+}
+
+/* Smallest phones (320px class). */
+@media (max-width: 380px) {
+  .pf-side { padding: 12px 16px; }
+  .pf-main { padding: 18px 16px 40px; }
+  .pf-title { font-size: 23px; }
+  .pf-card { padding: 18px 14px 20px; }
+  .chip { font-size: 11.5px; padding: 10px 11px; }
 }
 </style>

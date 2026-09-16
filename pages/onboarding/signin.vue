@@ -565,6 +565,7 @@ const onPrimary = () => {
     radial-gradient(circle at 90% 95%, rgba(0, 161, 154, 0.22) 0%, rgba(0, 161, 154, 0) 42%),
     linear-gradient(165deg, #2c2456 0%, #231d45 55%, #1a1535 100%);
   overflow: hidden;
+  min-width: 0;
 }
 
 .signin-aside-top {
@@ -715,17 +716,27 @@ const onPrimary = () => {
   justify-content: center;
   padding: 40px;
   background: #f3f2ef;
+  /* Grid items default to min-width:auto, so a wide child (the 6-box OTP row)
+     stretched this track past the viewport. The app shell clips overflow-x, so
+     that showed up as cut-off content rather than a scrollbar. */
+  min-width: 0;
 }
 .signin-main-inner {
   width: 100%;
   max-width: 400px;
+  /* As a flex item this defaults to min-width:auto, so any wide child (the
+     6-box OTP row) would push the column past the screen instead of letting
+     the child shrink. */
+  min-width: 0;
 }
 
 .signin-shell { width: 100%; }
 .signin-panel-wrap { width: 100%; }
 
-/* Reuse the plain panel/form look — strip the card chrome */
-.signin-panel {
+/* Reuse the plain panel/form look — strip the card chrome. Needs to outrank
+   the later `.auth-form` rule, whose 24px side padding was indenting every
+   field relative to the panel heading above it. */
+.signin-panel-wrap .signin-panel {
   background: transparent;
   border: none;
   border-radius: 0;
@@ -857,17 +868,6 @@ const onPrimary = () => {
 .confirm-state--futuristic .confirm-sub strong { color: #231d45; }
 .confirm-state--futuristic .confirm-sub { color: #6b6783; }
 
-/* ── Responsive: stack to single column ── */
-@media (max-width: 880px) {
-  .signin-split { grid-template-columns: 1fr; }
-  .signin-aside { padding: 28px 28px 36px; }
-  .signin-aside-top { margin-bottom: 36px; }
-  .signin-aside-body { justify-content: flex-start; }
-  .signin-welcome { font-size: clamp(38px, 11vw, 52px); }
-  .signin-home-card { margin-top: 28px; }
-  .signin-aside-foot { margin-top: 32px; }
-  .signin-main { padding: 32px 24px 48px; }
-}
 
 /* Topbar */
 .auth-topbar {
@@ -981,7 +981,7 @@ const onPrimary = () => {
 }
 .form-input::placeholder { color: #9c98ad; font-weight: 500; }
 .form-input.with-icon { padding-left: 40px; }
-.form-input.with-action { padding-right: 44px; }
+.form-input.with-action { padding-right: 48px; }
 .form-input-icon {
   position: absolute;
   left: 13px;
@@ -993,11 +993,11 @@ const onPrimary = () => {
 .form-input-icon svg { width: 16px; height: 16px; display: block; }
 .form-input-action {
   position: absolute;
-  right: 8px;
+  right: 4px;
   top: 50%;
   transform: translateY(-50%);
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
   border-radius: 8px;
   background: transparent;
   border: none;
@@ -1027,8 +1027,12 @@ const onPrimary = () => {
   justify-content: center;
   margin-bottom: 18px;
 }
+/* Six fixed 46px boxes plus gaps came to 326px, wider than a 320px screen's
+   content box. They flex down instead and cap at their design size. */
 .otp-box {
-  width: 46px;
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 46px;
   height: 54px;
   border: 1.5px solid #ececef;
   border-radius: 12px;
@@ -1140,8 +1144,10 @@ const onPrimary = () => {
   margin-bottom: 22px;
   letter-spacing: -0.05px;
 }
-.confirm-sub strong { color: #231d45; font-weight: 800; }
-.confirm-state .btn-primary { max-width: 280px; }
+/* The address is echoed back here, so a long one has to wrap rather than
+   push the panel wider than the screen. */
+.confirm-sub strong { color: #231d45; font-weight: 800; overflow-wrap: anywhere; }
+.confirm-state .btn-primary { width: 100%; max-width: 280px; }
 
 /* Footer */
 .auth-footer {
@@ -1194,4 +1200,95 @@ const onPrimary = () => {
   50% { transform: translateY(-10px); }
 }
 
+
+/* ── Responsive: stack to single column ──
+   Stacked, the brand panel is a header band above the form, not a second
+   half-screen. Its content is trimmed step by step so the form's heading and
+   first field stay on the fold — on a 640px-tall phone the full-size panel
+   pushed them clean off the screen. */
+@media (max-width: 880px) {
+  .signin-split {
+    grid-template-columns: 1fr;
+    /* Brand band sized to its content, form panel takes the rest of the
+       viewport so short states still paint to the bottom edge. */
+    grid-template-rows: auto 1fr;
+  }
+  .signin-aside { padding: 28px 28px 32px; }
+  /* Stacked, the hero and the form share one centred column so they line up on
+     the same left edge instead of drifting apart on tablet widths. */
+  .signin-aside-top,
+  .signin-aside-body,
+  .signin-aside-foot {
+    width: 100%;
+    max-width: 460px;
+    margin-inline: auto;
+  }
+  .signin-aside-top { margin-bottom: 28px; }
+  .signin-aside-body { justify-content: flex-start; }
+  .signin-aside-foot { display: flex; margin-top: 26px; }
+  .signin-welcome { font-size: clamp(34px, 8vw, 46px); letter-spacing: -1.2px; }
+  .signin-welcome-sub { margin-top: 14px; max-width: 52ch; }
+  .signin-home-card { margin-top: 24px; }
+  .signin-main { padding: 32px 24px 48px; }
+  .signin-main-inner { max-width: 460px; }
+}
+
+/* Phones — the brand panel collapses to a compact header. */
+@media (max-width: 600px) {
+  .signin-aside { padding: 20px 20px 22px; }
+  .signin-aside-top { margin-bottom: 18px; }
+  .signin-logo { gap: 10px; }
+  .signin-logo-mark {
+    width: 36px;
+    height: 36px;
+    box-shadow: 0 0 0 3px rgba(0, 161, 154, 0.12);
+  }
+  .signin-logo-mark :deep(img),
+  .signin-logo-mark :deep(svg),
+  .signin-logo-mark img,
+  .signin-logo-mark svg { width: 20px; }
+  .signin-logo strong { font-size: 17px; }
+
+  .signin-welcome {
+    font-size: clamp(25px, 7.4vw, 31px);
+    line-height: 1.08;
+    letter-spacing: -0.9px;
+  }
+  .signin-welcome-sub { margin-top: 8px; font-size: 13.5px; line-height: 1.5; }
+
+  .signin-home-card {
+    margin-top: 16px;
+    padding: 12px 14px;
+    gap: 12px;
+    border-radius: 14px;
+  }
+  .signin-home-thumb { width: 34px; height: 48px; }
+  .signin-home-kicker { font-size: 9px; letter-spacing: 1.2px; margin-bottom: 3px; }
+  .signin-home-addr { font-size: 14px; margin-bottom: 6px; }
+  .signin-home-tag { font-size: 10.5px; padding: 3px 8px; }
+  .signin-aside-foot { margin-top: 16px; font-size: 12px; gap: 7px; }
+
+  .signin-main { padding: 26px 20px 40px; }
+  .signin-form-head { margin-bottom: 18px; }
+  .signin-form-title { font-size: 23px; letter-spacing: -0.6px; }
+  .signin-form-sub { font-size: 13.5px; }
+  .signin-panel-wrap .form-field { margin-bottom: 14px; }
+  /* 16px is the floor that stops iOS Safari zooming the page in on focus. */
+  .signin-panel-wrap .form-input { padding: 14px 13px; font-size: 16px; }
+  .signin-panel-wrap .form-input.with-icon { padding-left: 40px; }
+  .signin-panel .btn-primary--futuristic { padding: 16px 18px; font-size: 15px; }
+  .logged-out-toast { margin-bottom: 18px; padding: 11px 14px; }
+}
+
+/* Smallest phones (320px class). */
+@media (max-width: 380px) {
+  .signin-aside { padding: 16px 16px 18px; }
+  .signin-main { padding: 22px 16px 36px; }
+  .signin-welcome { font-size: 24px; }
+  .signin-welcome-sub { font-size: 13px; }
+  .signin-home-card { padding: 11px 12px; gap: 10px; }
+  .signin-form-title { font-size: 21px; }
+  .otp-boxes { gap: 6px; }
+  .otp-box { height: 50px; font-size: 20px; }
+}
 </style>

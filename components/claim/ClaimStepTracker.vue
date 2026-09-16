@@ -156,4 +156,44 @@ defineProps<{ current: number }>()
     font-size: 11px;
   }
 }
+
+/* Smallest phones. Four 52px tiles across a 296px content box left each step
+   74px wide, so the connector — inset 33px from each side of the step — came
+   out 8px long and read as a stray dash rather than a line between steps.
+   Smaller tiles give it room. */
+@media (max-width: 400px) {
+  .cst-ic {
+    width: 44px;
+    height: 44px;
+    border-radius: 13px;
+  }
+  .cst-ic img {
+    width: 34px;
+    height: 34px;
+  }
+  .cst-step {
+    gap: 6px;
+  }
+  .cst-step:not(:first-child)::before {
+    top: 21px;
+    left: calc(-50% + 26px);
+    right: calc(50% + 26px);
+    height: 2px;
+  }
+  .cst-badge {
+    width: 19px;
+    height: 19px;
+    top: -6px;
+    right: -6px;
+    font-size: 10px;
+  }
+  .cst-badge svg {
+    width: 9px;
+    height: 9px;
+  }
+  .cst-label {
+    font-size: 10px;
+    letter-spacing: -0.1px;
+  }
+}
 </style>
