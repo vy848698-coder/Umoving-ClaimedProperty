@@ -22,11 +22,13 @@ export default defineEventHandler(async (event) => {
   const api = <T>(path: string) =>
     $fetch<T>(`${backendBase}${path}`, { headers: { Authorization: auth } })
 
-  // profile/me, profile/passports and founder-number don't depend on one
-  // another - run them together instead of one after another. This endpoint
-  // used to take 5 fully sequential backend round-trips before it could even
-  // start rendering; three of those never needed to wait for each other.
-  const [profile, passports, founder] = await Promise.all([
+  // profile/me and profile/passports don't depend on one another - run them
+  // together instead of one after another. This endpoint used to take 5 fully
+  // sequential backend round-trips before it could even start rendering.
+  // The founder number is deliberately NOT in here: it is a write, not a read
+  // (it allocates a permanent, never-reused number), so it has to stay behind
+  // the guards below - see where it is awaited.
+  const [profile, passports] = await Promise.all([
     api<AnyRecord>('/profile/me').catch((err) => {
       const status = err?.statusCode ?? err?.response?.status
       throw createError(
@@ -41,7 +43,6 @@ export default defineEventHandler(async (event) => {
     // no seeded sections yet - certifying a claim that isn't actually
     // complete).
     api<AnyRecord[]>('/profile/passports').catch(() => [] as AnyRecord[]),
-    getOrAssignFounderNumber(backendBase, auth),
   ])
 
   const userId = String(profile?.id ?? profile?.userId ?? profile?.email ?? '')
@@ -83,6 +84,14 @@ export default defineEventHandler(async (event) => {
       statusMessage: 'Claim a property to get your Founding Homeowner certificate.',
     })
   }
+
+  // Only now, past every guard: this assigns a permanent, never-reused
+  // Founding Homeowner number on first call and flips `isNew` (which gates the
+  // "here's your certificate" email). Running it earlier - alongside the reads
+  // above - burns a number and fires that flag for anyone who merely hits this
+  // endpoint without a name or a claimed passport, leaving holes in the
+  // sequence.
+  const founder = await getOrAssignFounderNumber(backendBase, auth)
 
   const passport = (await api<AnyRecord>(`/passport/${chosen.id}`).catch(() => null)) ?? chosen
   // The passport stores only the street and postcode; the town is on the
