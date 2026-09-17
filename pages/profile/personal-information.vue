@@ -156,8 +156,15 @@
             </div>
 
             <div class="pi-verify-body">
+              <!-- The tick is the verified state's icon. Showing it above
+                   "Not verified yet" read as though the check had passed —
+                   only the badge's background changed between the two, and
+                   those two greens are all but identical. -->
               <div class="pi-verify-badge" :class="{ done: profile?.isVerified }">
-                <Icon name="heroicons:shield-check-solid" class="pi-verify-badge-ic" />
+                <Icon
+                  :name="profile?.isVerified ? 'heroicons:shield-check-solid' : 'heroicons:shield-exclamation'"
+                  class="pi-verify-badge-ic"
+                />
               </div>
               <div class="pi-verify-title">
                 {{ profile?.isVerified ? 'Verified' : 'Not verified yet' }}
@@ -918,9 +925,12 @@ const ringStyle = computed(() => ({
 /* Identity verification */
 .pi-card-verify { text-align: center; }
 .pi-verify-body { display: flex; flex-direction: column; align-items: center; flex: 1; justify-content: center; padding: 6px 0; }
-.pi-verify-badge { width: 76px; height: 76px; border-radius: 50%; background: #e7f5ee; display: flex; align-items: center; justify-content: center; margin-bottom: 14px; }
-.pi-verify-badge-ic { width: 38px; height: 38px; color: #18a558; }
+/* Unverified is the "needs your attention" amber used by the Add pills above;
+   green is reserved for the state that has actually passed. */
+.pi-verify-badge { width: 76px; height: 76px; border-radius: 50%; background: #fdf3e0; display: flex; align-items: center; justify-content: center; margin-bottom: 14px; }
+.pi-verify-badge-ic { width: 38px; height: 38px; color: #c98a1e; }
 .pi-verify-badge.done { background: #d8f3e3; }
+.pi-verify-badge.done .pi-verify-badge-ic { color: #18a558; }
 .pi-verify-title { font-size: 17px; font-weight: 800; color: #231d45; margin-bottom: 6px; }
 .pi-verify-sub { font-size: 12.5px; color: #6f8398; line-height: 1.5; max-width: 240px; margin-bottom: 16px; }
 .pi-verify-btn {
