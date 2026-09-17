@@ -466,21 +466,21 @@ const securityLabel = computed(() => {
 }
 .st-header-intro {
   display: flex;
-  gap: 16px;
+  gap: 18px;
   align-items: flex-start;
   padding-top: 6px;
 }
 .st-header-icon {
-  width: 52px;
-  height: 52px;
-  border-radius: 16px;
+  width: 62px;
+  height: 62px;
+  border-radius: 18px;
   flex-shrink: 0;
   background: #fff;
   border: 1px solid #dfeae6;
   display: grid;
   place-items: center;
 }
-.st-header-icon img { width: 34px; height: 34px; object-fit: contain; }
+.st-header-icon img { width: 42px; height: 42px; object-fit: contain; }
 .st-h1 {
   font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
   font-size: 40px;
@@ -505,16 +505,16 @@ const securityLabel = computed(() => {
   box-shadow:
     0 18px 44px rgba(18, 22, 60, 0.32),
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
-  padding: 22px 24px;
+  padding: 24px 26px;
   display: flex;
-  gap: 18px;
+  gap: 24px;
   align-items: center;
 }
 .st-strength-shield {
   position: relative;
-  width: 64px;
-  height: 64px;
-  border-radius: 18px;
+  width: 86px;
+  height: 86px;
+  border-radius: 22px;
   flex-shrink: 0;
   background: #fff;
   border: 1px solid #dfeae6;
@@ -522,14 +522,14 @@ const securityLabel = computed(() => {
   place-items: center;
   box-shadow: 0 10px 22px rgba(0, 150, 160, 0.16);
 }
-.st-strength-shield img { width: 40px; height: 40px; object-fit: contain; }
+.st-strength-shield img { width: 58px; height: 58px; object-fit: contain; }
 .st-strength-check {
   position: absolute;
-  bottom: -4px;
-  right: -4px;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
+  bottom: -6px;
+  right: -6px;
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
   background: #14c08a;
   color: #fff;
   font-size: 12px;
@@ -540,7 +540,7 @@ const securityLabel = computed(() => {
 }
 .st-strength-body { flex: 1; min-width: 0; }
 .st-strength-title {
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 800;
   color: #ffffff;
   letter-spacing: -0.3px;
@@ -564,14 +564,14 @@ const securityLabel = computed(() => {
 .st-strength-bar {
   height: 6px;
   background: rgba(255, 255, 255, 0.12);
-  border-radius: 100px;
+  border-radius: 4px;
   overflow: hidden;
-  margin-top: 8px;
+  margin-top: 10px;
 }
 .st-strength-fill {
   height: 100%;
   background: linear-gradient(90deg, #14c08a, var(--fx-aqua));
-  border-radius: 100px;
+  border-radius: 4px;
   transition: width 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
@@ -1045,6 +1045,11 @@ const securityLabel = computed(() => {
   .st-body { padding: 16px 14px 0; }
   .st-h1 { font-size: 32px; }
   .st-card, .st-strength-card { padding: 18px; }
+  .st-strength-card { gap: 16px; }
+  .st-strength-shield { width: 66px; height: 66px; border-radius: 18px; }
+  .st-strength-shield img { width: 46px; height: 46px; }
+  .st-header-icon { width: 54px; height: 54px; border-radius: 16px; }
+  .st-header-icon img { width: 36px; height: 36px; }
   .st-footer-grid { grid-template-columns: 1fr; gap: 22px; }
   .st-footer-grid, .st-footer-bottom { padding-left: 16px; padding-right: 16px; }
 }
