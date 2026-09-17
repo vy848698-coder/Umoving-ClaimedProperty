@@ -57,7 +57,7 @@
           <section class="pi-card">
             <div class="pi-card-head">
               <div class="pi-card-titlewrap">
-                <span class="pi-card-ic ic-blue"><Icon name="heroicons:user" /></span>
+                <span class="pi-card-ic ic-art"><img src="/buyer-profile-icon/idCard.png" alt="" /></span>
                 <h2 class="pi-card-title">Personal Information</h2>
               </div>
             </div>
@@ -70,7 +70,7 @@
                 type="button"
                 @click="openContactEditor(index)"
               >
-                <span class="pi-field-ic"><Icon :name="contactIcons[item.key]" /></span>
+                <span class="pi-field-ic ic-art"><img :src="contactArt[item.key]" alt="" /></span>
                 <span class="pi-field-body">
                   <span class="pi-field-label">{{ item.label }}</span>
                   <span class="pi-field-value" :class="{ empty: !item.value }">
@@ -82,7 +82,7 @@
             </div>
 
             <div class="pi-card-note">
-              <Icon name="heroicons:lock-closed" class="pi-card-note-ic" />
+              <img src="/build/padlock.png" alt="" class="pi-card-note-ic" />
               Your personal information is secure and private.
             </div>
           </section>
@@ -91,7 +91,7 @@
           <section class="pi-card">
             <div class="pi-card-head">
               <div class="pi-card-titlewrap">
-                <span class="pi-card-ic ic-aqua"><Icon name="heroicons:home-modern" /></span>
+                <span class="pi-card-ic ic-art"><img src="/build/houseWithPin.png" alt="" /></span>
                 <h2 class="pi-card-title">Property Journey</h2>
               </div>
               <button type="button" class="pi-card-action" @click="openAddressEditor(null)">
@@ -101,7 +101,7 @@
 
             <div class="pi-journeylist">
               <button class="pi-journey" type="button" @click="openAddressEditor((profile?.addresses ?? [])[0] ?? null)">
-                <span class="pi-journey-ic ic-aqua"><Icon name="heroicons:map-pin" /></span>
+                <span class="pi-journey-ic ic-art"><img src="/op-icons/matched-buyers/pin.png" alt="" /></span>
                 <span class="pi-journey-body">
                   <span class="pi-journey-label">Current address</span>
                   <span class="pi-journey-value" :class="{ empty: !(profile?.addresses ?? []).length }">
@@ -114,7 +114,7 @@
               </button>
 
               <button class="pi-journey" type="button" @click="openCompanyEditor((profile?.companies ?? [])[0] ?? null)">
-                <span class="pi-journey-ic ic-indigo"><Icon name="heroicons:building-office-2" /></span>
+                <span class="pi-journey-ic ic-art"><img src="/op-icons/investment/officeBuilding.png" alt="" /></span>
                 <span class="pi-journey-body">
                   <span class="pi-journey-label">Registered company</span>
                   <span class="pi-journey-value" :class="{ empty: !(profile?.companies ?? []).length }">
@@ -127,7 +127,7 @@
               </button>
 
               <button class="pi-journey" type="button" @click="openSolicitorEditor((profile?.solicitors ?? [])[0] ?? null)">
-                <span class="pi-journey-ic ic-blue"><Icon name="heroicons:scale" /></span>
+                <span class="pi-journey-ic ic-art"><img src="/buyer-profile-icon/scales.png" alt="" /></span>
                 <span class="pi-journey-body">
                   <span class="pi-journey-label">Solicitor</span>
                   <span class="pi-journey-value" :class="{ empty: !(profile?.solicitors ?? []).length }">
@@ -141,7 +141,7 @@
             </div>
 
             <div class="pi-card-note tip">
-              <Icon name="heroicons:light-bulb" class="pi-card-note-ic" />
+              <img src="/homescore-icon/bulb.png" alt="" class="pi-card-note-ic" />
               Add these details for a smoother experience.
             </div>
           </section>
@@ -150,7 +150,7 @@
           <section class="pi-card pi-card-verify">
             <div class="pi-card-head">
               <div class="pi-card-titlewrap">
-                <span class="pi-card-ic ic-green"><Icon name="heroicons:shield-check" /></span>
+                <span class="pi-card-ic ic-art"><img src="/build/shield.png" alt="" /></span>
                 <h2 class="pi-card-title">Identity Verification</h2>
               </div>
             </div>
@@ -188,7 +188,7 @@
           <section class="pi-card">
             <div class="pi-card-head col">
               <div class="pi-card-titlewrap">
-                <span class="pi-card-ic ic-blue"><Icon name="heroicons:bell" /></span>
+                <span class="pi-card-ic ic-art"><img src="/op-icons/misc/bell.png" alt="" /></span>
                 <h2 class="pi-card-title">Communication Preferences</h2>
               </div>
               <button type="button" class="pi-card-action">
@@ -203,7 +203,7 @@
                 :key="item.key"
                 class="pi-pref"
               >
-                <span class="pi-pref-ic"><Icon :name="prefIcons[item.key]" /></span>
+                <span class="pi-pref-ic ic-art"><img :src="prefArt[item.key]" alt="" /></span>
                 <span class="pi-pref-body">
                   <span class="pi-pref-label">{{ item.label }}</span>
                   <span class="pi-pref-hint">{{ item.hint }}</span>
@@ -223,7 +223,7 @@
           <section class="pi-card">
             <div class="pi-card-head">
               <div class="pi-card-titlewrap">
-                <span class="pi-card-ic ic-aqua"><Icon name="heroicons:check-circle" /></span>
+                <span class="pi-card-ic ic-art"><img src="/build/bigCheckHero.png" alt="" /></span>
                 <div>
                   <h2 class="pi-card-title">Profile Completion</h2>
                   <p class="pi-card-desc tight">Complete these steps to finish your profile.</p>
@@ -239,7 +239,7 @@
                   class="pi-check"
                   :class="{ done: step.done }"
                 >
-                  <Icon :name="step.icon" class="pi-check-ic" />
+                  <img :src="step.art" alt="" class="pi-check-ic" />
                   <span class="pi-check-label">{{ step.label }}</span>
                   <span class="pi-check-state" :class="step.done ? 'ok' : 'pending'">
                     <Icon v-if="step.done" name="heroicons:check-16-solid" />
@@ -265,7 +265,7 @@
         </div>
 
         <div class="pi-footnote">
-          <Icon name="heroicons:lock-closed" class="pi-footnote-ic" />
+          <img src="/build/padlock.png" alt="" class="pi-footnote-ic" />
           Your data is encrypted and never shared with third parties.
         </div>
     </main>
@@ -565,15 +565,16 @@ const contactDetails = computed(() => [
   { label: 'Phone', value: profile.value?.phone ?? '', key: 'phone' },
 ])
 
-const contactIcons = {
-  name: 'heroicons:user',
-  email: 'heroicons:envelope',
-  phone: 'heroicons:phone',
+// The 3D artwork the rest of the app uses, in place of flat glyphs.
+const contactArt = {
+  name: '/build/people.png',
+  email: '/build/email.png',
+  phone: '/build/phone.png',
 }
-const prefIcons = {
-  pushNotifications: 'heroicons:device-phone-mobile',
-  emailNewsletter: 'heroicons:envelope',
-  smsNotifications: 'heroicons:chat-bubble-oval-left',
+const prefArt = {
+  pushNotifications: '/build/phone.png',
+  emailNewsletter: '/build/email.png',
+  smsNotifications: '/op-icons/matched-buyers/chat-multi.png',
 }
 
 const firstNameDisplay = computed(
@@ -770,14 +771,16 @@ const profileCompletion = computed(() => {
   return Math.round((checks.filter(Boolean).length / checks.length) * 100)
 })
 
+// Each step reuses the same artwork as the card it sends you to, so the
+// checklist and the cards above read as the same thing.
 const completionSteps = computed(() => [
-  { label: 'Add full name', icon: 'heroicons:pencil', done: !!profile.value?.firstName },
-  { label: 'Add email address', icon: 'heroicons:envelope', done: !!profile.value?.email },
-  { label: 'Add phone number', icon: 'heroicons:phone', done: !!profile.value?.phone },
-  { label: 'Add current address', icon: 'heroicons:map-pin', done: !!profile.value?.addresses?.length },
-  { label: 'Add company details', icon: 'heroicons:building-office-2', done: !!profile.value?.companies?.length },
-  { label: 'Add solicitor', icon: 'heroicons:scale', done: !!profile.value?.solicitors?.length },
-  { label: 'Verify your identity', icon: 'heroicons:shield-check', done: !!profile.value?.isVerified },
+  { label: 'Add full name', art: '/build/people.png', done: !!profile.value?.firstName },
+  { label: 'Add email address', art: '/build/email.png', done: !!profile.value?.email },
+  { label: 'Add phone number', art: '/build/phone.png', done: !!profile.value?.phone },
+  { label: 'Add current address', art: '/op-icons/matched-buyers/pin.png', done: !!profile.value?.addresses?.length },
+  { label: 'Add company details', art: '/op-icons/investment/officeBuilding.png', done: !!profile.value?.companies?.length },
+  { label: 'Add solicitor', art: '/buyer-profile-icon/scales.png', done: !!profile.value?.solicitors?.length },
+  { label: 'Verify your identity', art: '/build/shield.png', done: !!profile.value?.isVerified },
 ])
 
 const ringStyle = computed(() => ({
@@ -864,10 +867,17 @@ const ringStyle = computed(() => ({
 .pi-card-titlewrap { display: flex; align-items: center; gap: 11px; min-width: 0; }
 .pi-card-ic { width: 38px; height: 38px; border-radius: 11px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .pi-card-ic :deep(svg) { width: 20px; height: 20px; }
-.ic-blue { background: #eaf0ff; color: #5b6ef0; }
-.ic-aqua { background: #e3f5f1; color: #00a19a; }
-.ic-green { background: #e3f5ec; color: #18a558; }
-.ic-indigo { background: #efeafe; color: #7c5cf0; }
+/* Chips that carry the 3D artwork instead of a flat glyph: the art needs a
+   plain backdrop, so the chip drops its tint and keeps only a soft border.
+   Two classes deep so it beats the tinted backgrounds on the base rules. */
+.pi-card-ic.ic-art,
+.pi-field-ic.ic-art,
+.pi-journey-ic.ic-art,
+.pi-pref-ic.ic-art { background: #fff; border: 1px solid #dfeae6; }
+.pi-card-ic.ic-art img { width: 28px; height: 28px; object-fit: contain; }
+.pi-field-ic.ic-art img { width: 25px; height: 25px; object-fit: contain; }
+.pi-journey-ic.ic-art img { width: 25px; height: 25px; object-fit: contain; }
+.pi-pref-ic.ic-art img { width: 26px; height: 26px; object-fit: contain; }
 .pi-card-title { font-size: 16px; font-weight: 800; color: #231d45; letter-spacing: -0.3px; }
 .pi-card-action {
   display: inline-flex; align-items: center; gap: 5px; flex-shrink: 0;
@@ -902,7 +912,7 @@ const ringStyle = computed(() => ({
   border-radius: 11px; padding: 9px 12px;
 }
 .pi-card-note.tip { color: #8a6d1f; background: #fdf6e3; }
-.pi-card-note-ic { width: 15px; height: 15px; flex-shrink: 0; }
+.pi-card-note-ic { width: 22px; height: 22px; flex-shrink: 0; object-fit: contain; }
 
 /* Property journey */
 .pi-journeylist { display: flex; flex-direction: column; gap: 10px; flex: 1; }
@@ -961,8 +971,7 @@ const ringStyle = computed(() => ({
 .pi-checklist { flex: 1; min-width: 220px; display: flex; flex-direction: column; gap: 2px; }
 .pi-check { display: flex; align-items: center; gap: 10px; padding: 8px 4px; border-bottom: 1px solid #f0f4f8; }
 .pi-check:last-child { border-bottom: none; }
-.pi-check-ic { width: 16px; height: 16px; color: #9fb0c2; flex-shrink: 0; }
-.pi-check.done .pi-check-ic { color: #00a19a; }
+.pi-check-ic { width: 20px; height: 20px; flex-shrink: 0; object-fit: contain; }
 .pi-check-label { flex: 1; font-size: 13px; font-weight: 600; color: #3c5165; }
 .pi-check.done .pi-check-label { color: #16314a; }
 .pi-check-state { flex-shrink: 0; font-size: 11px; font-weight: 800; }
@@ -979,7 +988,7 @@ const ringStyle = computed(() => ({
 .pi-ring-note-ic { width: 15px; height: 15px; flex-shrink: 0; margin-top: 1px; }
 
 .pi-footnote { display: flex; align-items: center; justify-content: center; gap: 7px; font-size: 12.5px; font-weight: 600; color: #8195aa; padding: 8px 0; }
-.pi-footnote-ic { width: 15px; height: 15px; }
+.pi-footnote-ic { width: 22px; height: 22px; object-fit: contain; }
 
 .pi-avatar {
   width: 96px; height: 96px; border-radius: 50%;
