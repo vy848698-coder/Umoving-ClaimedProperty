@@ -221,6 +221,17 @@ watch(
   }
 }
 
+/* Smallest phones — see PassportNavButton. Both selectors are repeated so
+   this beats the `:has(.pm-chev)` rule above rather than tying with it. */
+@media (max-width: 400px) {
+  .pm-trigger,
+  .pm-trigger:has(.pm-chev) {
+    font-size: 13.5px;
+    padding: 0 9px 0 12px;
+    gap: 5px;
+  }
+}
+
 .pm-menu {
   position: absolute;
   top: calc(100% + 8px);

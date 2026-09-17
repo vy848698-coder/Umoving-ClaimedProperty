@@ -83,4 +83,14 @@ onMounted(() => {
     padding: 0 14px;
   }
 }
+
+/* Smallest phones. On the passport screens this button shares the row with a
+   Back or tour button as well as Profile, so it gives up a little padding to
+   keep the row on one line. */
+@media (max-width: 400px) {
+  .pn-btn {
+    font-size: 13.5px;
+    padding: 0 12px;
+  }
+}
 </style>

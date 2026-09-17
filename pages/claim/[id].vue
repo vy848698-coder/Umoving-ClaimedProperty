@@ -2779,4 +2779,60 @@ async function issuePassport() {
   place-items: center;
 }
 .cl-lrf-row-ic svg { width: 15px; height: 15px; }
+
+/* ── Navbar on small screens ──────────────────────────────────────────
+   Scoped deliberately. These rules used to live in assets/css/main.css,
+   which never reaches the production bundle — verified against a real
+   .output build, where none of that file's content ships, its @font-face
+   included. So the phone sizing worked in dev and silently did nothing on
+   the deployed site.
+
+   At full size this row is wider than any phone: the wordmark plus every
+   action button. The app shell clips overflow-x, so the right-hand button
+   was sliced off the screen rather than producing a scrollbar. */
+@media (max-width: 700px) {
+  .hsw-nav-inner { gap: 12px; }
+  .hsw-brand { font-size: 17px; gap: 8px; min-width: 0; }
+  .hsw-brand-logo { width: 26px; height: 26px; }
+  .hsw-actions { gap: 8px; min-width: 0; }
+}
+
+/* The "Exit"/"Back" button drops to its chevron. font-size:0 hides the bare
+   text node while leaving it as the button's accessible name. */
+@media (max-width: 560px) {
+  .hsw-back {
+    font-size: 0;
+    gap: 0;
+    width: 42px;
+    padding: 0;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .hsw-back svg { width: 17px; height: 17px; flex-shrink: 0; }
+}
+
+/* Below this the wordmark cannot sit beside the buttons, so the mark carries
+   the brand alone. Hidden visually rather than display:none — it is the only
+   name this button has. */
+@media (max-width: 440px) {
+  .hsw-brand > span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .hsw-brand {
+    gap: 0;
+    min-width: 42px;
+    min-height: 42px;
+    justify-content: center;
+    margin-left: -8px;
+  }
+}
+
+@media (max-width: 400px) {
+  .hsw-tour { width: 40px; height: 40px; font-size: 15px; }
+}
 </style>

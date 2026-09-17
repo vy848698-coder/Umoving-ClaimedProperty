@@ -2289,4 +2289,42 @@ const executeDelete = async () => {
     animation: none;
   }
 }
+
+/* ── Navbar on small screens ──────────────────────────────────────────
+   Scoped deliberately — these rules used to live in assets/css/main.css,
+   which never reaches the production bundle (verified against a real
+   .output build), so they worked in dev and did nothing on the live site.
+
+   This row carries the most of any page: brand, tour button, Passport and
+   Profile. The "Claim Passport" CTA is already hidden below 900px above. */
+@media (max-width: 700px) {
+  .ppn-nav-inner { gap: 12px; }
+  .ppn-brand { gap: 8px; min-width: 0; }
+  .ppn-brand-logo { height: 26px; }
+  .ppn-actions { gap: 8px; min-width: 0; }
+}
+
+/* Below this the wordmark cannot sit beside the buttons. Hidden visually
+   rather than display:none — it is the only name this button has. */
+@media (max-width: 440px) {
+  .ppn-brand-name {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .ppn-brand {
+    gap: 0;
+    min-width: 42px;
+    min-height: 42px;
+    justify-content: center;
+    margin-left: -8px;
+  }
+}
+
+@media (max-width: 400px) {
+  .ppn-tour { width: 40px; height: 40px; font-size: 15px; }
+}
 </style>
