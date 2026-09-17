@@ -46,27 +46,9 @@ export default defineNuxtConfig({
     externals: {
       external: ['@napi-rs/canvas'],
     },
-    hooks: {
-      async compiled(nitro) {
-        const fs = await import('node:fs')
-        const path = await import('node:path')
-        const platformPkgs = [
-          'canvas-win32-x64-msvc',
-          'canvas-linux-x64-gnu',
-          'canvas-linux-arm64-gnu',
-          'canvas-darwin-x64',
-          'canvas-darwin-arm64',
-        ]
-        for (const pkg of platformPkgs) {
-          const src = path.join(process.cwd(), 'node_modules/@napi-rs', pkg, 'icudtl.dat')
-          const destDir = path.join(nitro.options.output.serverDir, 'node_modules/@napi-rs', pkg)
-          if (fs.existsSync(src) && fs.existsSync(destDir)) {
-            fs.copyFileSync(src, path.join(destDir, 'icudtl.dat'))
-            console.log(`[nitro] copied icudtl.dat for ${pkg}`)
-          }
-        }
-      },
-    },
+    // NB: the icudtl.dat copy that pairs with this deliberately does NOT live
+    // in `nitro.hooks` — see the `nitro:init` hook near the bottom of this
+    // file for why.
   },
 
   modules: ['@nuxt/ui', '@pinia/nuxt', '@vite-pwa/nuxt'],
@@ -248,6 +230,49 @@ export default defineNuxtConfig({
     esbuild: {
       drop:
         process.env.NODE_ENV === 'production' ? ['console', 'debugger'] : [],
+    },
+  },
+
+  hooks: {
+    // @napi-rs/canvas ships its native binary alongside a data file it loads
+    // at runtime (icudtl.dat) from a path next to the binary, not via JS
+    // `require()`. Nitro's file-tracer only follows JS requires, so a traced
+    // build drops icudtl.dat and the certificate renderer hard-crashes in
+    // production ("SkIcuLoader: datafile missing") even though it works in
+    // dev. `nitro.externals.external` above keeps the package whole, and this
+    // copies the data file next to the binary afterwards.
+    //
+    // This MUST be registered here rather than as `nitro: { hooks: { compiled } }`.
+    // Nitro loads its preset as a c12 config layer and merges it with defu,
+    // which overwrites a function rather than merging it — so a `compiled`
+    // hook in nitro config REPLACES the preset's own. On Vercel the preset's
+    // compiled hook is what writes .vercel/output/config.json (via
+    // generateFunctionFiles), the manifest that marks the directory as Build
+    // Output API. Without it Vercel ignores .vercel/output, falls back to the
+    // framework's static output directory and fails the deployment with
+    // "No Output Directory named 'dist' found after the Build completed" —
+    // after a build that otherwise succeeded. `nitro.hooks.hook()` on the live
+    // instance appends a listener instead, so both hooks run.
+    'nitro:init'(nitro) {
+      nitro.hooks.hook('compiled', async () => {
+        const fs = await import('node:fs')
+        const path = await import('node:path')
+        const platformPkgs = [
+          'canvas-win32-x64-msvc',
+          'canvas-linux-x64-gnu',
+          'canvas-linux-arm64-gnu',
+          'canvas-darwin-x64',
+          'canvas-darwin-arm64',
+        ]
+        for (const pkg of platformPkgs) {
+          const src = path.join(process.cwd(), 'node_modules/@napi-rs', pkg, 'icudtl.dat')
+          const destDir = path.join(nitro.options.output.serverDir, 'node_modules/@napi-rs', pkg)
+          if (fs.existsSync(src) && fs.existsSync(destDir)) {
+            fs.copyFileSync(src, path.join(destDir, 'icudtl.dat'))
+            console.log(`[nitro] copied icudtl.dat for ${pkg}`)
+          }
+        }
+      })
     },
   },
 })
