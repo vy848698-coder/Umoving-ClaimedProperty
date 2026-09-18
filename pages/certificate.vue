@@ -26,12 +26,28 @@
                Each claimed property has its own certificate: same founder
                number, that property's address and passport code. -->
           <div v-if="options.length > 1" class="ct-switch">
-            <label for="ct-property">Certificate for</label>
-            <select id="ct-property" :value="activeId" @change="onSwitch">
-              <option v-for="option in options" :key="option.id" :value="option.id">
-                {{ option.label }}
-              </option>
-            </select>
+            <div class="ct-switch-label">
+              <span>Certificate for</span>
+              <span class="ct-switch-count">{{ options.length }} properties</span>
+            </div>
+            <div class="ct-switch-field">
+              <span class="ct-switch-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M4 10.5 12 4l8 6.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                  <path d="M6 9.5V19a1 1 0 0 0 1 1h3v-5h4v5h3a1 1 0 0 0 1-1V9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </span>
+              <select id="ct-property" class="ct-switch-select" :value="activeId" @change="onSwitch">
+                <option v-for="option in options" :key="option.id" :value="option.id">
+                  {{ option.label }}{{ option.code ? ` · ${option.code}` : '' }}
+                </option>
+              </select>
+              <span class="ct-switch-chevron" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </span>
+            </div>
           </div>
 
           <div class="ct-actions-row">
@@ -273,34 +289,97 @@ onBeforeUnmount(revoke)
 
 .ct-switch {
   display: grid;
-  gap: 6px;
-  padding-bottom: 14px;
+  gap: 8px;
+  padding-bottom: 16px;
   border-bottom: 1px solid #eef1f5;
 }
-.ct-switch label {
+.ct-switch-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
   font-size: 10.5px;
   font-weight: 800;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: #8a94a6;
 }
-.ct-switch select {
-  width: 100%;
+.ct-switch-count {
+  color: #00857f;
+  letter-spacing: 0.06em;
+}
+
+.ct-switch-field {
+  position: relative;
   max-width: 460px;
-  height: 42px;
-  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  height: 48px;
   border: 1px solid #d8e3ee;
-  border-radius: 10px;
+  border-radius: 12px;
+  background: #fbfdff;
+  transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
+}
+.ct-switch-field:hover {
+  border-color: #b9d4e6;
   background: #fff;
+}
+.ct-switch-field:focus-within {
+  border-color: #00a19a;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(0, 161, 154, 0.14);
+}
+
+.ct-switch-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  margin-left: 14px;
+  color: #00857f;
+  flex-shrink: 0;
+}
+.ct-switch-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.ct-switch-select {
+  appearance: none;
+  -webkit-appearance: none;
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  padding: 0 38px 0 10px;
+  border: 0;
+  background: transparent;
   color: #0d1835;
   font-family: inherit;
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
 }
-.ct-switch select:focus-visible {
-  outline: 2px solid #00a19a;
-  outline-offset: 2px;
+.ct-switch-select:focus-visible {
+  outline: none;
+}
+
+.ct-switch-chevron {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  color: #8a94a6;
+  pointer-events: none;
+}
+.ct-switch-chevron svg {
+  width: 100%;
+  height: 100%;
 }
 
 .ct-btn-row {

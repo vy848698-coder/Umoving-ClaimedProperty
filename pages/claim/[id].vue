@@ -146,9 +146,7 @@
       <div class="cl-card cl-mb-sm">
         <div class="cl-eyebrow cl-mb-sm">What this fee covers</div>
         <p class="cl-body" style="margin: 0">
-          Identity checks and HM Land Registry ownership lookups cost us real
-          money per property, so we ask for this one-off fee upfront -
-          {{ claimPriceReason }}. Once it's paid, we'll run those checks next.
+          {{ claimPriceExplainer }}
         </p>
       </div>
 
@@ -542,13 +540,6 @@
       </div>
     </main>
 
-    <FoundingMemberModal
-      v-model="showFoundingModal"
-      :number-label="founderNumberLabel"
-      :passport-path="issuedPassportPath"
-      :certificate-path="issuedCertificatePath"
-      :first-claim="isFirstClaim"
-    />
   </div>
 </template>
 
@@ -578,7 +569,7 @@ type ClaimStep =
   | 'lr-failed'
   | 'lr-found'
 
-import FoundingMemberModal from '~/components/claim/FoundingMemberModal.vue'
+import { useFounderCelebration } from '~/composables/useFounderCelebration'
 
 const route = useRoute()
 const config = useRuntimeConfig()
@@ -588,14 +579,14 @@ const config = useRuntimeConfig()
 // their Seller Passport without being asked to pick a type.
 const PASSPORT_TYPE = 'seller' as const
 
-// Founding Homeowner congrats modal, shown once the passport is issued —
-// see issuePassport() below.
-const showFoundingModal = ref(false)
-const founderNumberLabel = ref<string | null>(null)
+// The Founding Homeowner congrats modal itself now lives on the Passport
+// page (pages/passportview/[id].vue) - it appears a beat after landing
+// there rather than blocking this page's redirect. See issuePassport()
+// below and useFounderCelebration for the handoff.
+const { setPending: setPendingFounderCelebration } = useFounderCelebration()
 const issuedPassportPath = ref('')
 // The certificate is per property, so the modal links to this claim's one.
 const issuedCertificatePath = ref('/certificate')
-const isFirstClaim = ref(true)
 
 const readyPassport = {
   image: '/build/umu-passport-sm.png',
@@ -898,13 +889,46 @@ const claimPriceDisplay = computed(() =>
     ? `£${(claimAmountPence.value / 100).toFixed(2)}`
     : '',
 )
-// The backend picks the tier — infer which one just from the amount so the
-// copy explains what's being charged without duplicating the pricing logic.
+// The backend picks the tier — infer which one just from the amount (the
+// three tiers are all distinct: £8.99 KYC-only, £12.99 HMLR-only, £19.99
+// both) so the copy explains what's being charged without duplicating the
+// pricing logic.
+const claimPriceTier = computed<'kyc' | 'hmlr' | 'both' | ''>(() => {
+  const amount = claimAmountPence.value
+  if (amount == null) return ''
+  if (amount <= 899) return 'kyc'
+  if (amount <= 1299) return 'hmlr'
+  return 'both'
+})
+
 const claimPriceReason = computed(() => {
-  if (claimAmountPence.value == null) return ''
-  return claimAmountPence.value >= 1999
-    ? 'Identity verification (KYC) and HM Land Registry ownership check'
-    : 'HM Land Registry ownership check'
+  switch (claimPriceTier.value) {
+    case 'kyc':
+      return 'Identity verification (KYC)'
+    case 'hmlr':
+      return 'HM Land Registry ownership check'
+    case 'both':
+      return 'Identity verification (KYC) and HM Land Registry ownership check'
+    default:
+      return ''
+  }
+})
+
+// The polite, spelled-out explanation shown under "What this fee covers" -
+// different from claimPriceReason (the short subheading) because a
+// partial-fee claim needs to say *why* it's cheaper: which check the user
+// already has on file, not just which one is left.
+const claimPriceExplainer = computed(() => {
+  switch (claimPriceTier.value) {
+    case 'kyc':
+      return "Your HM Land Registry ownership check for this property is already on file from an earlier attempt, so this fee only covers your identity verification (KYC)."
+    case 'hmlr':
+      return 'Your identity has already been verified, so this fee only covers the HM Land Registry ownership check for this property.'
+    case 'both':
+      return "Identity checks and HM Land Registry ownership lookups cost us real money per property, so we ask for this one-off fee upfront - identity verification (KYC) and the HM Land Registry ownership check. Once it's paid, we'll run those checks next."
+    default:
+      return ''
+  }
 })
 
 async function openPaymentStep(passportId: string) {
@@ -1292,13 +1316,18 @@ async function issuePassport() {
         headers: authHeaders(),
         query: { passportId, format: 'json', email: '1' },
       })
-      founderNumberLabel.value = details.founderNumberLabel
-      // More than one claimed property means they were already a Founding
-      // Homeowner before this one, so the welcome is worded differently.
-      isFirstClaim.value = (details.passports?.length ?? 1) <= 1
-      showFoundingModal.value = true
+      setPendingFounderCelebration({
+        passportId,
+        numberLabel: details.founderNumberLabel,
+        certificatePath: issuedCertificatePath.value,
+        // More than one claimed property means they were already a
+        // Founding Homeowner before this one, so the welcome is worded
+        // differently.
+        firstClaim: (details.passports?.length ?? 1) <= 1,
+      })
     } catch (err) {
       console.error('[claim] founder certificate details fetch failed:', err)
+    } finally {
       await navigateTo(issuedPassportPath.value, { replace: true })
     }
   } catch (e: any) {

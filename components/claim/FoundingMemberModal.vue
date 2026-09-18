@@ -1,6 +1,6 @@
 <template>
   <Teleport to="body">
-    <div v-if="modelValue" class="fmm-overlay" @click.self="viewPassport">
+    <div v-if="modelValue" class="fmm-overlay" @click.self="primaryAction">
       <div class="fmm-modal">
         <div class="fmm-handle" />
         <div class="fmm-icon"><img src="/homescore-icon/trophy.png" alt="" /></div>
@@ -12,19 +12,26 @@
         <p v-if="firstClaim" class="fmm-body">
           You're officially one of the first 1,000,000 people to claim a
           property with us. We've emailed a copy of your certificate to your
-          registered address — you can also view or download it any time from
-          the Certificate page in your Profile menu.
+          registered email address — you can also view or download it any
+          time from the Founding Homeowner certificate page in your Profile
+          menu.
         </p>
-        <p v-else class="fmm-body">
-          This property now has its own certificate, showing its address and
-          Passport code under the same founder number. We've emailed you a copy
-          — you can also view or download a certificate for any property you've
-          claimed from the Certificate page in your Profile menu.
-        </p>
+        <template v-else>
+          <p class="fmm-body fmm-body--tight">
+            This property now has its own certificate, showing its address
+            and Passport code under the same founder number. We've emailed
+            you a copy to your registered email address.
+          </p>
+          <p class="fmm-hint">
+            You now have more than one certificate. On the certificate page,
+            use the <strong>"Certificate for"</strong> dropdown to switch to
+            this property's certificate.
+          </p>
+        </template>
 
         <div class="fmm-actions">
-          <button type="button" class="fmm-btn-primary" @click="viewPassport">
-            View my Passport →
+          <button type="button" class="fmm-btn-primary" @click="primaryAction">
+            {{ stayOnPage ? 'Got it, thanks' : 'View my Passport →' }}
           </button>
           <button type="button" class="fmm-btn-link" @click="viewCertificate">
             View certificate now
@@ -47,8 +54,14 @@ const props = withDefaults(
     // False once they have claimed more than one property - they are already a
     // Founding Homeowner, so the welcome is worded differently.
     firstClaim?: boolean
+    // True when the modal is shown on the Passport page itself (the
+    // post-claim celebration, fired a moment after landing there) rather
+    // than from the claim flow before navigating away - the primary
+    // button then just closes the modal instead of re-navigating to the
+    // page already underneath it.
+    stayOnPage?: boolean
   }>(),
-  { numberLabel: null, certificatePath: '', firstClaim: true },
+  { numberLabel: null, certificatePath: '', firstClaim: true, stayOnPage: false },
 )
 const emit = defineEmits<{ (e: 'update:modelValue', v: boolean): void }>()
 
@@ -59,6 +72,11 @@ function close() {
 function viewPassport() {
   close()
   navigateTo(props.passportPath, { replace: true })
+}
+
+function primaryAction() {
+  if (props.stayOnPage) close()
+  else viewPassport()
 }
 
 function viewCertificate() {
@@ -156,6 +174,23 @@ function viewCertificate() {
   color: #5b6d89;
   line-height: 1.55;
   margin: 0 0 22px;
+}
+.fmm-body--tight {
+  margin-bottom: 10px;
+}
+.fmm-hint {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #00857f;
+  background: #eafaf8;
+  border: 1px solid #cdeeea;
+  border-radius: 10px;
+  padding: 10px 12px;
+  line-height: 1.5;
+  margin: 0 0 22px;
+}
+.fmm-hint strong {
+  font-weight: 800;
 }
 
 .fmm-actions {
