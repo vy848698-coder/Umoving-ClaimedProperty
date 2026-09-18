@@ -7,13 +7,19 @@
 
         <div class="fmm-eyebrow">Founding Homeowner</div>
         <h2 class="fmm-title">
-          Welcome, Founding Member{{ numberLabel ? ` ${numberLabel}` : '' }}
+          {{ firstClaim ? 'Welcome' : 'Another one claimed' }}, Founding Member{{ numberLabel ? ` ${numberLabel}` : '' }}
         </h2>
-        <p class="fmm-body">
+        <p v-if="firstClaim" class="fmm-body">
           You're officially one of the first 1,000,000 people to claim a
           property with us. We've emailed a copy of your certificate to your
           registered address — you can also view or download it any time from
           the Certificate page in your Profile menu.
+        </p>
+        <p v-else class="fmm-body">
+          This property now has its own certificate, showing its address and
+          Passport code under the same founder number. We've emailed you a copy
+          — you can also view or download a certificate for any property you've
+          claimed from the Certificate page in your Profile menu.
         </p>
 
         <div class="fmm-actions">
@@ -30,11 +36,20 @@
 </template>
 
 <script setup lang="ts">
-const props = defineProps<{
-  modelValue: boolean
-  numberLabel?: string | null
-  passportPath: string
-}>()
+const props = withDefaults(
+  defineProps<{
+    modelValue: boolean
+    numberLabel?: string | null
+    passportPath: string
+    // This claim's certificate, not the bare /certificate page: the endpoint
+    // would otherwise resolve it for whichever property is newest by then.
+    certificatePath?: string
+    // False once they have claimed more than one property - they are already a
+    // Founding Homeowner, so the welcome is worded differently.
+    firstClaim?: boolean
+  }>(),
+  { numberLabel: null, certificatePath: '', firstClaim: true },
+)
 const emit = defineEmits<{ (e: 'update:modelValue', v: boolean): void }>()
 
 function close() {
@@ -48,7 +63,7 @@ function viewPassport() {
 
 function viewCertificate() {
   close()
-  navigateTo('/certificate', { replace: true })
+  navigateTo(props.certificatePath || '/certificate', { replace: true })
 }
 </script>
 

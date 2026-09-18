@@ -546,6 +546,8 @@
       v-model="showFoundingModal"
       :number-label="founderNumberLabel"
       :passport-path="issuedPassportPath"
+      :certificate-path="issuedCertificatePath"
+      :first-claim="isFirstClaim"
     />
   </div>
 </template>
@@ -591,6 +593,9 @@ const PASSPORT_TYPE = 'seller' as const
 const showFoundingModal = ref(false)
 const founderNumberLabel = ref<string | null>(null)
 const issuedPassportPath = ref('')
+// The certificate is per property, so the modal links to this claim's one.
+const issuedCertificatePath = ref('/certificate')
+const isFirstClaim = ref(true)
 
 const readyPassport = {
   image: '/build/umu-passport-sm.png',
@@ -1264,19 +1269,33 @@ async function issuePassport() {
     const passportId = claimPassportId.value
 
     issuedPassportPath.value = `/passportview/${passportId}`
+    issuedCertificatePath.value = `/certificate?passportId=${encodeURIComponent(passportId)}`
 
-    // Assigns (or reads) the founder number and - on the very first call for
-    // this user - fires the certificate email in the background, reusing
-    // the exact same endpoint the Certificate page itself calls. Non-fatal:
-    // a failure here (e.g. no name on the profile yet) shouldn't block the
-    // claim that already succeeded - just skip the celebration and go
+    // Assigns (or reads) the founder number and emails the certificate in the
+    // background, reusing the exact same endpoint the Certificate page itself
+    // calls. Two things matter here:
+    //   passportId - the certificate is per property, so it has to name the
+    //                passport that was just claimed rather than let the
+    //                endpoint guess; a second claim otherwise certifies the
+    //                first property's address and passport code.
+    //   email=1    - every completed claim earns its own emailed certificate,
+    //                not just the first one. Only this flow sets it, so
+    //                viewing the certificate page never re-sends.
+    // Non-fatal: a failure here (e.g. no name on the profile yet) shouldn't
+    // block the claim that already succeeded - just skip the celebration and go
     // straight to the passport.
     try {
-      const details = await $fetch<{ founderNumberLabel: string }>(
-        '/api/certificate/me',
-        { headers: authHeaders(), query: { format: 'json' } },
-      )
+      const details = await $fetch<{
+        founderNumberLabel: string
+        passports: unknown[]
+      }>('/api/certificate/me', {
+        headers: authHeaders(),
+        query: { passportId, format: 'json', email: '1' },
+      })
       founderNumberLabel.value = details.founderNumberLabel
+      // More than one claimed property means they were already a Founding
+      // Homeowner before this one, so the welcome is worded differently.
+      isFirstClaim.value = (details.passports?.length ?? 1) <= 1
       showFoundingModal.value = true
     } catch (err) {
       console.error('[claim] founder certificate details fetch failed:', err)

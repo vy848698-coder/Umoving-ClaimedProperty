@@ -18,7 +18,7 @@ export default defineEventHandler(async (event) => {
       founderNumber: Number(q.number) || 251,
       addressLine1: text(q.line1, '24 Oakfield Road'),
       addressLine2: text(q.line2, 'Surbiton, KT6 6AS'),
-      joinedAt: text(q.date, new Date().toISOString()),
+      claimedAt: text(q.date, new Date().toISOString()),
     },
     q.format === 'png' ? 'png' : 'jpeg',
   )

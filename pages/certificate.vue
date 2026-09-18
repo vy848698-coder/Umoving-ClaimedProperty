@@ -5,14 +5,8 @@
     <main class="ct-main">
       <div class="ct-head">
         <p class="ct-kicker">Founding Homeowner</p>
-        <h1>{{ justClaimed ? 'You did it - welcome to the first 1,000,000' : 'Your certificate' }}</h1>
-        <p class="ct-lede">
-          {{
-            justClaimed
-              ? "You're officially a Founding Homeowner. We've also emailed you a copy of this certificate."
-              : 'Built from your profile and your claimed property, so it always shows your current name.'
-          }}
-        </p>
+        <h1>{{ headline }}</h1>
+        <p class="ct-lede">{{ lede }}</p>
       </div>
 
       <div v-if="loading" class="ct-state" aria-live="polite">
@@ -23,32 +17,50 @@
       <div v-else-if="error" class="ct-state ct-state--error" role="alert">
         <strong>We couldn't show your certificate</strong>
         <span>{{ error }}</span>
-        <button type="button" class="ct-btn ct-btn--ghost" @click="load">Try again</button>
+        <button type="button" class="ct-btn ct-btn--ghost" @click="load()">Try again</button>
       </div>
 
       <template v-else-if="imageUrl">
         <div class="ct-actions">
-          <dl v-if="details" class="ct-facts">
-            <div>
-              <dt>Founder number</dt>
-              <dd>{{ details.founderNumberLabel }}</dd>
+          <!-- Only worth showing once there is something to switch between.
+               Each claimed property has its own certificate: same founder
+               number, that property's address and passport code. -->
+          <div v-if="options.length > 1" class="ct-switch">
+            <label for="ct-property">Certificate for</label>
+            <select id="ct-property" :value="activeId" @change="onSwitch">
+              <option v-for="option in options" :key="option.id" :value="option.id">
+                {{ option.label }}
+              </option>
+            </select>
+          </div>
+
+          <div class="ct-actions-row">
+            <dl v-if="details" class="ct-facts">
+              <div>
+                <dt>Founder number</dt>
+                <dd>{{ details.founderNumberLabel }}</dd>
+              </div>
+              <div>
+                <dt>Property</dt>
+                <dd>{{ [details.addressLine1, details.addressLine2].filter(Boolean).join(', ') }}</dd>
+              </div>
+              <div v-if="details.passportCode">
+                <dt>Passport</dt>
+                <dd>{{ details.passportCode }}</dd>
+              </div>
+              <div>
+                <dt>Claimed</dt>
+                <dd>{{ details.claimedLabel }}</dd>
+              </div>
+            </dl>
+            <div class="ct-btn-row">
+              <a class="ct-btn" :class="{ 'ct-btn--ghost': nextPath }" :href="imageUrl" :download="fileName">
+                Download certificate
+              </a>
+              <button v-if="nextPath" type="button" class="ct-btn" @click="continueOn">
+                Continue to your Passport →
+              </button>
             </div>
-            <div>
-              <dt>Property</dt>
-              <dd>{{ [details.addressLine1, details.addressLine2].filter(Boolean).join(', ') }}</dd>
-            </div>
-            <div>
-              <dt>Joined</dt>
-              <dd>{{ details.joinedLabel }}</dd>
-            </div>
-          </dl>
-          <div class="ct-btn-row">
-            <a class="ct-btn" :class="{ 'ct-btn--ghost': nextPath }" :href="imageUrl" :download="fileName">
-              Download certificate
-            </a>
-            <button v-if="nextPath" type="button" class="ct-btn" @click="continueOn">
-              Continue to your Passport →
-            </button>
           </div>
         </div>
 
@@ -65,12 +77,24 @@ import FlowHeader from '~/components/core/FlowHeader.vue'
 
 definePageMeta({ middleware: 'auth' })
 
+interface CertificatePassport {
+  id: string
+  code: string
+  label: string
+  selected: boolean
+}
+
 interface CertificateDetails {
   name: string
   founderNumberLabel: string
   addressLine1: string
   addressLine2: string
-  joinedLabel: string
+  // The day this property was claimed - each certificate carries its own.
+  claimedLabel: string
+  passportId: string
+  passportCode: string
+  // Every claimed property, newest first - a user can claim more than one.
+  passports: CertificatePassport[]
 }
 
 const route = useRoute()
@@ -89,14 +113,60 @@ function continueOn() {
   router.replace(nextPath.value)
 }
 
+// Which claim this certificate is for. Absent means "the newest one", which is
+// what the endpoint picks - so arriving from the Profile menu after a second
+// claim shows the second property, not the first one for ever.
+const requestedId = computed(() => {
+  const id = route.query.passportId
+  return typeof id === 'string' && id ? id : ''
+})
+
 const loading = ref(true)
 const error = ref('')
 const imageUrl = ref('')
 const details = ref<CertificateDetails | null>(null)
 
+const options = computed(() => details.value?.passports ?? [])
+const activeId = computed(() => details.value?.passportId ?? requestedId.value)
+const multiple = computed(() => options.value.length > 1)
+
+const headline = computed(() => {
+  if (!justClaimed.value) return 'Your certificate'
+  // The "first 1,000,000" welcome belongs to the claim that made them a
+  // Founding Homeowner. On a later property they already are one.
+  return multiple.value
+    ? 'Your certificate for this property'
+    : 'You did it - welcome to the first 1,000,000'
+})
+
+const lede = computed(() => {
+  if (justClaimed.value) {
+    return multiple.value
+      ? "Your new Passport is claimed, and this certificate now carries its address. We've emailed you a copy."
+      : "You're officially a Founding Homeowner. We've also emailed you a copy of this certificate."
+  }
+  return multiple.value
+    ? 'Built from your profile and the property you pick below, each dated the day you claimed it - your founder number stays the same for every one.'
+    : 'Built from your profile and your claimed property, so it always shows your current name.'
+})
+
+// Switching property re-requests everything, so the image and the facts can
+// never be left showing a different claim from the one selected.
+function onSwitch(event: Event) {
+  const id = (event.target as HTMLSelectElement).value
+  if (!id || id === activeId.value) return
+  // The just-claimed welcome and its "continue to your Passport" button belong
+  // to the claim that was arrived with, so they don't survive a switch.
+  router.replace({ query: { passportId: id } })
+  load(id)
+}
+
 const fileName = computed(() => {
   const num = details.value?.founderNumberLabel.replace('#', '') ?? 'certificate'
-  return `umovingu-founding-homeowner-${num}.jpg`
+  // Without the passport code, every property a user claims would download over
+  // the last one - same founder number, same file name.
+  const code = details.value?.passportCode?.toLowerCase().replace(/[^a-z0-9]+/g, '-') ?? ''
+  return `umovingu-founding-homeowner-${num}${code ? `-${code}` : ''}.jpg`
 })
 
 function revoke() {
@@ -104,20 +174,29 @@ function revoke() {
   imageUrl.value = ''
 }
 
-async function load() {
+async function load(passportId = requestedId.value) {
   loading.value = true
   error.value = ''
   revoke()
   try {
     const token = localStorage.getItem('token')
     const headers = { Authorization: `Bearer ${token}` }
-    // Details first: this assigns the founder number, so the image request
-    // that follows never races it.
+    // Both requests name the same passport, so the picture can never be of one
+    // property while the facts beside it describe another. Details first: that
+    // request assigns the founder number, so the image never races it.
+    const query = passportId ? { passportId } : {}
     details.value = await $fetch<CertificateDetails>('/api/certificate/me', {
       headers,
-      query: { format: 'json' },
+      query: { ...query, format: 'json' },
     })
-    const blob = await $fetch<Blob>('/api/certificate/me', { headers, responseType: 'blob' })
+    const blob = await $fetch<Blob>('/api/certificate/me', {
+      headers,
+      // Whatever the details came back for - so an absent passportId resolves
+      // to the same newest claim in both requests even if one is claimed in
+      // between.
+      query: { passportId: details.value.passportId },
+      responseType: 'blob',
+    })
     imageUrl.value = URL.createObjectURL(blob)
   } catch (err: any) {
     error.value =
@@ -129,7 +208,7 @@ async function load() {
   }
 }
 
-onMounted(load)
+onMounted(() => load())
 onBeforeUnmount(revoke)
 </script>
 
@@ -176,15 +255,52 @@ onBeforeUnmount(revoke)
 }
 
 .ct-actions {
+  display: grid;
+  gap: 14px;
+  padding: 16px 18px;
+  background: #fff;
+  border: 1px solid #e3e8ee;
+  border-radius: 12px;
+}
+
+.ct-actions-row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 16px 18px;
+}
+
+.ct-switch {
+  display: grid;
+  gap: 6px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #eef1f5;
+}
+.ct-switch label {
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #8a94a6;
+}
+.ct-switch select {
+  width: 100%;
+  max-width: 460px;
+  height: 42px;
+  padding: 0 12px;
+  border: 1px solid #d8e3ee;
+  border-radius: 10px;
   background: #fff;
-  border: 1px solid #e3e8ee;
-  border-radius: 12px;
+  color: #0d1835;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.ct-switch select:focus-visible {
+  outline: 2px solid #00a19a;
+  outline-offset: 2px;
 }
 
 .ct-btn-row {

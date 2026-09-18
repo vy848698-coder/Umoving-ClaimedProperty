@@ -2,13 +2,26 @@ import { createError, getHeader, getQuery, setHeader } from 'h3'
 
 // The signed-in user's Founding Homeowner certificate, built from live data:
 //   name     - their current profile name (so a name change shows straight away)
-//   property - the address of their first claimed Passport, or ?passportId=
-//   date     - the day the certificate was first issued (kept for good)
+//   property - the address of the claim being viewed
+//   code     - the passport code for that same claim
+//   date     - the day that property was claimed
 //   number   - their founder number, assigned on first request and kept for good
+//
+// A user can claim more than one property. Everything that describes the
+// property - address, passport code, passport id, claim date - is resolved per
+// passport on every request, so a second claim shows the second property rather
+// than the first one for ever. Only the founder number is per user: it is
+// allocated once and never changes, whatever is claimed afterwards.
+//
+// ?passportId=<id> picks a specific claim; without it the newest claim wins.
+// ?format=json returns the details (including every claim, for the property
+// switcher) instead of the image.
+// ?email=1 also sends the certificate to the user - the claim flow passes it
+// once per completed claim; plain page views never do, so refreshing the
+// certificate page cannot re-send it.
 //
 // Requires the user's own bearer token; everything is read from the backend
 // with it, so nobody can render someone else's certificate.
-// ?format=json returns the details instead of the image.
 
 type AnyRecord = Record<string, any>
 
@@ -37,11 +50,6 @@ export default defineEventHandler(async (event) => {
           : { statusCode: 502, statusMessage: 'Could not load your profile. Try again in a moment.' },
       )
     }),
-    // Owned (seller / landlord) passports only - not ones the user watches as
-    // a buyer - and only ones actually claimed (not PENDING_PAYMENT: a draft
-    // row that exists after KYC+HMLR but before the owner-claim charge, with
-    // no seeded sections yet - certifying a claim that isn't actually
-    // complete).
     api<AnyRecord[]>('/profile/passports').catch(() => [] as AnyRecord[]),
   ])
 
@@ -61,22 +69,26 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const owned = (passports ?? []).filter(
-    (p) => p?.id && p?.type !== 'BUYER' && p?.status !== 'PENDING_PAYMENT',
-  )
+  // Owned (seller / landlord) passports only - not ones the user watches as a
+  // buyer - and, for the switcher and the default, only ones actually claimed.
+  const owned = (passports ?? []).filter(isOwnedPassport)
+  // Newest claim first: the order the switcher lists them in, and the default
+  // when no passport is asked for. Somebody who has just claimed a second
+  // property means that one, not the one they claimed a year ago.
+  const claims = newestClaimFirst(owned.filter(isClaimedPassport))
 
-  const { passportId, format } = getQuery(event)
+  const { passportId, format, email } = getQuery(event)
   let chosen: AnyRecord | undefined
   if (typeof passportId === 'string' && passportId) {
+    // Matched against everything they own rather than just the settled claims:
+    // the status guard below runs on the passport's own record, which is
+    // fresher than this list in the moment right after a claim completes.
     chosen = owned.find((p) => p.id === passportId)
     if (!chosen) {
       throw createError({ statusCode: 404, statusMessage: 'That Passport is not one of yours.' })
     }
   } else {
-    // The founding claim is the first one. The list comes back most-recently
-    // visited first, so without dates the last entry is the oldest.
-    const time = (p: AnyRecord) => Date.parse(p.createdAt ?? p.claimedAt ?? '') || Infinity
-    chosen = [...owned].reverse().sort((a, b) => time(a) - time(b))[0]
+    chosen = claims[0]
   }
   if (!chosen) {
     throw createError({
@@ -84,41 +96,75 @@ export default defineEventHandler(async (event) => {
       statusMessage: 'Claim a property to get your Founding Homeowner certificate.',
     })
   }
+  const selected = chosen
+
+  const passport = (await api<AnyRecord>(`/passport/${selected.id}`).catch(() => null)) ?? selected
+  // PENDING_PAYMENT is a draft row: KYC and HM Land Registry are done but the
+  // owner-claim charge isn't, so there is no claim to certify yet.
+  if ((passport.status ?? selected.status) === 'PENDING_PAYMENT') {
+    throw createError({
+      statusCode: 404,
+      statusMessage: 'That claim is not finished yet, so it has no certificate.',
+    })
+  }
 
   // Only now, past every guard: this assigns a permanent, never-reused
   // Founding Homeowner number on first call and flips `isNew` (which gates the
   // "here's your certificate" email). Running it earlier - alongside the reads
   // above - burns a number and fires that flag for anyone who merely hits this
-  // endpoint without a name or a claimed passport, leaving holes in the
-  // sequence.
-  const founder = await getOrAssignFounderNumber(backendBase, auth)
-
-  const passport = (await api<AnyRecord>(`/passport/${chosen.id}`).catch(() => null)) ?? chosen
+  // endpoint without a name or a finished claim, leaving holes in the sequence.
+  // Running it beside the property read is fine: both are past the guards.
+  //
   // The passport stores only the street and postcode; the town is on the
   // property record it was claimed from.
-  const propertyId = passport.propertyId ?? chosen.propertyId ?? passport.property?.id
-  const property: AnyRecord =
-    (propertyId ? await api<AnyRecord>(`/property/${propertyId}`).catch(() => null) : null) ??
-    passport.property ??
-    chosen.property ??
-    {}
+  const propertyId = passport.propertyId ?? selected.propertyId ?? passport.property?.id
+  const [founder, fetchedProperty] = await Promise.all([
+    getOrAssignFounderNumber(backendBase, auth),
+    propertyId ? api<AnyRecord>(`/property/${propertyId}`).catch(() => null) : null,
+  ])
+  const property: AnyRecord = fetchedProperty ?? passport.property ?? selected.property ?? {}
+
   // The passport's own street first; otherwise the property's lines, where a
   // flat or building name can sit in addressLine2.
   const addressLine1 = formatStreet(
     passport.addressLine1 ??
-      chosen.addressLine1 ??
+      selected.addressLine1 ??
       [property.addressLine1, property.addressLine2].filter(Boolean).join(', '),
   )
   const town = formatPlaceName(
     property.city ?? property.town ?? passport.city ?? passport.town ?? property.county ?? '',
   )
-  const postcode = formatPostcode(passport.postcode ?? chosen.postcode ?? property.postcode ?? '')
+  const postcode = formatPostcode(passport.postcode ?? selected.postcode ?? property.postcode ?? '')
   const addressLine2 = [town, postcode].filter(Boolean).join(', ')
 
-  // The day the certificate was first issued - today on the first request,
-  // then fixed for good. Passport records can be created long before the claim,
-  // so their createdAt showed the wrong day.
-  const joinedAt = founder.assignedAt
+  // The day THIS property was claimed, read from the passport itself, so a
+  // second property claimed months later is dated that day rather than the day
+  // the user first joined. The passport's own record is tried before the
+  // summary row from the list. If neither carries a date - an older record from
+  // before the backend stored one - fall back to the day the founder number was
+  // assigned, which is the only other date we have.
+  const claimedAt = passportClaimDate(passport, selected) || founder.assignedAt
+
+  const passportCode = formatPassportCode(passport)
+  const resolvedLabel = [addressLine1, addressLine2].filter(Boolean).join(', ')
+
+  // The switcher lists the settled claims, newest first. An explicitly asked-for
+  // passport is prepended if it isn't among them yet - which is the case in the
+  // moment right after a claim, where its own record already says it is paid for
+  // but /profile/passports still has it as PENDING_PAYMENT. Without this the
+  // dropdown would have no entry matching what is on screen.
+  const listed = claims.some((p) => p.id === selected.id) ? claims : [selected, ...claims]
+
+  // Every entry is labelled from its own list row: resolving each full address
+  // means a request per property, and the street and postcode already name a UK
+  // home. The selected one falls back to its resolved address only when its row
+  // carries no address at all - otherwise it alone would show a town the rest of
+  // the list can't, and gain one the moment it was picked.
+  const optionLabel = (p: AnyRecord) => {
+    const label = passportAddressLabel(p)
+    const bare = !label || label === formatPassportCode(p)
+    return bare && p.id === selected.id && resolvedLabel ? resolvedLabel : label
+  }
 
   const details = {
     name: formatCertificateName(name),
@@ -126,21 +172,37 @@ export default defineEventHandler(async (event) => {
     founderNumberLabel: formatFounderNumber(founder.number),
     addressLine1,
     addressLine2,
-    joinedAt,
-    joinedLabel: formatJoinedDate(joinedAt),
-    passportId: chosen.id,
-    passportType: chosen.type ?? null,
+    claimedAt,
+    claimedLabel: formatCertificateDate(claimedAt),
+    // When this user became a Founding Homeowner. Per user, not per property -
+    // it is the date their founder number was assigned, and it never moves.
+    founderSince: founder.assignedAt,
+    passportId: selected.id,
+    passportCode,
+    passportType: selected.type ?? null,
+    propertyId: propertyId ?? null,
+    // Every claim this user can be certified for, newest first, for the
+    // property switcher on the certificate page. The selected one carries the
+    // fully resolved address rather than the list row's partial one.
+    passports: listed.map((p) => ({
+      id: p.id as string,
+      code: formatPassportCode(p),
+      label: optionLabel(p),
+      selected: p.id === selected.id,
+    })),
   }
 
   setHeader(event, 'Cache-Control', 'private, no-store')
 
-  // First-ever request for this user: this is the moment they're actually
-  // becoming a Founding Homeowner, so email them a copy now rather than
-  // waiting for them to notice the certificate exists under the Profile
-  // menu. Every later view of this page (isNew: false) skips this - no
-  // re-send on refresh. Fire-and-forget: a failed email shouldn't break
-  // the page the user is looking at right now, which already has its copy.
-  if (founder.isNew) {
+  // Email a copy at the moment it is earned: on the user's very first
+  // certificate, and on each later claim, where the claim flow asks for it with
+  // ?email=1. Plain views of the certificate page never set it, so refreshing
+  // the page or switching property in the dropdown cannot re-send. What gets
+  // rendered is the details above - this property's address and passport code -
+  // so a second claim is emailed its own certificate, not the first one again.
+  // Fire-and-forget: a failed email shouldn't break the page the user is
+  // looking at right now, which already has its copy.
+  if (founder.isNew || email === '1') {
     const image = await renderCertificate(details)
     $fetch(`${backendBase}/profile/founder-number/email`, {
       method: 'POST',

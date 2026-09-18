@@ -9,7 +9,9 @@ export interface CertificateData {
   founderNumber: number
   addressLine1: string
   addressLine2?: string
-  joinedAt: Date | string
+  // The day THIS property was claimed - each certificate carries its own, so a
+  // user who claims again later gets that later date on the new certificate.
+  claimedAt: Date | string
 }
 
 const NAVY = '#0A0F33'
@@ -68,7 +70,7 @@ export function formatFounderNumber(n: number): string {
 }
 
 // "10 SEPTEMBER 2026", in UK time so a late-evening claim keeps its UK date.
-export function formatJoinedDate(value: Date | string): string {
+export function formatCertificateDate(value: Date | string): string {
   const date = value instanceof Date ? value : new Date(value)
   const safe = Number.isNaN(date.getTime()) ? new Date() : date
   return new Intl.DateTimeFormat('en-GB', {
@@ -197,13 +199,13 @@ export async function renderCertificate(
     lines.forEach((t, i) => ctx.fillText(t, L.cx, baselines[i]!))
   }
 
-  // Joined date, tracked capitals.
+  // The claim date, tracked capitals.
   ctx.textAlign = 'left'
   ctx.font = `${L.date.size}px "Lora Medium"`
   ctx.fillStyle = NAVY
   fillTracked(
     ctx,
-    formatJoinedDate(data.joinedAt),
+    formatCertificateDate(data.claimedAt),
     L.cx,
     L.date.baseline,
     Math.round(L.date.size * L.date.tracking),
