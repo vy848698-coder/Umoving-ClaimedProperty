@@ -1,17 +1,20 @@
 import { createError, getHeader, getQuery, setHeader } from 'h3'
 
-// The signed-in user's Founding Homeowner certificate, built from live data:
+// The signed-in user's Founding Homeowner certificate(s), built from live
+// data:
 //   name     - their current profile name (so a name change shows straight away)
 //   property - the address of the claim being viewed
 //   code     - the passport code for that same claim
 //   date     - the day that property was claimed
-//   number   - their founder number, assigned on first request and kept for good
+//   number   - THIS PROPERTY's founder number, assigned on first request
+//              and kept for good
 //
-// A user can claim more than one property. Everything that describes the
-// property - address, passport code, passport id, claim date - is resolved per
-// passport on every request, so a second claim shows the second property rather
-// than the first one for ever. Only the founder number is per user: it is
-// allocated once and never changes, whatever is claimed afterwards.
+// A user can claim more than one property, and gets a separate certificate
+// - with its own founder number - for each one. Everything that describes
+// the property - address, passport code, passport id, claim date, and now
+// the founder number itself - is resolved per passport on every request,
+// so a second claim gets its own certificate rather than reusing the
+// first one's number.
 //
 // ?passportId=<id> picks a specific claim; without it the newest claim wins.
 // ?format=json returns the details (including every claim, for the property
@@ -119,7 +122,7 @@ export default defineEventHandler(async (event) => {
   // property record it was claimed from.
   const propertyId = passport.propertyId ?? selected.propertyId ?? passport.property?.id
   const [founder, fetchedProperty] = await Promise.all([
-    getOrAssignFounderNumber(backendBase, auth),
+    getOrAssignFounderNumber(backendBase, auth, selected.id),
     propertyId ? api<AnyRecord>(`/property/${propertyId}`).catch(() => null) : null,
   ])
   const property: AnyRecord = fetchedProperty ?? passport.property ?? selected.property ?? {}
@@ -174,8 +177,9 @@ export default defineEventHandler(async (event) => {
     addressLine2,
     claimedAt,
     claimedLabel: formatCertificateDate(claimedAt),
-    // When this user became a Founding Homeowner. Per user, not per property -
-    // it is the date their founder number was assigned, and it never moves.
+    // When THIS PROPERTY's founder number was assigned - never moves once
+    // set. A second claimed property gets its own founderSince, from its
+    // own certificate, not the first property's date.
     founderSince: founder.assignedAt,
     passportId: selected.id,
     passportCode,
