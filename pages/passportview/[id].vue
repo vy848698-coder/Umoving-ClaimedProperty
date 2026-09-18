@@ -529,6 +529,18 @@
       @select="switchPassport"
     />
 
+    <!-- Founding Homeowner congrats, shown a beat after landing here from a
+         just-completed claim - see useFounderCelebration. -->
+    <FoundingMemberModal
+      v-if="founderCelebration"
+      v-model="showFounderModal"
+      :number-label="founderCelebration.numberLabel"
+      :passport-path="`/passportview/${route.params.id}`"
+      :certificate-path="founderCelebration.certificatePath"
+      :first-claim="founderCelebration.firstClaim"
+      stay-on-page
+    />
+
     <Toast
       v-if="toastState.isVisible"
       :message="toastState.message"
@@ -635,7 +647,9 @@ import PublishPassportDrawer from '~/components/passport/PublishPassportDrawer.v
 import BuyerDetailDrawer from '~/components/passport/BuyerDetailDrawer.vue'
 import BuyerActionDrawer from '~/components/passport/BuyerActionDrawer.vue'
 import Toast from '~/components/ui/Toast.vue'
+import FoundingMemberModal from '~/components/claim/FoundingMemberModal.vue'
 import { useAppToast } from '~/composables/useCustomToast'
+import { useFounderCelebration } from '~/composables/useFounderCelebration'
 import { toSmartTitleCase } from '~/utils/titleCase'
 
 // Guided tour — auto-runs once per browser, replays from the "?" button.
@@ -704,6 +718,12 @@ const collaborators = ref([])
 const showCollaboratorModal = ref(false)
 const showPropertiesModal = ref(false)
 
+// Founding Homeowner congrats popup, for a claim that just completed and
+// redirected here - see useFounderCelebration.
+const { takePending: takePendingFounderCelebration } = useFounderCelebration()
+const founderCelebration = ref(null)
+const showFounderModal = ref(false)
+
 const passportAddress = ref({ line1: '', line2: '' })
 const passportTown = ref('')
 // Drives which cover art the hero book shows. This page is the seller view,
@@ -763,6 +783,17 @@ function matchStrokeColor(score) {
 }
 
 onMounted(async () => {
+  // A just-completed claim redirected here with a pending celebration -
+  // show it a beat after landing rather than the instant the page mounts,
+  // so it reads as "you've arrived" rather than blocking the arrival.
+  const pending = takePendingFounderCelebration(String(route.params.id))
+  if (pending) {
+    founderCelebration.value = pending
+    setTimeout(() => {
+      showFounderModal.value = true
+    }, 1500)
+  }
+
   // The landlord hand-off that used to run here has been removed: this app
   // only issues Seller Passports, so every passport loads the seller view.
   loadSections()

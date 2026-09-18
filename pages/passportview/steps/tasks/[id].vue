@@ -329,8 +329,6 @@ const {
   moveToPreviousQuestion,
 } = usePassportRuntime()
 
-const { checkForCelebrations, waitForCelebrations } = usePassportAchievement()
-
 const showSectionComplete = ref(false)
 const sectionBonusPoints = ref(0)
 const totalPointsBefore = ref(0)
@@ -627,23 +625,9 @@ async function maybeCompleteTask(questionId) {
   if (!taskQuestions.every((q) => q.completed)) return null
   try {
     const result = await completeTask(completedTaskId)
-    // The backend mints any newly-earned stamps fire-and-forget right after
-    // marking the task complete, so they may not have landed yet when this
-    // response comes back.
-    if (result?.sectionCompleted) {
-      // Stamp takes priority over section-complete — block here until any
-      // newly-earned stamp's celebration has played AND been acknowledged,
-      // so it never ends up appearing after section-complete (otherwise a
-      // race: whichever screen is ready first wins, usually section-complete
-      // since it doesn't wait on the backend's fire-and-forget evaluation).
-      await waitForCelebrations()
-    } else {
-      // Non-section-completing save: don't block navigation to the next
-      // question, but still check soon — without this a freshly-minted stamp
-      // would sit invisible until the app next backgrounds/foregrounds or
-      // reloads (checkForCelebrations' only other caller, in app.vue).
-      setTimeout(() => checkForCelebrations(), 800)
-    }
+    // This website doesn't show the passport-stamp celebration (the app
+    // keeps its own, separate implementation) - so unlike there, nothing
+    // here needs to wait on or poll for a newly-earned stamp.
     return result
   } catch (err) {
     console.error('Error completing task:', err)

@@ -568,6 +568,8 @@ type ClaimStep =
   | 'lr-failed'
   | 'lr-found'
 
+import { useFounderCelebration } from '~/composables/useFounderCelebration'
+
 const route = useRoute()
 const config = useRuntimeConfig()
 
@@ -576,10 +578,14 @@ const config = useRuntimeConfig()
 // their Seller Passport without being asked to pick a type.
 const PASSPORT_TYPE = 'seller' as const
 
-// This website has no in-app "you're a Founding Member" celebration - see
-// issuePassport() below - unlike the app, which keeps its own. The
-// certificate itself (and its email) is still earned exactly the same way.
+// The Founding Homeowner congrats modal itself now lives on the Passport
+// page (pages/passportview/[id].vue) - it appears a beat after landing
+// there rather than blocking this page's redirect. See issuePassport()
+// below and useFounderCelebration for the handoff.
+const { setPending: setPendingFounderCelebration } = useFounderCelebration()
 const issuedPassportPath = ref('')
+// The certificate is per property, so the modal links to this claim's one.
+const issuedCertificatePath = ref('/certificate')
 
 const readyPassport = {
   image: '/build/umu-passport-sm.png',
@@ -1294,6 +1300,7 @@ async function issuePassport() {
     const passportId = claimPassportId.value
 
     issuedPassportPath.value = `/passportview/${passportId}`
+    issuedCertificatePath.value = `/certificate?passportId=${encodeURIComponent(passportId)}`
 
     // Assigns (or reads) the founder number and emails the certificate in the
     // background, reusing the exact same endpoint the Certificate page itself
@@ -1305,19 +1312,28 @@ async function issuePassport() {
     //   email=1    - every completed claim earns its own emailed certificate,
     //                not just the first one. Only this flow sets it, so
     //                viewing the certificate page never re-sends.
-    // This website (unlike the app) doesn't show an in-app "you're a
-    // Founding Member" celebration - that's app-only - but the certificate
-    // itself is still earned and emailed here exactly as before, so this
-    // fetch stays even though nothing downstream reads its response.
     // Non-fatal: a failure here (e.g. no name on the profile yet) shouldn't
-    // block the claim that already succeeded.
+    // block the claim that already succeeded - just skip the celebration and go
+    // straight to the passport.
     try {
-      await $fetch('/api/certificate/me', {
+      const details = await $fetch<{
+        founderNumberLabel: string
+        passports: unknown[]
+      }>('/api/certificate/me', {
         headers: authHeaders(),
         query: { passportId, format: 'json', email: '1' },
       })
+      setPendingFounderCelebration({
+        passportId,
+        numberLabel: details.founderNumberLabel,
+        certificatePath: issuedCertificatePath.value,
+        // More than one claimed property means they were already a
+        // Founding Homeowner before this one, so the welcome is worded
+        // differently.
+        firstClaim: (details.passports?.length ?? 1) <= 1,
+      })
     } catch (err) {
-      console.error('[claim] founder certificate email failed:', err)
+      console.error('[claim] founder certificate details fetch failed:', err)
     } finally {
       await navigateTo(issuedPassportPath.value, { replace: true })
     }
