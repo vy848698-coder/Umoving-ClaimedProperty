@@ -145,9 +145,8 @@
 
       <div class="cl-card cl-mb-sm">
         <div class="cl-eyebrow cl-mb-sm">What this fee covers</div>
-        <p class="cl-body" style="margin: 0">
-          {{ claimPriceExplainer }}
-        </p>
+        <!-- eslint-disable-next-line vue/no-v-html -->
+        <p class="cl-body" style="margin: 0" v-html="claimPriceExplainer" />
       </div>
 
       <div class="cl-card cl-mb-sm">
@@ -569,8 +568,6 @@ type ClaimStep =
   | 'lr-failed'
   | 'lr-found'
 
-import { useFounderCelebration } from '~/composables/useFounderCelebration'
-
 const route = useRoute()
 const config = useRuntimeConfig()
 
@@ -579,14 +576,10 @@ const config = useRuntimeConfig()
 // their Seller Passport without being asked to pick a type.
 const PASSPORT_TYPE = 'seller' as const
 
-// The Founding Homeowner congrats modal itself now lives on the Passport
-// page (pages/passportview/[id].vue) - it appears a beat after landing
-// there rather than blocking this page's redirect. See issuePassport()
-// below and useFounderCelebration for the handoff.
-const { setPending: setPendingFounderCelebration } = useFounderCelebration()
+// This website has no in-app "you're a Founding Member" celebration - see
+// issuePassport() below - unlike the app, which keeps its own. The
+// certificate itself (and its email) is still earned exactly the same way.
 const issuedPassportPath = ref('')
-// The certificate is per property, so the modal links to this claim's one.
-const issuedCertificatePath = ref('/certificate')
 
 const readyPassport = {
   image: '/build/umu-passport-sm.png',
@@ -914,6 +907,11 @@ const claimPriceReason = computed(() => {
   }
 })
 
+// Wraps the two fee-covering terms in a highlighted span - the copy below
+// is authored here (never user input), so v-html on it is safe.
+const KYC_TERM = '<span class="cl-fee-term">KYC</span>'
+const HMLR_TERM = '<span class="cl-fee-term">HM Land Registry</span>'
+
 // The polite, spelled-out explanation shown under "What this fee covers" -
 // different from claimPriceReason (the short subheading) because a
 // partial-fee claim needs to say *why* it's cheaper: which check the user
@@ -921,11 +919,11 @@ const claimPriceReason = computed(() => {
 const claimPriceExplainer = computed(() => {
   switch (claimPriceTier.value) {
     case 'kyc':
-      return "Your HM Land Registry ownership check for this property is already on file from an earlier attempt, so this fee only covers your identity verification (KYC)."
+      return `Your ${HMLR_TERM} ownership check for this property is already on file from an earlier attempt, so this fee only covers your identity verification (${KYC_TERM}).`
     case 'hmlr':
-      return 'Your identity has already been verified, so this fee only covers the HM Land Registry ownership check for this property.'
+      return `Your identity has already been verified, so this fee only covers the ${HMLR_TERM} ownership check for this property.`
     case 'both':
-      return "Identity checks and HM Land Registry ownership lookups cost us real money per property, so we ask for this one-off fee upfront - identity verification (KYC) and the HM Land Registry ownership check. Once it's paid, we'll run those checks next."
+      return `Identity checks and ${HMLR_TERM} ownership lookups cost us real money per property, so we ask for this one-off fee upfront - identity verification (${KYC_TERM}) and the ${HMLR_TERM} ownership check. Once it's paid, we'll run those checks next.`
     default:
       return ''
   }
@@ -1057,10 +1055,13 @@ async function startPersonaKyc() {
     // liveness + AML inside their UI; we just wait for the result.
     const w = window.open(start.hostedUrl, '_blank', 'noopener')
     if (!w) {
+      // Still start polling even though the tab didn't open automatically -
+      // the inquiry already exists on Persona's side, so if the user opens
+      // the verification link another way (or already has it open from a
+      // prior attempt), auto-check picks the result up without them having
+      // to find and tap "Resume auto-check" themselves.
       personaError.value =
-        'Pop-ups blocked — allow pop-ups for this site and try again.'
-      personaPolling.value = false
-      return
+        'Pop-ups blocked — allow pop-ups for this site and try again, or open the verification link manually.'
     }
     runPolling()
   } catch (e: any) {
@@ -1293,7 +1294,6 @@ async function issuePassport() {
     const passportId = claimPassportId.value
 
     issuedPassportPath.value = `/passportview/${passportId}`
-    issuedCertificatePath.value = `/certificate?passportId=${encodeURIComponent(passportId)}`
 
     // Assigns (or reads) the founder number and emails the certificate in the
     // background, reusing the exact same endpoint the Certificate page itself
@@ -1305,28 +1305,19 @@ async function issuePassport() {
     //   email=1    - every completed claim earns its own emailed certificate,
     //                not just the first one. Only this flow sets it, so
     //                viewing the certificate page never re-sends.
+    // This website (unlike the app) doesn't show an in-app "you're a
+    // Founding Member" celebration - that's app-only - but the certificate
+    // itself is still earned and emailed here exactly as before, so this
+    // fetch stays even though nothing downstream reads its response.
     // Non-fatal: a failure here (e.g. no name on the profile yet) shouldn't
-    // block the claim that already succeeded - just skip the celebration and go
-    // straight to the passport.
+    // block the claim that already succeeded.
     try {
-      const details = await $fetch<{
-        founderNumberLabel: string
-        passports: unknown[]
-      }>('/api/certificate/me', {
+      await $fetch('/api/certificate/me', {
         headers: authHeaders(),
         query: { passportId, format: 'json', email: '1' },
       })
-      setPendingFounderCelebration({
-        passportId,
-        numberLabel: details.founderNumberLabel,
-        certificatePath: issuedCertificatePath.value,
-        // More than one claimed property means they were already a
-        // Founding Homeowner before this one, so the welcome is worded
-        // differently.
-        firstClaim: (details.passports?.length ?? 1) <= 1,
-      })
     } catch (err) {
-      console.error('[claim] founder certificate details fetch failed:', err)
+      console.error('[claim] founder certificate email failed:', err)
     } finally {
       await navigateTo(issuedPassportPath.value, { replace: true })
     }
@@ -1894,6 +1885,14 @@ async function issuePassport() {
   color: #6b6783;
   line-height: 1.55;
   margin: 0 0 14px;
+}
+.cl-fee-term {
+  font-weight: 800;
+  color: #00857f;
+  background: rgba(0, 161, 154, 0.1);
+  padding: 1px 6px;
+  border-radius: 6px;
+  white-space: nowrap;
 }
 .cl-center { text-align: center; }
 .cl-mb-xs { margin-bottom: 8px; }
