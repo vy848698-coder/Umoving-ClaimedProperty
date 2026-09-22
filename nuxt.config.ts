@@ -188,8 +188,6 @@ export default defineNuxtConfig({
     },
   },
   runtimeConfig: {
-    // Private keys (only available on server-side)
-    apiSecret: process.env.API_SECRET || '123',
     // Absolute backend URL for server routes (the certificate). The public
     // apiBase is the relative '/__backend' proxy path in dev, which server code
     // can't fetch.

@@ -2420,8 +2420,13 @@ onMounted(async () => {
 
 function handleAction(label: string) {
   if (label === 'Claim Passport') {
-    // No passport yet — start ownership verification
-    router.push(`/verify-ownership/${propertyId}`)
+    // The legacy /verify-ownership/[id] flow (a client-side animation that
+    // called a backend endpoint which set ownership VERIFIED with no real
+    // evidence check) has been removed - it let anyone forge ownership of
+    // any property (security review 2026-09-22, finding C1). This is now
+    // the only claim entry point; it drives the real HM Land Registry
+    // check in pages/claim/[id].vue.
+    router.push(`/claim/${propertyId}`)
   } else if (label === 'Access Passport') {
     const status = passportStatus.value
     if (status?.isOwner || status?.isCollaborator) {
