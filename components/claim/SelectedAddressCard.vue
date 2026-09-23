@@ -120,9 +120,31 @@ const line2 = computed(() =>
 }
 
 @media (max-width: 420px) {
+  /* On one row the image, the address and the Change button need more width
+     than a small phone has, and the address is the part that would get
+     truncated. The button drops to its own full-width row instead - a better
+     tap target too - and the address is allowed to wrap rather than ellipsis
+     away, since a half-shown address isn't worth showing. */
+  .sac {
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 12px;
+  }
   .sac-img {
-    width: 56px;
-    height: 56px;
+    width: 52px;
+    height: 52px;
+  }
+  .sac-body {
+    flex: 1 1 0;
+  }
+  .sac-line1 {
+    white-space: normal;
+    overflow: visible;
+    font-size: 15.5px;
+  }
+  .sac-change {
+    flex: 1 0 100%;
+    padding: 10px 12px;
   }
 }
 </style>

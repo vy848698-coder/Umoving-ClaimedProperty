@@ -700,7 +700,12 @@ function continueToClaim() {
 /* ── Responsive ───────────────────────────────────────────────────── */
 @media (max-width: 980px) {
   .clw-layout {
-    grid-template-columns: 1fr;
+    /* minmax(0, 1fr), not 1fr: a grid column's default minimum is its
+       content's min-content width, so a child that can't wrap - the selected
+       address card, which holds an image, a nowrap address and a Change
+       button on one row - pushed this column wider than the screen. The card
+       was then clipped rather than shrunk. */
+    grid-template-columns: minmax(0, 1fr);
     gap: 24px;
   }
 
@@ -744,6 +749,26 @@ function continueToClaim() {
 
   .cl-h2 {
     font-size: 23px;
+  }
+}
+
+/* Small phones (320-380px class). */
+@media (max-width: 420px) {
+  .clw-card {
+    padding: 20px 14px 22px;
+  }
+
+  /* The label wraps to two lines here, so the button can't keep a fixed
+     height without clipping it. */
+  .cl-continue {
+    height: auto;
+    min-height: 52px;
+    padding: 13px 14px;
+    font-size: 14.5px;
+    line-height: 1.25;
+  }
+  .cl-continue svg {
+    flex-shrink: 0;
   }
 }
 

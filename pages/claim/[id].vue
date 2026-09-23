@@ -2725,7 +2725,11 @@ async function issuePassport() {
 
 @media (max-width: 980px) {
   .claim-layout {
-    grid-template-columns: 1fr;
+    /* minmax(0, 1fr), not 1fr: a grid column's default minimum is its
+       content's min-content width, so the selected address card - image,
+       address and Change button on one row - pushed this column past the
+       screen on small phones and was clipped instead of shrinking. */
+    grid-template-columns: minmax(0, 1fr);
     gap: 22px;
   }
 
