@@ -340,10 +340,22 @@ const handleSubmit = async () => {
   padding: 40px 48px;
   color: #231d45;
   background:
+    /* A soft light where the artwork sits, so the house has something to
+       stand on instead of flat cream, and the teal wash at the far corner. */
+    radial-gradient(620px 460px at 22% 34%, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0) 66%),
     radial-gradient(circle at 90% 95%, rgba(0, 161, 154, 0.08) 0%, rgba(0, 161, 154, 0) 42%),
-    #fbfbf9;
+    linear-gradient(170deg, #f7f7f4 0%, #fbfbf9 42%, #f8faf9 100%);
   overflow: hidden;
   min-width: 0;
+}
+/* Hairline between the two panels - without it the cream and the form grey
+   meet with nothing to separate them. */
+.signup-aside::after {
+  content: '';
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: 1px;
+  background: linear-gradient(180deg, rgba(35, 29, 69, 0) 0%, rgba(35, 29, 69, 0.08) 22%, rgba(35, 29, 69, 0.08) 78%, rgba(35, 29, 69, 0) 100%);
 }
 .signup-aside-top {
   display: flex;
@@ -352,7 +364,7 @@ const handleSubmit = async () => {
   margin-bottom: 24px;
   gap: 16px;
 }
-.signup-logo { display: inline-flex; align-items: center; gap: 12px; }
+.signup-logo { display: inline-flex; align-items: center; gap: 13px; }
 /* The mark carries its own shape, so the ring around it only added weight
    and a second circle next to the wordmark. */
 .signup-logo-mark {
@@ -360,18 +372,18 @@ const handleSubmit = async () => {
   place-items: center;
   flex-shrink: 0;
 }
-.signup-logo-mark img { width: 30px; height: 30px; display: block; }
+.signup-logo-mark img { width: 42px; height: 42px; display: block; }
 .signup-logo strong {
-  font-size: 19px;
+  font-size: 24px;
   font-weight: 800;
-  letter-spacing: -0.3px;
+  letter-spacing: -0.5px;
   color: #231d45;
 }
 .signup-tagline {
   margin: 0;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 600;
-  color: #9490a3;
+  color: #8d89a0;
   text-align: right;
   white-space: nowrap;
 }
@@ -382,6 +394,9 @@ const handleSubmit = async () => {
   flex-direction: column;
   justify-content: center;
   max-width: 500px;
+  /* Centres inside a slightly shorter box, so the whole column sits above the
+     true middle - level with the form's own weight rather than below it. */
+  padding-bottom: 4.5vh;
 }
 
 .signup-eyebrow {
@@ -402,20 +417,21 @@ const handleSubmit = async () => {
 }
 .signup-q { color: #00a19a; }
 .signup-welcome-sub {
-  margin: 14px 0 0;
+  margin: 15px 0 0;
   font-size: 18px;
-  line-height: 1.5;
-  color: #6b6783;
+  line-height: 1.52;
+  color: #635f7b;
   max-width: 32ch;
 }
 
 /* Leads the panel. Pulled left of the text column so it sits against the
-   panel edge rather than floating in the middle of its own margin. */
+   panel edge rather than floating in the middle of its own margin, and up
+   towards the logo so the two read as the top of one column. */
 .signup-house-illus {
-  width: 268px;
+  width: 288px;
   height: auto;
   display: block;
-  margin: 0 0 20px -18px;
+  margin: -18px 0 16px -22px;
   object-fit: contain;
   filter: drop-shadow(0 22px 30px rgba(35, 29, 69, 0.16));
 }
@@ -424,18 +440,18 @@ const handleSubmit = async () => {
    with no gaps between the rows to fall through. */
 .signup-points {
   list-style: none;
-  margin: 26px 0 0;
+  margin: 28px 0 0;
   padding: 0;
   display: grid;
 }
 .signup-points li {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
-  padding: 13px 0;
-  border-top: 1px solid #e8e6e0;
+  gap: 13px;
+  padding: 14px 0;
+  border-top: 1px solid rgba(35, 29, 69, 0.09);
 }
-.signup-points li:last-child { border-bottom: 1px solid #e8e6e0; }
+.signup-points li:last-child { border-bottom: 1px solid rgba(35, 29, 69, 0.09); }
 /* A small rotated square - a marker, not a bullet. */
 .signup-point-k {
   width: 5px;
@@ -807,7 +823,9 @@ const handleSubmit = async () => {
     margin-inline: auto;
   }
   .signup-aside-top { margin-bottom: 20px; }
-  .signup-aside-body { justify-content: flex-start; }
+  /* Top-aligned in the stacked band, so the upward bias the desktop column
+     needs would only add dead space above the footnote here. */
+  .signup-aside-body { justify-content: flex-start; padding-bottom: 0; }
   .signup-aside-foot { display: flex; margin-top: 20px; }
   .signup-welcome { font-size: clamp(34px, 8vw, 46px); }
   .signup-house-illus {
@@ -826,9 +844,8 @@ const handleSubmit = async () => {
   .signup-aside { padding: 20px 20px 22px; }
   .signup-aside-top { margin-bottom: 18px; }
   .signup-logo { gap: 10px; }
-  .signup-logo-mark { width: 36px; height: 36px; }
-  .signup-logo-mark img { width: 25px; }
-  .signup-logo strong { font-size: 17px; }
+  .signup-logo-mark img { width: 34px; height: 34px; }
+  .signup-logo strong { font-size: 20px; }
   .signup-tagline { display: none; }
   /* The band is a compact header at this size, so it keeps only what the
      form itself doesn't already say: the artwork stays (small - it is the
