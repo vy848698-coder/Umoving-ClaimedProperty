@@ -1747,6 +1747,30 @@ const handleContinue = () => {
   .q-nav {
     margin-top: 0;
   }
+  /* Two 20px gutters (page + card) left answers a 240px column on a 320px
+     phone; trimmed so inputs and options get room to breathe. */
+  .tk-main {
+    padding: 24px 16px 90px;
+  }
+  .question-card {
+    padding: 20px 16px;
+    border-radius: 18px;
+  }
+  /* The label broke round its arrow onto two ragged lines. */
+  .submit-btn {
+    gap: 8px;
+    padding: 16px 14px;
+    font-size: 14.5px;
+  }
+  .submit-btn svg {
+    flex-shrink: 0;
+  }
+}
+
+@media (max-width: 360px) {
+  .submit-btn {
+    font-size: 13.5px;
+  }
 }
 
 /* ── Navbar on small screens ──────────────────────────────────────────

@@ -3961,33 +3961,79 @@ function formatStamp(iso) {
 
 /* ── Small screens ─────────────────────────────────────────────────────
    These have to sit after the pill-style .pp-subtabs/.pp-subtab overrides
-   further up, which drop the row out of `flex: 1` and let it size to its
-   content — 425px for four icon-and-label tabs, wider than any phone, and
-   the app shell clips the overflow so "Timeline" simply vanished. Four tabs
-   will not fit at this width, so the row scrolls sideways instead, which
-   keeps every tab and its icon reachable. */
+   further up, which size the row to its content — 425px for four
+   icon-and-label tabs, wider than any phone. A sideways-scrolling strip hid
+   "Timeline" and cut "Vault" in half, so on phones the four tabs become a
+   fitted segmented bar instead: equal columns, icon stacked over the label,
+   every tab visible at once. */
 @media (max-width: 700px) {
+  .pp-tabs-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
   .pp-subtabs {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px;
     width: 100%;
-    max-width: 100%;
-    overflow-x: auto;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
-  }
-  .pp-subtabs::-webkit-scrollbar {
-    display: none;
-  }
-  /* Nothing else signals that the row runs past the edge, so it fades out on
-     the right — otherwise the last tab reads as if it were the last one. */
-  .pp-subtabs {
-    -webkit-mask-image: linear-gradient(to right, #000 82%, transparent 99%);
-    mask-image: linear-gradient(to right, #000 82%, transparent 99%);
+    padding: 4px;
+    border-radius: 14px;
+    background: #fff;
   }
   .pp-subtab {
-    flex: 0 0 auto;
-    padding: 10px 14px;
+    position: relative;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+    padding: 8px 2px 7px;
+    border-radius: 10px;
+    font-size: 11.5px;
+    line-height: 1.1;
     white-space: nowrap;
+  }
+  .pp-subtab-ic {
+    width: 22px;
+    height: 22px;
+  }
+  /* Count badges ride the icon's corner instead of widening the label. */
+  .pp-subtab-badge {
+    position: absolute;
+    top: 4px;
+    left: calc(50% + 6px);
+    margin: 0;
+    min-width: 16px;
+    padding: 1px 4px;
+    font-size: 9.5px;
+    line-height: 14px;
+    text-align: center;
+  }
+  /* List / Map fills the row as two equal halves. */
+  .view-toggle :deep(.switch-container) {
+    display: flex;
+    width: 100%;
+    border-radius: 14px;
+  }
+  .view-toggle :deep(.switch-btn) {
+    flex: 1 1 0;
+    justify-content: center;
+    border-radius: 10px !important;
+    padding: 9px 12px;
+  }
+  /* The "0 of 17 complete" chip squeezed the heading into three lines;
+     below the heading it gets the full width back. */
+  .pp-sec-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 18px 0 14px;
+  }
+  .pp-sec-title {
+    font-size: 21px;
+  }
+  .pp-sec-complete {
+    padding: 6px 12px;
+    font-size: 12px;
   }
   /* Was 34px — the only control in the hero's corner. */
   .pp-hero-switch {

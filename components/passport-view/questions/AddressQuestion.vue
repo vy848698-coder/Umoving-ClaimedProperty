@@ -79,13 +79,18 @@ const onInput = () => {
   gap: 8px;
   align-items: center;
 }
+/* min-width: 0 lets the field give up width; without it the input kept its
+   intrinsic size and pushed "Find URN" off the edge of the card on phones. */
 .text-field {
   flex: 1;
+  min-width: 0;
   padding: 10px;
   border-radius: 8px;
   border: 1px solid #e5e7eb;
 }
 .btn {
+  flex-shrink: 0;
+  white-space: nowrap;
   padding: 8px 12px;
   border-radius: 8px;
   background: #00a19a;

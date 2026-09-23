@@ -127,6 +127,21 @@ const guidanceText = computed(() => {
   return props.content.sellerGuidance || props.content.buyerGuidance || null
 })
 
+// Much of the guidance arrives as one unbroken paragraph - on a phone that was
+// a full screen of solid text. Long paragraphs are regrouped two sentences at
+// a time; the wording is untouched.
+const LONG_PARAGRAPH = 260
+function splitLongParagraph(text: string): string[] {
+  if (text.length <= LONG_PARAGRAPH) return [text]
+  const sentences = text.split(/(?<=[.!?])\s+(?=[A-Z(])/)
+  if (sentences.length < 3) return [text]
+  const chunks: string[] = []
+  for (let i = 0; i < sentences.length; i += 2) {
+    chunks.push(sentences.slice(i, i + 2).join(' '))
+  }
+  return chunks
+}
+
 /** Parse guidance text into typed blocks for structured rendering */
 const blocks = computed((): Block[] => {
   const text = guidanceText.value
@@ -156,7 +171,9 @@ const blocks = computed((): Block[] => {
       bulletBuffer.push(line.slice(2))
     } else {
       flushBullets()
-      result.push({ type: 'para', text: line })
+      for (const chunk of splitLongParagraph(line)) {
+        result.push({ type: 'para', text: chunk })
+      }
     }
   }
   flushBullets()
@@ -177,7 +194,10 @@ const blocks = computed((): Block[] => {
 
 .help-drawer {
   width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
   max-height: 85vh;
+  max-height: 85dvh;
   background: #fff;
   border-radius: 20px 20px 0 0;
   display: flex;
@@ -236,8 +256,24 @@ const blocks = computed((): Block[] => {
 .help-drawer-body {
   flex: 1;
   overflow-y: auto;
-  padding: 20px;
+  padding: 20px 20px calc(24px + env(safe-area-inset-bottom, 0px));
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 480px) {
+  .help-drawer-header {
+    padding: 10px 16px 12px;
+  }
+  .help-drawer-body {
+    padding: 18px 16px calc(24px + env(safe-area-inset-bottom, 0px));
+  }
+  .help-para,
+  .help-bullet-item {
+    font-size: 14.5px;
+    line-height: 1.65;
+  }
 }
 
 .help-empty {

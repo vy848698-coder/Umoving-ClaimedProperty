@@ -38,7 +38,7 @@
         <div class="hero-body">
           <span class="hero-badge">
             <span class="dot"></span>
-            Official record · Section {{ sectionNumber }} of {{ totalSections }}
+            <span class="hero-badge-lead">Official record · </span>Section {{ sectionNumber }} of {{ totalSections }}
           </span>
           <h1 class="hero-title">{{ currentStep?.title || '' }}</h1>
           <p class="hero-sub">{{ currentStep?.subtitle || '' }}</p>
@@ -1417,6 +1417,148 @@ const handleViewProfile = () => {
   }
   .stw-crumbs button {
     padding: 10px 0;
+  }
+}
+
+/* ── Hero on phones ─────────────────────────────────────────────────
+   At desktop sizes the badge wrapped "17" onto a line of its own, the three
+   stats ran into the card's edge, and the ring - a flex item beside the
+   "Last updated" chip - was squeezed into an oval. */
+@media (max-width: 560px) {
+  .hero {
+    padding: 22px 18px;
+    gap: 20px;
+    border-radius: 22px;
+  }
+  .hero-body {
+    width: 100%;
+  }
+  .hero-badge {
+    font-size: 10.5px;
+    padding: 6px 12px;
+  }
+  .hero-title {
+    font-size: 28px;
+    margin: 14px 0 6px;
+  }
+  .hero-sub {
+    font-size: 14px;
+  }
+  .hero-stats {
+    gap: 12px;
+    margin: 20px 0 22px;
+  }
+  .hero-stat {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  .hero-stat strong {
+    font-size: 22px;
+  }
+  .hero-stat strong em {
+    font-size: 14px;
+  }
+  .hero-stat small {
+    font-size: 9.5px;
+    letter-spacing: 0.06em;
+  }
+  .hero-divider {
+    flex-shrink: 0;
+    height: 28px;
+  }
+  .hero-actions {
+    flex-wrap: nowrap;
+    gap: 10px;
+  }
+  .hbtn {
+    flex: 1 1 0;
+    min-width: 0;
+    justify-content: center;
+    height: 44px;
+    padding: 0 12px;
+    font-size: 13.5px;
+    white-space: nowrap;
+  }
+  .hero-ring-wrap {
+    gap: 14px;
+  }
+  .hero-ring {
+    flex-shrink: 0;
+    width: 124px;
+    height: 124px;
+  }
+  .hero-ring-inner {
+    width: 98px;
+    height: 98px;
+  }
+  .hero-ring-pct {
+    font-size: 28px;
+  }
+  .hero-ring-lbl {
+    margin-top: 6px;
+    font-size: 8px;
+    letter-spacing: 0.08em;
+  }
+  .hero-updated {
+    min-width: 0;
+    border-radius: 14px;
+    padding: 9px 12px;
+    font-size: 11.5px;
+    line-height: 1.35;
+  }
+  .hero-updated svg {
+    flex-shrink: 0;
+  }
+}
+
+/* Task cards: index + 64px art + 42px arrow left the title a ~90px column,
+   one word per line. The index goes (order still reads top to bottom) and
+   the art and arrow shrink so the text gets the card's width back. */
+@media (max-width: 560px) {
+  .task-card {
+    gap: 12px;
+    padding: 16px 14px 16px 18px;
+    border-radius: 18px;
+  }
+  .task-index {
+    display: none;
+  }
+  .task-icon {
+    width: 44px;
+    height: 44px;
+  }
+  .task-icon :deep(img) {
+    width: 40px;
+    height: 40px;
+  }
+  .task-title {
+    font-size: 15px;
+    line-height: 1.3;
+  }
+  .task-description {
+    font-size: 13px;
+  }
+  .task-progress-row {
+    margin-top: 10px;
+  }
+  .task-badge {
+    padding: 5px 11px;
+    font-size: 11.5px;
+  }
+  .task-arrow {
+    width: 34px;
+    height: 34px;
+  }
+  .task-arrow svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+/* The badge keeps just "Section 1 of 17" where the full line won't fit. */
+@media (max-width: 400px) {
+  .hero-badge-lead {
+    display: none;
   }
 }
 
