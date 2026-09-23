@@ -1,14 +1,14 @@
 <template>
   <footer class="create-account-or-login">
     <div class="create-account-or-login__buttons">
-      <UButton @click="onCreateAccount"
+      <button type="button" @click="onCreateAccount"
         class="create-account-or-login__button create-account-or-login__button-create-account">
         Create Account
-      </UButton>
+      </button>
 
-      <UButton @click="onLogin" class="create-account-or-login__button create-account-or-login__button--login">
+      <button type="button" @click="onLogin" class="create-account-or-login__button create-account-or-login__button--login">
         Log in
-      </UButton>
+      </button>
     </div>
   </footer>
 </template>
@@ -44,9 +44,11 @@ const onLogin = () => {
     gap: 4px;
     align-self: stretch;
     border-radius: 12px;
+    border: none;
     color: white;
     transition: background-color 0.15s ease;
     font-size: 17px;
+    cursor: pointer;
   }
 
   &__button--login {

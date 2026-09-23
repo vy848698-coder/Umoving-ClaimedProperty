@@ -51,7 +51,7 @@ export default defineNuxtConfig({
     // file for why.
   },
 
-  modules: ['@nuxt/ui', '@pinia/nuxt', '@vite-pwa/nuxt'],
+  modules: ['@pinia/nuxt', '@vite-pwa/nuxt'],
   css: ['~/assets/css/main.css'],
 
   pwa: {

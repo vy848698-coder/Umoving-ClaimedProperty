@@ -1,9 +1,9 @@
 <template>
-  <UButton
+  <button
+    type="button"
     @click="handleBack"
-    variant="ghost"
     :class="[
-      'flex items-center space-x-1 px-0 hover:!bg-transparent focus:!bg-transparent focus-visible:!ring-0 back_button',
+      'flex items-center space-x-1 px-0 bg-transparent border-0 hover:!bg-transparent focus:!bg-transparent focus-visible:!ring-0 back_button',
       colorClass,
       customClass,
     ]"
@@ -12,7 +12,7 @@
     <span :class="['text-base font-medium text-brand-aqua', colorClass]"
       >Back</span
     >
-  </UButton>
+  </button>
 </template>
 
 <script setup>
