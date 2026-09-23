@@ -563,50 +563,59 @@ const onPrimary = () => {
   padding: 40px 48px;
   color: #231d45;
   background:
+    /* A soft light where the home card sits, over a faint vertical wash and
+       the teal corner glow - matches the sign-up panel. */
+    radial-gradient(620px 460px at 22% 44%, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0) 66%),
     radial-gradient(circle at 90% 95%, rgba(0, 161, 154, 0.08) 0%, rgba(0, 161, 154, 0) 42%),
-    #fbfbf9;
+    linear-gradient(170deg, #f7f7f4 0%, #fbfbf9 42%, #f8faf9 100%);
   overflow: hidden;
   min-width: 0;
+}
+/* Hairline between the two panels - without it the cream and the form grey
+   meet with nothing to separate them. */
+.signin-aside::after {
+  content: '';
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: 1px;
+  background: linear-gradient(180deg, rgba(35, 29, 69, 0) 0%, rgba(35, 29, 69, 0.08) 22%, rgba(35, 29, 69, 0.08) 78%, rgba(35, 29, 69, 0) 100%);
 }
 
 .signin-aside-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 64px;
+  margin-bottom: 24px;
   gap: 16px;
 }
 
 .signin-logo {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
+  gap: 13px;
 }
+/* The mark carries its own shape, so the ring around it only added weight
+   and a second circle next to the wordmark. */
 .signin-logo-mark {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  border: 2px solid #00a19a;
-  background: rgba(0, 161, 154, 0.08);
   display: grid;
   place-items: center;
-  overflow: hidden;
+  flex-shrink: 0;
 }
 .signin-logo-mark :deep(img),
 .signin-logo-mark :deep(svg),
 .signin-logo-mark img,
-.signin-logo-mark svg { width: 30px; height: auto; display: block; }
+.signin-logo-mark svg { width: 42px; height: 42px; display: block; }
 .signin-logo strong {
-  font-size: 19px;
+  font-size: 24px;
   font-weight: 800;
-  letter-spacing: -0.3px;
+  letter-spacing: -0.5px;
   color: #231d45;
 }
 .signin-tagline {
   margin: 0;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 600;
-  color: #9490a3;
+  color: #8d89a0;
   text-align: right;
   white-space: nowrap;
 }
@@ -616,70 +625,75 @@ const onPrimary = () => {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  max-width: 440px;
+  max-width: 500px;
+  /* Truly centred here, unlike sign-up. That page's column is tall enough to
+     need lifting off the floor; this one is three short blocks, and the form
+     beside it is centred too - biasing one and not the other would give the
+     page two different vertical anchors. */
 }
 
 .signin-welcome {
   margin: 0;
-  font-size: clamp(44px, 5vw, 64px);
+  font-size: clamp(46px, 4.7vw, 62px);
   font-weight: 800;
-  line-height: 1.02;
-  letter-spacing: -2px;
+  line-height: 0.97;
+  letter-spacing: -0.035em;
   color: #231d45;
 }
 .signin-welcome-sub {
-  margin: 20px 0 0;
-  font-size: 16px;
-  line-height: 1.6;
-  color: #6b6783;
-  max-width: 34ch;
+  margin: 15px 0 0;
+  font-size: 18px;
+  line-height: 1.52;
+  color: #635f7b;
+  max-width: 32ch;
 }
 
 /* Light home card */
 .signin-home-card {
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin-top: 40px;
-  padding: 18px;
-  border-radius: 18px;
+  gap: 18px;
+  margin-top: 28px;
+  padding: 20px 22px;
+  border-radius: 20px;
   background: #fff;
   border: 1px solid #ece9f5;
-  box-shadow: 0 10px 22px rgba(35, 29, 69, 0.06);
+  box-shadow: 0 14px 30px rgba(35, 29, 69, 0.07);
 }
 /* The real Seller Passport cover - the same artwork the claim flow's "ready"
    card uses (pages/claim/[id].vue). It is portrait book art at ~5:7, so it is
    sized as one rather than squashed into a square. */
 .signin-home-thumb {
   flex-shrink: 0;
-  width: 46px;
-  height: 64px;
+  width: 66px;
+  height: 92px;
   object-fit: contain;
-  filter: drop-shadow(0 6px 12px rgba(35, 29, 69, 0.16));
+  filter: drop-shadow(0 10px 18px rgba(35, 29, 69, 0.18));
 }
 .signin-home-meta { min-width: 0; }
 .signin-home-kicker {
   display: block;
-  font-size: 10px;
+  font-size: 10.5px;
   font-weight: 800;
-  letter-spacing: 1.4px;
+  letter-spacing: 1.5px;
   text-transform: uppercase;
   color: #a39fb2;
-  margin-bottom: 4px;
+  margin-bottom: 5px;
 }
 .signin-home-addr {
   display: block;
-  font-size: 16px;
+  font-size: 19px;
   font-weight: 800;
+  letter-spacing: -0.2px;
   color: #231d45;
-  margin-bottom: 8px;
+  margin-bottom: 9px;
 }
 .signin-home-tags { display: flex; gap: 8px; flex-wrap: wrap; }
 .signin-home-tag {
-  font-size: 11px;
+  font-size: 11.5px;
   font-weight: 700;
-  padding: 4px 10px;
-  border-radius: 7px;
+  padding: 5px 11px;
+  border-radius: 8px;
 }
 .signin-home-tag--passport {
   background: rgba(224, 164, 58, 0.16);
@@ -690,20 +704,20 @@ const onPrimary = () => {
 .signin-aside-foot {
   display: inline-flex;
   align-items: center;
-  gap: 9px;
-  margin: 56px 0 0;
-  font-size: 13px;
+  gap: 8px;
+  margin: 28px 0 0;
+  font-size: 12.5px;
   font-weight: 600;
   color: #9490a3;
 }
-.signin-aside-foot svg { width: 15px; height: 15px; flex-shrink: 0; }
+.signin-aside-foot svg { width: 14px; height: 14px; flex-shrink: 0; }
 
 /* ── Right form panel ── */
 .signin-main {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 40px;
+  padding: 48px 40px;
   background: #f3f2ef;
   /* Grid items default to min-width:auto, so a wide child (the 6-box OTP row)
      stretched this track past the viewport. The app shell clips overflow-x, so
@@ -712,7 +726,7 @@ const onPrimary = () => {
 }
 .signin-main-inner {
   width: 100%;
-  max-width: 400px;
+  max-width: 420px;
   /* As a flex item this defaults to min-width:auto, so any wide child (the
      6-box OTP row) would push the column past the screen instead of letting
      the child shrink. */
@@ -939,14 +953,14 @@ const onPrimary = () => {
 
 /* Form */
 .auth-form { padding: 22px 24px 18px; }
-.form-field { margin-bottom: 14px; }
+.form-field { margin-bottom: 18px; }
 .form-label {
   display: block;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 800;
   color: #231d45;
   letter-spacing: -0.1px;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 .form-input-wrap { position: relative; }
 .form-input {
@@ -954,9 +968,9 @@ const onPrimary = () => {
   background: #fff;
   border: 1.5px solid #ececef;
   border-radius: 12px;
-  padding: 13px 14px;
+  padding: 15px 14px;
   font-family: inherit;
-  font-size: 14px;
+  font-size: 14.5px;
   font-weight: 600;
   color: #231d45;
   letter-spacing: -0.1px;
@@ -1064,10 +1078,10 @@ const onPrimary = () => {
   color: #fff;
   border: none;
   font-family: inherit;
-  font-size: 15px;
+  font-size: 15.5px;
   font-weight: 800;
-  padding: 14px 18px;
-  border-radius: 100px;
+  padding: 17px 18px;
+  border-radius: 14px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -1212,12 +1226,14 @@ const onPrimary = () => {
     max-width: 460px;
     margin-inline: auto;
   }
-  .signin-aside-top { margin-bottom: 28px; }
-  .signin-aside-body { justify-content: flex-start; }
-  .signin-aside-foot { display: flex; margin-top: 26px; }
-  .signin-welcome { font-size: clamp(34px, 8vw, 46px); letter-spacing: -1.2px; }
-  .signin-welcome-sub { margin-top: 14px; max-width: 52ch; }
-  .signin-home-card { margin-top: 24px; }
+  .signin-aside-top { margin-bottom: 20px; }
+  /* Top-aligned in the stacked band, so the upward bias the desktop column
+     needs would only add dead space above the footnote here. */
+  .signin-aside-body { justify-content: flex-start; padding-bottom: 0; }
+  .signin-aside-foot { display: flex; margin-top: 20px; }
+  .signin-welcome { font-size: clamp(34px, 8vw, 46px); letter-spacing: -0.03em; }
+  .signin-welcome-sub { margin-top: 14px; max-width: none; font-size: 16.5px; }
+  .signin-home-card { margin-top: 20px; }
   .signin-main { padding: 32px 24px 48px; }
   .signin-main-inner { max-width: 460px; }
 }
@@ -1227,18 +1243,17 @@ const onPrimary = () => {
   .signin-aside { padding: 20px 20px 22px; }
   .signin-aside-top { margin-bottom: 18px; }
   .signin-logo { gap: 10px; }
-  .signin-logo-mark { width: 36px; height: 36px; }
   .signin-logo-mark :deep(img),
   .signin-logo-mark :deep(svg),
   .signin-logo-mark img,
-  .signin-logo-mark svg { width: 25px; }
-  .signin-logo strong { font-size: 17px; }
+  .signin-logo-mark svg { width: 34px; height: 34px; }
+  .signin-logo strong { font-size: 20px; }
   .signin-tagline { display: none; }
 
   .signin-welcome {
     font-size: clamp(25px, 7.4vw, 31px);
     line-height: 1.08;
-    letter-spacing: -0.9px;
+    letter-spacing: -0.025em;
   }
   .signin-welcome-sub { margin-top: 8px; font-size: 13.5px; line-height: 1.5; }
 
