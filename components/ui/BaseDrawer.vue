@@ -225,8 +225,13 @@ onUnmounted(() => {
   color: rgba(0, 161, 154, 0.8);
 }
 
+/* This is only rendered when there is NO back button, so the thing it has to
+   balance is the close button on the right - not the back button that isn't
+   there. At 80px it pushed the centred title off-centre and, on a phone, left
+   it too little room: "Change Full name" broke over two lines. */
 .drawer__back-placeholder {
-  width: 80px; /* Same approximate width as the back button */
+  width: 2rem;
+  flex-shrink: 0;
   visibility: hidden;
 }
 
@@ -341,16 +346,20 @@ onUnmounted(() => {
 
 /* Responsive — collapse to a bottom-sheet on phones */
 @media (max-width: 560px) {
+  /* A sheet, but inset rather than welded to the screen: full-bleed left the
+     fields and the save button running into the edges of the display. */
   .drawer-overlay:not(.drawer-overlay--fullscreen) {
     align-items: flex-end;
-    padding: 0;
+    padding: 0 10px 10px;
   }
 
   .drawer:not(.drawer--fullscreen) {
     max-width: 100%;
     margin: 0;
-    max-height: 90vh;
-    border-radius: 1.25rem 1.25rem 0 0;
+    max-height: calc(100dvh - 20px);
+    /* Inset on three sides, so every corner is rounded rather than just the
+       top two. */
+    border-radius: 1.25rem;
     box-shadow: 0 -10px 40px rgba(15, 44, 76, 0.18);
     /* Slide up from the bottom on mobile */
     animation: drawer-slide-up 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
@@ -362,7 +371,12 @@ onUnmounted(() => {
   }
 
   .drawer__header {
-    padding: 0.875rem 1.125rem;
+    padding: 0.875rem 1rem;
+  }
+
+  .drawer__title {
+    font-size: 1.0625rem;
+    padding: 0 0.5rem;
   }
 
   .drawer__illustration {
@@ -378,7 +392,7 @@ onUnmounted(() => {
   }
 
   .drawer__back-placeholder {
-    width: 60px; /* Smaller placeholder on mobile */
+    width: 1.75rem;
   }
 }
 
