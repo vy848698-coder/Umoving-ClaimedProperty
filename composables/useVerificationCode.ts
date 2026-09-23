@@ -5,7 +5,7 @@ import { setSessionFlag } from '~/composables/useSessionFlag'
 
 export const useVerificationCode = () => {
   const { verifyOtp, requestOtp, register } = useAuth()
-  const { email, pendingSignup } = useSession()
+  const { email, setPendingSignup, resolvePendingSignup } = useSession()
 
   const verificationCode = ref<string>('')
   const isLoading = ref<boolean>(false)
@@ -88,8 +88,9 @@ export const useVerificationCode = () => {
     try {
       await verifyOtp(resolvedEmail, verificationCode.value)
 
-      if (pendingSignup.value) {
-        const { firstName, lastName, phone, postcode, password } = pendingSignup.value
+      const resolvedPendingSignup = resolvePendingSignup()
+      if (resolvedPendingSignup) {
+        const { firstName, lastName, phone, postcode, password } = resolvedPendingSignup
         const regRes: any = await register({
           email: resolvedEmail,
           firstName,
@@ -101,10 +102,13 @@ export const useVerificationCode = () => {
         localStorage.setItem('token', regRes.token)
         setSessionFlag()
         sessionStorage.removeItem('umu-pending-email')
-        pendingSignup.value = null
+        setPendingSignup(null)
         await navigateTo('/onboarding/preferences?new=true')
       } else {
-        await navigateTo('/onboarding/create-account')
+        // No pending signup on file (e.g. a stale/expired verification
+        // session) — there's nothing left to register, so send them back
+        // to start a fresh signup rather than a dead legacy page.
+        await navigateTo('/onboarding/signup')
       }
     } catch (err: any) {
       error.value = parseApiError(err)

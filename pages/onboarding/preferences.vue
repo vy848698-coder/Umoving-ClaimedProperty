@@ -72,7 +72,10 @@
                 :class="`tint-${sec.tint}`"
                 @click="scrollToSection(sec.anchor)"
               >
-                <span class="pf-onpage-ic"><span v-html="sec.icon" /></span>
+                <span class="pf-onpage-ic">
+                  <img v-if="sec.isImage" :src="sec.icon" alt="" />
+                  <span v-else v-html="sec.icon" />
+                </span>
                 {{ sec.title }}
               </button>
             </div>
@@ -125,7 +128,7 @@
                 :class="[`tint-${r.key}`, { selected: selectedRole === r.key }]"
                 @click="selectRole(r.key)"
               >
-                <span class="pf-role-ic"><span v-html="r.svg" /></span>
+                <span class="pf-role-ic"><img :src="r.icon" alt="" /></span>
                 <span class="pf-role-info">
                   <span class="pf-role-title">{{ r.label }}</span>
                   <span class="pf-role-desc">{{ r.desc }}</span>
@@ -147,7 +150,10 @@
                 class="pf-card"
               >
                 <div v-if="sec.title" class="pf-card-head">
-                  <span class="pf-card-ic" :class="`tint-${sec.tint}`"><span v-html="sec.icon" /></span>
+                  <span class="pf-card-ic" :class="`tint-${sec.tint}`">
+                    <img v-if="sec.isImage" :src="sec.icon" alt="" />
+                    <span v-else v-html="sec.icon" />
+                  </span>
                   <h3>{{ sec.title }}</h3>
                 </div>
 
@@ -475,20 +481,19 @@ const expanded = reactive<Record<string, boolean>>({})
 
 // ── Static data ───────────────────────────────────────────────────────────
 
-// Inline SVGs render through v-html. Stored as one-liners so the template
-// stays readable.
+// 3D-style PNGs, matching the mobile app's own role-picker (op-icons/onboarding).
 const roles = [
   {
     key: 'buy',
     iconClass: '', // default teal
-    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
+    icon: '/op-icons/onboarding/lookingToBuy.png',
     label: "I'm looking to buy",
     desc: 'Search properties, check risks, find your home',
   },
   {
     key: 'sell',
     iconClass: 'gold',
-    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12 12 3l9 9"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>',
+    icon: '/op-icons/onboarding/sellingHome.png',
     label: "I'm selling my home",
     desc: 'Build your Passport, get verified, move faster',
   },
@@ -498,7 +503,7 @@ const roles = [
   {
     key: 'both',
     iconClass: '',
-    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/></svg>',
+    icon: '/op-icons/onboarding/sellingAndBuying.png',
     label: 'Selling and buying',
     desc: "We'll set up both sides of your move",
   },
@@ -868,19 +873,12 @@ function advanceToDetail() {
 // ── Detail-phase section cards ────────────────────────────────────────────
 // Group the flat question list into cards, one per section heading. Icons +
 // tints are keyed off the heading emoji so the cards match the design.
-const sectionMeta: Record<string, { icon: string; tint: string }> = {
-  '🏠': {
-    tint: 'amber',
-    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12 12 3l9 9"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>',
-  },
-  '🔍': {
-    tint: 'teal',
-    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
-  },
-  '📋': {
-    tint: 'purple',
-    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="3" width="8" height="4" rx="1"/><path d="M9 5H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-3"/><path d="M9 12h6"/><path d="M9 16h4"/></svg>',
-  },
+// 3D-style PNGs (op-icons/homescore), matching the mobile app's icon set.
+// Inline SVG kept only for the rare unmapped-heading fallback below.
+const sectionMeta: Record<string, { icon: string; tint: string; isImage: boolean }> = {
+  '🏠': { tint: 'amber', icon: '/op-icons/homescore/house.png', isImage: true },
+  '🔍': { tint: 'teal', icon: '/op-icons/homescore/magnifier.png', isImage: true },
+  '📋': { tint: 'purple', icon: '/op-icons/homescore/clipboard.png', isImage: true },
 }
 const defaultSectionIcon =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg>'
@@ -892,6 +890,7 @@ function slugify(s: string): string {
 interface Section {
   title: string
   icon: string
+  isImage: boolean
   tint: string
   anchor: string
   questions: Question[]
@@ -904,10 +903,11 @@ const sections = computed<Section[]>(() => {
     if (q.type === 'heading') {
       const emoji = headingEmoji(q.label || '')
       const title = headingText(q.label || '')
-      const meta = sectionMeta[emoji] ?? { icon: defaultSectionIcon, tint: 'teal' }
+      const meta = sectionMeta[emoji] ?? { icon: defaultSectionIcon, tint: 'teal', isImage: false }
       cur = {
         title,
         icon: meta.icon,
+        isImage: meta.isImage,
         tint: meta.tint,
         anchor: 'sec-' + slugify(title || String(secs.length)),
         questions: [],
@@ -1522,6 +1522,11 @@ onMounted(() => {
   width: 24px;
   height: 24px;
 }
+.pf-role-ic img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
 .pf-role.tint-buy .pf-role-ic {
   color: #00a19a;
   background: rgba(0, 161, 154, 0.12);
@@ -1624,6 +1629,11 @@ onMounted(() => {
   width: 21px;
   height: 21px;
 }
+.pf-card-ic img {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+}
 .tint-amber {
   color: #c98a1e;
   background: rgba(224, 164, 58, 0.16);
@@ -1693,6 +1703,11 @@ onMounted(() => {
 .pf-onpage-ic :deep(svg) {
   width: 17px;
   height: 17px;
+}
+.pf-onpage-ic img {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
 }
 
 /* Answered count card */

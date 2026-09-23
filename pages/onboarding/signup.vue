@@ -1,12 +1,13 @@
 <template>
   <div class="signup-split">
-    <!-- ── Left brand panel (dark) ── -->
+    <!-- ── Left brand panel (light) ── -->
     <aside class="signup-aside">
       <div class="signup-aside-top">
         <div class="signup-logo">
-          <span class="signup-logo-mark"><img src="/op-icons/logo.svg" alt="umu" /></span>
+          <span class="signup-logo-mark"><img src="/op-icons/logo.png" alt="umu" /></span>
           <strong>umovingu</strong>
         </div>
+        <p class="signup-tagline">A simpler way to own your home.</p>
       </div>
 
       <div class="signup-aside-body">
@@ -15,12 +16,18 @@
              survives when the phone rules hide the <br>, so the line reflows to
              "Start with your home." rather than running the words together. -->
         <h1 class="signup-welcome">Start with <br />your home<span class="signup-q">.</span></h1>
-        <p class="signup-welcome-sub">A few details and you're in. Your details stay with you — we never share them with third parties.</p>
+        <p class="signup-welcome-sub">A few details and you're in. Your details stay with you.</p>
+
+        <img
+          src="/op-icons/landing/homeScoreCard.png"
+          alt=""
+          class="signup-house-illus"
+        />
 
         <ol class="signup-steps">
-          <li><span class="signup-step-n">1</span><p>Create your account — about 30 seconds.</p></li>
-          <li><span class="signup-step-n">2</span><p>Tell us what you're planning.</p></li>
-          <li><span class="signup-step-n">3</span><p>Claim your home and get your Property Passport.</p></li>
+          <li><span class="signup-step-n">1</span><p>Create your account</p></li>
+          <li><span class="signup-step-n">2</span><p>Choose what you want to do</p></li>
+          <li><span class="signup-step-n">3</span><p>Claim your property</p></li>
         </ol>
       </div>
 
@@ -28,7 +35,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
         </svg>
-        End-to-end encrypted. Your data stays yours.
+        Your details stay with you — end-to-end encrypted, never shared with third parties.
       </p>
     </aside>
 
@@ -187,7 +194,7 @@ definePageMeta({
 
 const config = useRuntimeConfig()
 const { requestOtp } = useAuth()
-const { email, pendingSignup } = useSession()
+const { email, setPendingSignup } = useSession()
 
 const form = reactive({
   fullName: '',
@@ -278,13 +285,13 @@ const handleSubmit = async () => {
       return
     }
 
-    pendingSignup.value = {
+    setPendingSignup({
       firstName,
       lastName,
       phone: form.mobile,
       postcode: form.postcode,
       password: form.password,
-    }
+    })
 
     email.value = cleanEmail
     if (typeof sessionStorage !== 'undefined') {
@@ -311,16 +318,16 @@ const handleSubmit = async () => {
   color: #231d45;
 }
 
-/* ── Left brand panel ── */
+/* ── Left brand panel (light) ── */
 .signup-aside {
   position: relative;
   display: flex;
   flex-direction: column;
   padding: 40px 48px;
-  color: #fff;
+  color: #231d45;
   background:
-    radial-gradient(circle at 90% 95%, rgba(0, 161, 154, 0.22) 0%, rgba(0, 161, 154, 0) 42%),
-    linear-gradient(165deg, #2c2456 0%, #231d45 55%, #1a1535 100%);
+    radial-gradient(circle at 90% 95%, rgba(0, 161, 154, 0.08) 0%, rgba(0, 161, 154, 0) 42%),
+    #fbfbf9;
   overflow: hidden;
   min-width: 0;
 }
@@ -329,45 +336,34 @@ const handleSubmit = async () => {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 56px;
+  gap: 16px;
 }
 .signup-logo { display: inline-flex; align-items: center; gap: 12px; }
 .signup-logo-mark {
   width: 42px;
   height: 42px;
   border-radius: 50%;
-  border: 2px solid #2fd0c6;
-  background: rgba(0, 161, 154, 0.12);
-  box-shadow: 0 0 0 4px rgba(0, 161, 154, 0.12);
+  border: 2px solid #00a19a;
+  background: rgba(0, 161, 154, 0.08);
   display: grid;
   place-items: center;
+  overflow: hidden;
 }
-.signup-logo-mark img { width: 23px; height: auto; display: block; }
+.signup-logo-mark img { width: 30px; height: auto; display: block; }
 .signup-logo strong {
   font-size: 19px;
   font-weight: 800;
   letter-spacing: -0.3px;
-  color: #fff;
+  color: #231d45;
 }
-.signup-website-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 9px 16px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  color: rgba(255, 255, 255, 0.85);
+.signup-tagline {
+  margin: 0;
   font-size: 13px;
-  font-weight: 700;
-  font-family: inherit;
-  cursor: pointer;
-  transition: background 0.18s, border-color 0.18s;
+  font-weight: 600;
+  color: #9490a3;
+  text-align: right;
+  white-space: nowrap;
 }
-.signup-website-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.24);
-}
-.signup-website-btn svg { width: 15px; height: 15px; }
 
 .signup-aside-body {
   flex: 1;
@@ -382,7 +378,7 @@ const handleSubmit = async () => {
   font-weight: 800;
   letter-spacing: 1.8px;
   text-transform: uppercase;
-  color: #2fd0c6;
+  color: #00a19a;
 }
 .signup-welcome {
   margin: 0;
@@ -390,21 +386,30 @@ const handleSubmit = async () => {
   font-weight: 800;
   line-height: 1.02;
   letter-spacing:-.03em;
-  color: #fff;
+  color: #231d45;
 }
-.signup-q { color: #2fd0c6; }
+.signup-q { color: #00a19a; }
 .signup-welcome-sub {
   margin: 20px 0 0;
   font-size: 16px;
   line-height: 1.6;
-  color: rgba(255, 255, 255, 0.62);
+  color: #6b6783;
   max-width: 36ch;
+}
+
+.signup-house-illus {
+  width: 100%;
+  max-width: 260px;
+  height: auto;
+  display: block;
+  margin: 28px 0 0;
+  object-fit: contain;
 }
 
 /* Numbered steps */
 .signup-steps {
   list-style: none;
-  margin: 36px 0 0;
+  margin: 32px 0 0;
   padding: 0;
   display: flex;
   flex-direction: column;
@@ -412,17 +417,17 @@ const handleSubmit = async () => {
 }
 .signup-steps li {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 14px;
 }
 .signup-step-n {
   flex-shrink: 0;
   width: 30px;
   height: 30px;
-  border-radius: 9px;
-  background: rgba(0, 161, 154, 0.18);
+  border-radius: 50%;
+  background: rgba(0, 161, 154, 0.1);
   border: 1px solid rgba(0, 161, 154, 0.4);
-  color: #2fd0c6;
+  color: #00a19a;
   font-size: 13px;
   font-weight: 800;
   display: grid;
@@ -431,10 +436,9 @@ const handleSubmit = async () => {
 .signup-steps p {
   margin: 0;
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.4;
-  color: rgba(255, 255, 255, 0.85);
-  padding-top: 3px;
+  color: #231d45;
 }
 
 .signup-aside-foot {
@@ -444,7 +448,7 @@ const handleSubmit = async () => {
   margin: 48px 0 0;
   font-size: 13px;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.5);
+  color: #9490a3;
 }
 .signup-aside-foot svg { width: 15px; height: 15px; flex-shrink: 0; }
 
@@ -803,13 +807,11 @@ const handleSubmit = async () => {
   .signup-aside { padding: 20px 20px 22px; }
   .signup-aside-top { margin-bottom: 18px; }
   .signup-logo { gap: 10px; }
-  .signup-logo-mark {
-    width: 36px;
-    height: 36px;
-    box-shadow: 0 0 0 3px rgba(0, 161, 154, 0.12);
-  }
-  .signup-logo-mark img { width: 20px; }
+  .signup-logo-mark { width: 36px; height: 36px; }
+  .signup-logo-mark img { width: 25px; }
   .signup-logo strong { font-size: 17px; }
+  .signup-tagline { display: none; }
+  .signup-house-illus { display: none; }
 
   .signup-eyebrow { margin-bottom: 10px; font-size: 11px; letter-spacing: 1.5px; }
   .signup-welcome {
@@ -823,7 +825,7 @@ const handleSubmit = async () => {
 
   .signup-steps { margin-top: 16px; gap: 10px; }
   .signup-steps li { gap: 11px; }
-  .signup-step-n { width: 26px; height: 26px; border-radius: 8px; font-size: 12px; }
+  .signup-step-n { width: 26px; height: 26px; border-radius: 50%; font-size: 12px; }
   .signup-steps p { font-size: 13.5px; line-height: 1.35; padding-top: 2px; }
   .signup-aside-foot { margin-top: 16px; font-size: 12px; gap: 7px; }
 

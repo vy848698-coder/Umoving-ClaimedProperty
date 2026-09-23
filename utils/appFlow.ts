@@ -28,7 +28,7 @@ const APP_ROUTES: RegExp[] = [
 ]
 
 const PUBLIC_ROUTES: RegExp[] = [
-  /^\/onboarding\/(signin|signup|verification|create-account|preferences|welcome)$/,
+  /^\/onboarding\/(signin|signup|verification|preferences|welcome)$/,
   /^\/auth\/(google|apple)\/callback$/,
   // Linked from the sign-up form's terms line and from Settings.
   /^\/legal\/(terms|privacy|cookies)$/,
