@@ -87,7 +87,10 @@ if (typeof definePageMeta === 'function') {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 1px minmax(0, 1fr);
   column-gap: clamp(40px, 6vw, 88px);
-  align-items: center;
+  /* Both columns start on the same top line (eyebrow level with "Back",
+     headline level with "Enter your code"); the pair is centred as one. */
+  align-items: start;
+  align-content: center;
 }
 .otp-split::before {
   content: '';
@@ -101,8 +104,12 @@ if (typeof definePageMeta === 'function') {
 .otp-main { grid-column: 3; grid-row: 1; min-width: 0; display: flex; }
 
 /* ── Left copy ── */
+/* Sized against the form opposite: the eyebrow takes the Back link's line
+   height and gap, the headline and subline the form title's and subtitle's
+   type, so the two columns read as one scale. */
 .otp-eyebrow {
-  margin: 0 0 18px;
+  margin: 0 0 34px;
+  line-height: 24px;
   font-size: 12px;
   font-weight: 800;
   letter-spacing: 2.4px;
@@ -111,18 +118,18 @@ if (typeof definePageMeta === 'function') {
 }
 .otp-headline {
   margin: 0;
-  font-size: clamp(46px, 5.2vw, 68px);
+  font-size: clamp(34px, 4vw, 50px);
   font-weight: 800;
-  line-height: 1;
-  letter-spacing: -0.04em;
+  line-height: 1.05;
+  letter-spacing: -0.035em;
   color: #231d45;
 }
 .otp-dot { color: #00a19a; }
 .otp-sub {
-  margin: 20px 0 0;
-  font-size: 19px;
-  line-height: 1.5;
-  color: #4d4868;
+  margin: 14px 0 0;
+  font-size: 17px;
+  line-height: 1.6;
+  color: #5d5878;
   max-width: 34ch;
 }
 
@@ -130,11 +137,14 @@ if (typeof definePageMeta === 'function') {
    Multiply drops the white into the page background so only the envelope
    shows - no box, no second shadow. */
 .otp-illus {
+  /* Also bounded by viewport height, so on a short laptop screen the art
+     shrinks rather than pushing the page into a scroll. */
+  --illus-w: min(300px, 100%, 38vh);
   position: relative;
-  width: min(420px, 100%);
+  width: var(--illus-w);
   /* The envelope starts ~13% in from the image's own edge; pulling the image
      back by that much puts the envelope on the text/logo line. */
-  margin: 12px 0 0 calc(min(420px, 100%) * -0.13);
+  margin: 18px 0 0 calc(var(--illus-w) * -0.13);
 }
 /* The mask trims the artwork's own ground shadow, so a soft teal pool goes
    back under the envelope. */
@@ -208,7 +218,8 @@ if (typeof definePageMeta === 'function') {
        edge, so the image hangs past the column by that much. */
     margin: 0 calc(170px * -0.14) 0 0;
   }
-  .otp-headline { font-size: clamp(36px, 7vw, 48px); }
+  .otp-eyebrow { margin-bottom: 14px; line-height: normal; }
+  .otp-headline { font-size: clamp(32px, 5.4vw, 40px); }
   .otp-sub { font-size: 16px; margin-top: 12px; }
   .otp-main { grid-column: 1; grid-row: 2; }
 }
@@ -223,7 +234,7 @@ if (typeof definePageMeta === 'function') {
   .otp-split { padding: 22px 20px 40px; row-gap: 24px; }
   .otp-aside { padding-bottom: 22px; }
   .otp-eyebrow { font-size: 11px; letter-spacing: 1.8px; margin-bottom: 10px; }
-  .otp-headline { font-size: clamp(28px, 8.4vw, 34px); line-height: 1.05; }
+  .otp-headline { font-size: clamp(26px, 7.6vw, 30px); line-height: 1.05; }
   .otp-sub { font-size: 14px; margin-top: 8px; }
   .otp-illus { width: 118px; margin-right: calc(118px * -0.14); }
 }
