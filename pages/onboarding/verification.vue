@@ -96,7 +96,8 @@ if (typeof definePageMeta === 'function') {
   align-self: stretch;
   background: linear-gradient(180deg, rgba(0, 161, 154, 0) 0%, rgba(0, 161, 154, 0.22) 20%, rgba(0, 161, 154, 0.22) 80%, rgba(0, 161, 154, 0) 100%);
 }
-.otp-aside { grid-column: 1; grid-row: 1; min-width: 0; padding-left: clamp(0px, 3vw, 40px); }
+/* No inset of its own: the copy starts on the same line as the logo above. */
+.otp-aside { grid-column: 1; grid-row: 1; min-width: 0; }
 .otp-main { grid-column: 3; grid-row: 1; min-width: 0; display: flex; }
 
 /* ── Left copy ── */
@@ -131,7 +132,9 @@ if (typeof definePageMeta === 'function') {
 .otp-illus {
   position: relative;
   width: min(420px, 100%);
-  margin: 12px 0 0 clamp(-24px, -1.5vw, 0px);
+  /* The envelope starts ~13% in from the image's own edge; pulling the image
+     back by that much puts the envelope on the text/logo line. */
+  margin: 12px 0 0 calc(min(420px, 100%) * -0.13);
 }
 /* The mask trims the artwork's own ground shadow, so a soft teal pool goes
    back under the envelope. */
@@ -170,7 +173,8 @@ if (typeof definePageMeta === 'function') {
 
 /* ── Tablet and below: one column, message above the form ── */
 @media (max-width: 900px) {
-  .otp-header { padding: 28px 28px 0; }
+  /* Same centred column as the content below, so the logo keeps its line. */
+  .otp-header { width: min(560px, 100%); padding: 28px 28px 0; }
   .otp-split {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto auto;
@@ -200,7 +204,9 @@ if (typeof definePageMeta === 'function') {
     grid-column: 2;
     grid-row: 1 / span 3;
     width: 170px;
-    margin: 0 -10px 0 0;
+    /* Same idea on the right: the envelope ends ~14% short of the image's
+       edge, so the image hangs past the column by that much. */
+    margin: 0 calc(170px * -0.14) 0 0;
   }
   .otp-headline { font-size: clamp(36px, 7vw, 48px); }
   .otp-sub { font-size: 16px; margin-top: 12px; }
@@ -219,12 +225,12 @@ if (typeof definePageMeta === 'function') {
   .otp-eyebrow { font-size: 11px; letter-spacing: 1.8px; margin-bottom: 10px; }
   .otp-headline { font-size: clamp(28px, 8.4vw, 34px); line-height: 1.05; }
   .otp-sub { font-size: 14px; margin-top: 8px; }
-  .otp-illus { width: 118px; }
+  .otp-illus { width: 118px; margin-right: calc(118px * -0.14); }
 }
 
 @media (max-width: 380px) {
   .otp-header { padding: 16px 16px 0; }
   .otp-split { padding: 18px 16px 36px; }
-  .otp-illus { width: 100px; }
+  .otp-illus { width: 100px; margin-right: calc(100px * -0.14); }
 }
 </style>
