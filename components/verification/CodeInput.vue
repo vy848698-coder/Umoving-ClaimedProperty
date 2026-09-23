@@ -121,24 +121,25 @@ const updateModelValue = () => {
 <style scoped>
 .code-input__fields {
   display: flex;
-  gap: 16px;
+  gap: 14px;
 }
 
 .code-input__field {
   flex: 1;
   min-width: 0;
   aspect-ratio: 1 / 1;
-  max-width: 88px;
-  border-radius: 20px;
+  max-width: 80px;
+  border-radius: 12px;
   text-align: center;
-  font-size: 30px;
+  font-size: 28px;
   font-weight: 700;
   color: #231d45;
+  caret-color: #00a19a;
   background: #fff;
-  border: 1.5px solid #ece9f5;
+  border: 1.5px solid #e3e0ee;
   outline: none;
   transition: all 0.16s;
-  box-shadow: 0 10px 22px rgba(35, 29, 69, 0.06);
+  box-shadow: 0 4px 12px rgba(35, 29, 69, 0.04);
 }
 
 .code-input__field:focus {
@@ -157,8 +158,8 @@ const updateModelValue = () => {
     gap: 10px;
   }
   .code-input__field {
-    border-radius: 14px;
-    font-size: 24px;
+    border-radius: 10px;
+    font-size: 22px;
   }
 }
 </style>

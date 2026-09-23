@@ -14,6 +14,7 @@
     </p>
     <div v-if="email" class="otp-email-row">
       <span class="otp-email">{{ email }}</span>
+      <span class="otp-email-divider" aria-hidden="true"></span>
       <button type="button" class="otp-edit-email" @click="goBack">Edit email</button>
     </div>
 
@@ -43,6 +44,7 @@
 
     <!-- Resend -->
     <div class="otp-resend">
+      <span class="otp-resend-lead">Didn't get the code?</span>
       <button
         v-if="canResend"
         type="button"
@@ -79,7 +81,7 @@ const {
 <style scoped>
 .otp-form {
   width: 100%;
-  max-width: 520px;
+  max-width: 548px;
   font-family:
     'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI',
     Roboto, Inter, sans-serif;
@@ -98,7 +100,7 @@ const {
   font-weight: 700;
   color: #00a19a;
   padding: 0;
-  margin-bottom: 40px;
+  margin-bottom: 34px;
 }
 .otp-back svg {
   width: 17px;
@@ -110,9 +112,9 @@ const {
 
 /* Heading */
 .otp-title {
-  font-size: clamp(34px, 4vw, 46px);
+  font-size: clamp(34px, 4vw, 50px);
   font-weight: 800;
-  letter-spacing: -1.4px;
+  letter-spacing: -0.035em;
   line-height: 1.05;
   color: #231d45;
   margin: 0 0 14px;
@@ -120,25 +122,34 @@ const {
 .otp-subtitle {
   font-size: 17px;
   font-weight: 500;
-  color: #6b6783;
+  color: #5d5878;
   line-height: 1.6;
-  margin: 0 0 20px;
+  margin: 0 0 22px;
 }
 .otp-email-row {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin: 0 0 40px;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin: 0 0 36px;
 }
 .otp-email {
-  font-weight: 700;
-  color: #231d45;
-  font-size: 15px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-weight: 600;
+  color: #4d4868;
+  font-size: 16px;
+}
+.otp-email-divider {
+  width: 1px;
+  height: 22px;
+  background: rgba(35, 29, 69, 0.16);
+  flex-shrink: 0;
 }
 .otp-edit-email {
   font-family: inherit;
-  font-size: 13.5px;
-  font-weight: 800;
+  font-size: 15px;
+  font-weight: 700;
   color: #00a19a;
   background: none;
   border: none;
@@ -164,11 +175,11 @@ const {
 /* Continue */
 .otp-continue {
   width: 100%;
-  height: 62px;
+  height: 60px;
   border: none;
-  border-radius: 16px;
+  border-radius: 12px;
   font-family: inherit;
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 700;
   color: #fff;
   background: #00a19a;
@@ -197,13 +208,21 @@ const {
 
 /* Resend */
 .otp-resend {
-  text-align: center;
-  margin-top: 22px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 8px;
+  margin-top: 26px;
+  font-size: 15px;
+}
+.otp-resend-lead {
+  font-weight: 500;
+  color: #5d5878;
 }
 .otp-resend-timer {
-  font-size: 15px;
-  font-weight: 500;
-  color: #9c98ad;
+  font-weight: 600;
+  color: #4d4868;
+  font-variant-numeric: tabular-nums;
 }
 .otp-resend-btn {
   font-family: inherit;
@@ -222,8 +241,22 @@ const {
 .otp-spam-note {
   text-align: center;
   margin: 10px 0 0;
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 500;
-  color: #9c98ad;
+  color: #8d89a0;
+}
+
+@media (max-width: 600px) {
+  .otp-back { font-size: 15px; margin-bottom: 20px; }
+  .otp-title { font-size: 28px; margin-bottom: 10px; }
+  .otp-subtitle { font-size: 15px; margin-bottom: 16px; }
+  .otp-email-row { gap: 10px; margin-bottom: 26px; }
+  .otp-email { font-size: 15px; }
+  .otp-email-divider { height: 18px; }
+  .otp-edit-email { font-size: 14px; }
+  .otp-fields { margin-bottom: 22px; }
+  .otp-continue { height: 54px; font-size: 16px; }
+  .otp-resend { margin-top: 20px; font-size: 14px; }
+  .otp-spam-note { font-size: 12.5px; }
 }
 </style>
