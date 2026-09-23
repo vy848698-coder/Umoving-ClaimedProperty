@@ -201,8 +201,34 @@ if (typeof definePageMeta === 'function') {
   .otp-illus-img { animation: none; }
 }
 
-/* ── Tablet and below: one column, message above the form ── */
-@media (max-width: 900px) {
+/* ── Short desktop / laptop windows ──
+   With browser chrome a 1366x768 laptop leaves ~600px, and the page needed
+   ~660 - the resend line fell below the fold. On side-by-side layouts the
+   vertical rhythm scales with window height instead, so the whole page fits
+   one screen. The eyebrow gap tracks the Back link's (VerificationCode.vue)
+   so the two columns stay level. */
+@media (min-width: 901px) and (max-height: 820px),
+  (min-width: 701px) and (orientation: landscape) and (max-height: 820px) {
+  .otp-header { padding-top: clamp(16px, 3.6vh, 36px); }
+  .otp-logo-mark img { width: clamp(34px, 5.2vh, 42px); height: clamp(34px, 5.2vh, 42px); }
+  .otp-split {
+    padding-top: clamp(12px, 3vh, 40px);
+    padding-bottom: clamp(12px, 3vh, 56px);
+  }
+  .otp-eyebrow { margin-bottom: clamp(14px, 3.4vh, 34px); }
+  .otp-illus { --illus-w: min(420px, 100%, 52vh); }
+}
+
+/* Narrow landscape windows keep two columns with slimmer gutters. */
+@media (max-width: 900px) and (orientation: landscape) {
+  .otp-header { padding-left: 32px; padding-right: 32px; }
+  .otp-split { padding-left: 32px; padding-right: 32px; column-gap: 40px; }
+}
+
+/* ── Portrait tablets and phones: one column, message above the form ──
+   A landscape window keeps the two columns down to 700px - a narrow laptop
+   window stacked would need scrolling for no gain. */
+@media (max-width: 700px), (max-width: 900px) and (orientation: portrait) {
   /* Same centred column as the content below, so the logo keeps its line. */
   .otp-header { width: min(560px, 100%); padding: 28px 28px 0; }
   .otp-split {

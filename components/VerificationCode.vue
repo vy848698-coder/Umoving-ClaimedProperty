@@ -246,6 +246,28 @@ const {
   color: #8d89a0;
 }
 
+/* Short desktop / laptop windows - see pages/onboarding/verification.vue.
+   Every vertical gap, the code boxes and the button scale with window height
+   so the form fits one screen without scrolling. */
+@media (min-width: 901px) and (max-height: 820px),
+  (min-width: 701px) and (orientation: landscape) and (max-height: 820px) {
+  .otp-back { margin-bottom: clamp(14px, 3.4vh, 34px); }
+  .otp-title { margin-bottom: clamp(8px, 1.6vh, 14px); }
+  .otp-subtitle {
+    font-size: 16px;
+    line-height: 1.55;
+    margin-bottom: clamp(10px, 2.2vh, 22px);
+  }
+  .otp-email-row { margin-bottom: clamp(16px, 3.6vh, 36px); }
+  .otp-fields { margin-bottom: clamp(14px, 2.8vh, 28px); }
+  .otp-fields :deep(.code-input__field) { max-width: clamp(52px, 10.5vh, 80px); }
+  /* Smaller boxes still span the full row, edge to edge with the button. */
+  .otp-fields :deep(.code-input__fields) { justify-content: space-between; }
+  .otp-continue { height: clamp(48px, 8vh, 60px); }
+  .otp-resend { margin-top: clamp(12px, 2.6vh, 26px); }
+  .otp-spam-note { margin-top: clamp(4px, 1vh, 10px); }
+}
+
 @media (max-width: 600px) {
   .otp-back { font-size: 15px; margin-bottom: 20px; }
   .otp-title { font-size: 28px; margin-bottom: 10px; }
