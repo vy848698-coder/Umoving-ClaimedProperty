@@ -11,24 +11,33 @@
       </div>
 
       <div class="signup-aside-body">
-        <p class="signup-eyebrow">Create your account</p>
-        <!-- The space before the break is trimmed at end of line on desktop and
-             survives when the phone rules hide the <br>, so the line reflows to
-             "Start with your home." rather than running the words together. -->
-        <h1 class="signup-welcome">Start with <br />your home<span class="signup-q">.</span></h1>
-        <p class="signup-welcome-sub">A few details and you're in. Your details stay with you.</p>
-
-        <img
-          src="/op-icons/landing/homeScoreCard.png"
-          alt=""
-          class="signup-house-illus"
-        />
+        <!-- Headline and artwork sit side by side so the top of the panel reads
+             as one block. Stacked (see the 880px rules) the art drops away and
+             this collapses back to a single column. -->
+        <div class="signup-hero">
+          <div class="signup-hero-copy">
+            <p class="signup-eyebrow">Create your account</p>
+            <!-- The space before the break is trimmed at end of line on desktop
+                 and survives when the phone rules hide the <br>, so the line
+                 reflows to "Start with your home." rather than running the
+                 words together. -->
+            <h1 class="signup-welcome">Start with <br />your home<span class="signup-q">.</span></h1>
+            <p class="signup-welcome-sub">A few details and you're in.</p>
+          </div>
+          <img
+            src="/op-icons/landing/homeScoreCard.png"
+            alt=""
+            class="signup-house-illus"
+          />
+        </div>
 
         <ol class="signup-steps">
-          <li><span class="signup-step-n">1</span><p>Create your account</p></li>
+          <li class="is-now"><span class="signup-step-n">1</span><p>Create your account</p></li>
           <li><span class="signup-step-n">2</span><p>Choose what you want to do</p></li>
           <li><span class="signup-step-n">3</span><p>Claim your property</p></li>
         </ol>
+
+        <p class="signup-steps-note">Takes about a minute · <b>Free</b> to create</p>
       </div>
 
       <p class="signup-aside-foot">
@@ -335,21 +344,18 @@ const handleSubmit = async () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 56px;
+  margin-bottom: 24px;
   gap: 16px;
 }
 .signup-logo { display: inline-flex; align-items: center; gap: 12px; }
+/* The mark carries its own shape, so the ring around it only added weight
+   and a second circle next to the wordmark. */
 .signup-logo-mark {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  border: 2px solid #00a19a;
-  background: rgba(0, 161, 154, 0.08);
   display: grid;
   place-items: center;
-  overflow: hidden;
+  flex-shrink: 0;
 }
-.signup-logo-mark img { width: 30px; height: auto; display: block; }
+.signup-logo-mark img { width: 30px; height: 30px; display: block; }
 .signup-logo strong {
   font-size: 19px;
   font-weight: 800;
@@ -370,10 +376,20 @@ const handleSubmit = async () => {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  max-width: 440px;
+  max-width: 500px;
 }
+
+/* Copy on the left, artwork on the right, baselines aligned at the bottom so
+   the house sits on the same line the sub-copy ends on. */
+.signup-hero {
+  display: grid;
+  grid-template-columns: 1fr 200px;
+  align-items: end;
+  gap: 6px;
+}
+
 .signup-eyebrow {
-  margin: 0 0 18px;
+  margin: 0 0 10px;
   font-size: 12px;
   font-weight: 800;
   letter-spacing: 1.8px;
@@ -382,7 +398,7 @@ const handleSubmit = async () => {
 }
 .signup-welcome {
   margin: 0;
-  font-size: clamp(44px, 4.4vw, 58px);
+  font-size: clamp(40px, 3.9vw, 50px);
   font-weight: 800;
   line-height: 1.02;
   letter-spacing:-.03em;
@@ -390,62 +406,86 @@ const handleSubmit = async () => {
 }
 .signup-q { color: #00a19a; }
 .signup-welcome-sub {
-  margin: 20px 0 0;
-  font-size: 16px;
-  line-height: 1.6;
+  margin: 12px 0 0;
+  font-size: 15px;
+  line-height: 1.55;
   color: #6b6783;
-  max-width: 36ch;
+  max-width: 28ch;
 }
 
+/* Pulled right and down a touch so it reads as part of the headline block
+   rather than a separate centred picture, and overhangs the panel edge the
+   way the artwork does elsewhere in the app. */
 .signup-house-illus {
-  width: 100%;
-  max-width: 260px;
+  width: 200px;
   height: auto;
   display: block;
-  margin: 28px 0 0;
+  margin: 0 -30px -6px 0;
   object-fit: contain;
+  filter: drop-shadow(0 16px 24px rgba(35, 29, 69, 0.14));
 }
 
-/* Numbered steps */
+/* Numbered steps, as one rail rather than three floating rows - it reads as a
+   single object and holds the eye at the size the panel needs. */
 .signup-steps {
   list-style: none;
-  margin: 32px 0 0;
+  margin: 20px 0 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
+  border: 1px solid #e8e6e0;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #fff;
 }
 .signup-steps li {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 13px;
+  padding: 13px 16px;
+  border-bottom: 1px solid #f0eee9;
 }
+.signup-steps li:last-child { border-bottom: 0; }
+/* The step the user is actually on. */
+.signup-steps li.is-now {
+  background: linear-gradient(90deg, #f3faf9, #fff);
+}
+.signup-steps li:not(.is-now) p { color: #8a869b; }
 .signup-step-n {
   flex-shrink: 0;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background: rgba(0, 161, 154, 0.1);
-  border: 1px solid rgba(0, 161, 154, 0.4);
-  color: #00a19a;
-  font-size: 13px;
+  width: 23px;
+  height: 23px;
+  border-radius: 7px;
+  background: #eef6f5;
+  color: #00857f;
+  font-size: 11.5px;
   font-weight: 800;
   display: grid;
   place-items: center;
 }
+.signup-steps li.is-now .signup-step-n {
+  background: #00a19a;
+  color: #fff;
+}
 .signup-steps p {
   margin: 0;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
-  line-height: 1.4;
+  line-height: 1.3;
   color: #231d45;
 }
+
+.signup-steps-note {
+  margin: 14px 0 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #9490a3;
+}
+.signup-steps-note b { color: #00857f; font-weight: 800; }
 
 .signup-aside-foot {
   display: inline-flex;
   align-items: center;
   gap: 9px;
-  margin: 48px 0 0;
+  margin: 28px 0 0;
   font-size: 13px;
   font-weight: 600;
   color: #9490a3;
@@ -793,11 +833,20 @@ const handleSubmit = async () => {
     max-width: 460px;
     margin-inline: auto;
   }
-  .signup-aside-top { margin-bottom: 26px; }
+  .signup-aside-top { margin-bottom: 20px; }
   .signup-aside-body { justify-content: flex-start; }
-  .signup-aside-foot { display: flex; margin-top: 26px; }
+  .signup-aside-foot { display: flex; margin-top: 20px; }
   .signup-welcome { font-size: clamp(34px, 8vw, 46px); }
-  .signup-steps { margin-top: 26px; }
+  /* Still side by side, just on a narrower art column - stacking it left the
+     house floating in its own band of empty space, which is the gap this
+     layout exists to remove. */
+  .signup-hero { grid-template-columns: 1fr 132px; }
+  .signup-house-illus {
+    width: 132px;
+    margin: 0 -14px -4px 0;
+  }
+  .signup-welcome-sub { max-width: 30ch; }
+  .signup-steps { margin-top: 18px; }
   .signup-main { padding: 32px 24px 48px; }
   .signup-main-inner { max-width: 460px; }
 }
@@ -811,6 +860,8 @@ const handleSubmit = async () => {
   .signup-logo-mark img { width: 25px; }
   .signup-logo strong { font-size: 17px; }
   .signup-tagline { display: none; }
+  /* The band is a compact header at this size - the artwork is the first
+     thing that can go without losing meaning. */
   .signup-house-illus { display: none; }
 
   .signup-eyebrow { margin-bottom: 10px; font-size: 11px; letter-spacing: 1.5px; }
@@ -823,11 +874,12 @@ const handleSubmit = async () => {
   .signup-welcome br { display: none; }
   .signup-welcome-sub { margin-top: 8px; font-size: 13.5px; line-height: 1.5; max-width: none; }
 
-  .signup-steps { margin-top: 16px; gap: 10px; }
-  .signup-steps li { gap: 11px; }
-  .signup-step-n { width: 26px; height: 26px; border-radius: 50%; font-size: 12px; }
-  .signup-steps p { font-size: 13.5px; line-height: 1.35; padding-top: 2px; }
-  .signup-aside-foot { margin-top: 16px; font-size: 12px; gap: 7px; }
+  .signup-steps { margin-top: 14px; }
+  .signup-steps li { gap: 11px; padding: 11px 13px; }
+  .signup-step-n { width: 22px; height: 22px; font-size: 11px; }
+  .signup-steps p { font-size: 13.5px; line-height: 1.35; }
+  .signup-steps-note { margin-top: 10px; font-size: 12px; }
+  .signup-aside-foot { margin-top: 14px; font-size: 12px; gap: 7px; }
 
   .signup-main { padding: 26px 20px 40px; }
   .signup-form-head { margin-bottom: 18px; }
@@ -845,6 +897,8 @@ const handleSubmit = async () => {
   .signup-main { padding: 22px 16px 36px; }
   .signup-welcome { font-size: 24px; }
   .signup-welcome-sub { font-size: 13px; }
+  .signup-steps li { padding: 10px 12px; }
+  .signup-steps p { font-size: 13px; }
   .signup-form-title { font-size: 21px; }
 }
 </style>
