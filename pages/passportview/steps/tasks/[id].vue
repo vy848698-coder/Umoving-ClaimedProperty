@@ -1721,9 +1721,15 @@ const handleContinue = () => {
   .tk-split {
     grid-template-columns: 1fr;
   }
+  /* Stacked above the questions, the dark panel ran edge to edge with square
+     corners - it read as stuck to the screen. It sits inset as a card instead,
+     matching the section page's hero. */
   .tk-side {
     min-height: 0;
-    padding: 26px 22px 30px;
+    margin: 12px 20px 0;
+    padding: 26px 22px 8px;
+    border-radius: 24px;
+    box-shadow: 0 18px 40px rgba(29, 24, 56, 0.24);
   }
   .side-title {
     font-size: 28px;
@@ -1751,6 +1757,21 @@ const handleContinue = () => {
      phone; trimmed so inputs and options get room to breathe. */
   .tk-main {
     padding: 24px 16px 90px;
+  }
+  /* Same 16px gutter as the questions below it. */
+  .tk-side {
+    margin: 12px 16px 0;
+    padding: 22px 18px 4px;
+    border-radius: 22px;
+  }
+  .side-title {
+    font-size: 26px;
+  }
+  .side-divider {
+    margin: 20px 0;
+  }
+  .side-actions {
+    margin: 20px 0;
   }
   .question-card {
     padding: 20px 16px;
