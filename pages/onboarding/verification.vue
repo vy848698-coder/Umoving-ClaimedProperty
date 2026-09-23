@@ -13,7 +13,7 @@
       <!-- ── Left: message + illustration ── -->
       <section class="otp-aside">
         <p class="otp-eyebrow">One more step</p>
-        <h1 class="otp-headline">Check your<br /> email<span class="otp-dot">.</span></h1>
+        <h1 class="otp-headline">Check your email<span class="otp-dot">.</span></h1>
         <p class="otp-sub">We've sent a six-digit code to your inbox.</p>
 
         <div class="otp-illus">
@@ -123,6 +123,8 @@ if (typeof definePageMeta === 'function') {
   line-height: 1.05;
   letter-spacing: -0.035em;
   color: #231d45;
+  /* One line, like the form title opposite, so the sublines level too. */
+  white-space: nowrap;
 }
 .otp-dot { color: #00a19a; }
 .otp-sub {
@@ -139,12 +141,13 @@ if (typeof definePageMeta === 'function') {
 .otp-illus {
   /* Also bounded by viewport height, so on a short laptop screen the art
      shrinks rather than pushing the page into a scroll. */
-  --illus-w: min(300px, 100%, 38vh);
+  --illus-w: min(420px, 100%, 54vh);
   position: relative;
   width: var(--illus-w);
   /* The envelope starts ~13% in from the image's own edge; pulling the image
      back by that much puts the envelope on the text/logo line. */
-  margin: 18px 0 0 calc(var(--illus-w) * -0.13);
+  margin: 10px 0 calc(var(--illus-w) * -0.1) calc(var(--illus-w) * -0.13);
+  /* (bottom: the lowest ~10% of the image is empty, so it takes no room) */
 }
 /* The mask trims the artwork's own ground shadow, so a soft teal pool goes
    back under the envelope. */
@@ -158,6 +161,7 @@ if (typeof definePageMeta === 'function') {
   border-radius: 50%;
   background: radial-gradient(closest-side, rgba(0, 161, 154, 0.2), rgba(0, 161, 154, 0));
   filter: blur(6px);
+  animation: otp-glow 6s ease-in-out infinite;
 }
 .otp-illus-img {
   display: block;
@@ -166,6 +170,7 @@ if (typeof definePageMeta === 'function') {
   position: relative;
   object-fit: contain;
   mix-blend-mode: multiply;
+  animation: otp-float 6s ease-in-out infinite;
   /* Its outer border is pure white (gone under multiply), but inside that a
      faint teal glow stops at a hard rectangle - x 7-92%, y 10-90% - which
      read as a square behind the envelope. Each side fades out over that
@@ -179,6 +184,21 @@ if (typeof definePageMeta === 'function') {
     linear-gradient(to right, transparent 7%, #000 14%, #000 86%, transparent 92%),
     linear-gradient(to bottom, transparent 8%, #000 11%, #000 83%, transparent 90%);
   mask-composite: intersect;
+}
+
+/* A slow drift - the envelope lifts, its shadow thins - so the page feels
+   like it is waiting on the email rather than static. */
+@keyframes otp-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+@keyframes otp-glow {
+  0%, 100% { opacity: 1; transform: scaleX(1); }
+  50% { opacity: 0.7; transform: scaleX(0.92); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .otp-illus::before,
+  .otp-illus-img { animation: none; }
 }
 
 /* ── Tablet and below: one column, message above the form ── */
@@ -219,6 +239,7 @@ if (typeof definePageMeta === 'function') {
     margin: 0 calc(170px * -0.14) 0 0;
   }
   .otp-eyebrow { margin-bottom: 14px; line-height: normal; }
+  .otp-headline { white-space: normal; }
   .otp-headline { font-size: clamp(32px, 5.4vw, 40px); }
   .otp-sub { font-size: 16px; margin-top: 12px; }
   .otp-main { grid-column: 1; grid-row: 2; }
