@@ -51,8 +51,22 @@ export default defineNuxtConfig({
     // file for why.
   },
 
-  modules: ['@pinia/nuxt', '@vite-pwa/nuxt'],
+  // @nuxt/icon provides the <Icon> component, used ~430 times across the app
+  // (heroicons and lucide). It used to arrive as a dependency of @nuxt/ui;
+  // when that was dropped, every one of those icons silently rendered nothing
+  // - Vue logged "Failed to resolve component: Icon" and left an empty element
+  // behind, which is why the green confirm circles had no tick in them. It is
+  // registered directly here so it no longer depends on a UI library we don't
+  // otherwise use.
+  modules: ['@pinia/nuxt', '@vite-pwa/nuxt', '@nuxt/icon'],
   css: ['~/assets/css/main.css'],
+
+  icon: {
+    // Both collections are installed (@iconify-json/heroicons, -lucide), so
+    // icons are served from the bundle rather than fetched from Iconify's API
+    // at runtime - no third-party request on render, and they work offline.
+    serverBundle: 'local',
+  },
 
   // Tailwind runs through Nuxt's own PostCSS pipeline. It used to be pulled in
   // as a side effect of @nuxt/ui (which registers @nuxtjs/tailwindcss); when
