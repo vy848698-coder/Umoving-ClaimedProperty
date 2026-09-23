@@ -54,6 +54,21 @@ export default defineNuxtConfig({
   modules: ['@pinia/nuxt', '@vite-pwa/nuxt'],
   css: ['~/assets/css/main.css'],
 
+  // Tailwind runs through Nuxt's own PostCSS pipeline. It used to be pulled in
+  // as a side effect of @nuxt/ui (which registers @nuxtjs/tailwindcss); when
+  // that dependency was dropped, nothing processed the `@import 'tailwindcss/*'`
+  // lines in assets/css/main.css any more, so every utility class in the app
+  // silently stopped existing - `w-[18px] h-[18px]` on the 3D PNG icons meant
+  // nothing and they rendered at their full intrinsic size, over the text
+  // beside them. Declaring the plugin here keeps it independent of whichever UI
+  // library happens to be installed. Nuxt's defaults (postcss-import,
+  // postcss-url, autoprefixer, cssnano) still apply around it.
+  postcss: {
+    plugins: {
+      tailwindcss: {},
+    },
+  },
+
   pwa: {
     registerType: 'autoUpdate',
     strategies: 'generateSW',
