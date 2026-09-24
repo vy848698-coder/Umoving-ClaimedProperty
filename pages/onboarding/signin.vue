@@ -4,8 +4,7 @@
     <aside class="signin-aside">
       <div class="signin-aside-top">
         <div class="signin-logo">
-          <span class="signin-logo-mark"><img src="/op-icons/logo.png" alt="umu" /></span>
-          <strong>umovingu</strong>
+          <span class="signin-logo-word"><span class="signin-logo-word-a">umo</span><span class="signin-logo-word-b">vingu</span></span>
         </div>
         <p class="signin-tagline">You own the home. Own its story.</p>
       </div>
@@ -14,16 +13,7 @@
         <h1 class="signin-welcome">{{ heroTitle }}</h1>
         <p class="signin-welcome-sub">Good to see you again. Your Property Passport is right where you left it.</p>
 
-        <div class="signin-home-card">
-          <img src="/build/umu-passport-sm.png" alt="" class="signin-home-thumb" />
-          <div class="signin-home-meta">
-            <span class="signin-home-kicker">Your home</span>
-            <strong class="signin-home-addr">55, Woodfield Road</strong>
-            <div class="signin-home-tags">
-              <span class="signin-home-tag signin-home-tag--passport">Passport ready</span>
-            </div>
-          </div>
-        </div>
+        <img src="/umu-passport.png" alt="Property Passport" class="signin-passport-illus" />
       </div>
 
       <p class="signin-aside-foot">
@@ -246,7 +236,7 @@
           <div v-if="resetStep === 'idle'" class="signin-divider"><span>new to UMU?</span></div>
 
           <div v-if="resetStep === 'idle'" class="auth-footer signin-footer">
-            Don't have an account? <NuxtLink to="/onboarding/signup">Get started</NuxtLink>
+            New to Umovingu? <NuxtLink to="/onboarding/signup">Create an account.</NuxtLink>
           </div>
         </section>
       </div>
@@ -336,14 +326,14 @@ const heroSub = computed(() => {
 
 // Heading shown above the form (right panel)
 const formTitle = computed(() => {
-  if (resetStep.value === 'idle') return 'Sign in to UMU'
+  if (resetStep.value === 'idle') return 'Sign in'
   if (resetStep.value === 'email') return 'Reset your password'
   if (resetStep.value === 'otp') return 'Verify the code'
   if (resetStep.value === 'newPassword') return 'Set a new password'
   return ''
 })
 const formSub = computed(() => {
-  if (resetStep.value === 'idle') return 'Enter your details to pick up where you left off.'
+  if (resetStep.value === 'idle') return 'Pick up where you left off.'
   if (resetStep.value === 'email') return "Enter your email and we'll send you a code to set a new password."
   if (resetStep.value === 'otp') return 'Enter the 6-digit code we just sent you.'
   if (resetStep.value === 'newPassword') return 'At least 8 characters. Mix in a number for extra strength.'
@@ -592,25 +582,14 @@ const onPrimary = () => {
 .signin-logo {
   display: inline-flex;
   align-items: center;
-  gap: 13px;
 }
-/* The mark carries its own shape, so the ring around it only added weight
-   and a second circle next to the wordmark. */
-.signin-logo-mark {
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-}
-.signin-logo-mark :deep(img),
-.signin-logo-mark :deep(svg),
-.signin-logo-mark img,
-.signin-logo-mark svg { width: 42px; height: 42px; display: block; }
-.signin-logo strong {
-  font-size: 24px;
+.signin-logo-word {
+  font-size: 26px;
   font-weight: 800;
   letter-spacing: -0.5px;
-  color: #231d45;
 }
+.signin-logo-word-a { color: #231d45; }
+.signin-logo-word-b { color: #00a19a; }
 .signin-tagline {
   margin: 0;
   font-size: 15px;
@@ -648,57 +627,17 @@ const onPrimary = () => {
   max-width: 32ch;
 }
 
-/* Light home card */
-.signin-home-card {
-  display: flex;
-  align-items: center;
-  gap: 18px;
-  margin-top: 28px;
-  padding: 20px 22px;
-  border-radius: 20px;
-  background: #fff;
-  border: 1px solid #ece9f5;
-  box-shadow: 0 14px 30px rgba(35, 29, 69, 0.07);
-}
-/* The real Seller Passport cover - the same artwork the claim flow's "ready"
-   card uses (pages/claim/[id].vue). It is portrait book art at ~5:7, so it is
-   sized as one rather than squashed into a square. */
-.signin-home-thumb {
-  flex-shrink: 0;
-  width: 66px;
-  height: 92px;
+/* The real Property Passport cover artwork - full-size, not the small
+   thumbnail crop used elsewhere, since it's the panel's lead visual here
+   rather than a supporting detail next to an address card. */
+.signin-passport-illus {
+  width: 100%;
+  max-width: 300px;
+  height: auto;
+  display: block;
+  margin: 32px 0 0;
   object-fit: contain;
-  filter: drop-shadow(0 10px 18px rgba(35, 29, 69, 0.18));
-}
-.signin-home-meta { min-width: 0; }
-.signin-home-kicker {
-  display: block;
-  font-size: 10.5px;
-  font-weight: 800;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  color: #a39fb2;
-  margin-bottom: 5px;
-}
-.signin-home-addr {
-  display: block;
-  font-size: 19px;
-  font-weight: 800;
-  letter-spacing: -0.2px;
-  color: #231d45;
-  margin-bottom: 9px;
-}
-.signin-home-tags { display: flex; gap: 8px; flex-wrap: wrap; }
-.signin-home-tag {
-  font-size: 11.5px;
-  font-weight: 700;
-  padding: 5px 11px;
-  border-radius: 8px;
-}
-.signin-home-tag--passport {
-  background: rgba(224, 164, 58, 0.16);
-  color: #c98a1e;
-  border: 1px solid rgba(224, 164, 58, 0.4);
+  filter: drop-shadow(0 20px 30px rgba(35, 29, 69, 0.16));
 }
 
 .signin-aside-foot {
@@ -1233,7 +1172,7 @@ const onPrimary = () => {
   .signin-aside-foot { display: flex; margin-top: 20px; }
   .signin-welcome { font-size: clamp(34px, 8vw, 46px); letter-spacing: -0.03em; }
   .signin-welcome-sub { margin-top: 14px; max-width: none; font-size: 16.5px; }
-  .signin-home-card { margin-top: 20px; }
+  .signin-passport-illus { max-width: 220px; margin-top: 24px; }
   .signin-main { padding: 32px 24px 48px; }
   .signin-main-inner { max-width: 460px; }
 }
@@ -1242,12 +1181,7 @@ const onPrimary = () => {
 @media (max-width: 600px) {
   .signin-aside { padding: 20px 20px 22px; }
   .signin-aside-top { margin-bottom: 18px; }
-  .signin-logo { gap: 10px; }
-  .signin-logo-mark :deep(img),
-  .signin-logo-mark :deep(svg),
-  .signin-logo-mark img,
-  .signin-logo-mark svg { width: 34px; height: 34px; }
-  .signin-logo strong { font-size: 20px; }
+  .signin-logo-word { font-size: 20px; }
   .signin-tagline { display: none; }
 
   .signin-welcome {
@@ -1257,16 +1191,7 @@ const onPrimary = () => {
   }
   .signin-welcome-sub { margin-top: 8px; font-size: 13.5px; line-height: 1.5; }
 
-  .signin-home-card {
-    margin-top: 16px;
-    padding: 12px 14px;
-    gap: 12px;
-    border-radius: 14px;
-  }
-  .signin-home-thumb { width: 34px; height: 48px; }
-  .signin-home-kicker { font-size: 9px; letter-spacing: 1.2px; margin-bottom: 3px; }
-  .signin-home-addr { font-size: 14px; margin-bottom: 6px; }
-  .signin-home-tag { font-size: 10.5px; padding: 3px 8px; }
+  .signin-passport-illus { max-width: 170px; margin-top: 18px; }
   .signin-aside-foot { margin-top: 16px; font-size: 12px; gap: 7px; }
 
   .signin-main { padding: 26px 20px 40px; }
@@ -1287,7 +1212,7 @@ const onPrimary = () => {
   .signin-main { padding: 22px 16px 36px; }
   .signin-welcome { font-size: 24px; }
   .signin-welcome-sub { font-size: 13px; }
-  .signin-home-card { padding: 11px 12px; gap: 10px; }
+  .signin-passport-illus { max-width: 150px; }
   .signin-form-title { font-size: 21px; }
   .otp-boxes { gap: 6px; }
   .otp-box { height: 50px; font-size: 20px; }
