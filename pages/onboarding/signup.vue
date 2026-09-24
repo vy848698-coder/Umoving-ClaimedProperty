@@ -7,13 +7,13 @@
           <span class="signup-logo-mark"><img src="/op-icons/logo.png" alt="umu" /></span>
           <strong>umovingu</strong>
         </div>
-        <p class="signup-tagline">A simpler way to own your home.</p>
+        <p class="signup-tagline">You own the home. Own its story.</p>
       </div>
 
       <div class="signup-aside-body">
         <!-- Artwork leads, then the copy reads down from it in one column. -->
         <img
-          src="/op-icons/landing/homeScoreCard.png"
+          src="/dashboard-art/searchHouse.png"
           alt=""
           class="signup-house-illus"
         />
@@ -392,8 +392,10 @@ const handleSubmit = async () => {
   flex: 1;
   display: flex;
   flex-direction: column;
+  align-items: center;
   justify-content: center;
   max-width: 500px;
+  text-align: center;
   /* Centres inside a slightly shorter box, so the whole column sits above the
      true middle - level with the form's own weight rather than below it. */
   padding-bottom: 4.5vh;
@@ -417,21 +419,19 @@ const handleSubmit = async () => {
 }
 .signup-q { color: #00a19a; }
 .signup-welcome-sub {
-  margin: 15px 0 0;
+  margin: 15px auto 0;
   font-size: 18px;
   line-height: 1.52;
   color: #635f7b;
   max-width: 32ch;
 }
 
-/* Leads the panel. Pulled left of the text column so it sits against the
-   panel edge rather than floating in the middle of its own margin, and up
-   towards the logo so the two read as the top of one column. */
+/* Leads the panel, centred above the copy. */
 .signup-house-illus {
   width: 288px;
   height: auto;
   display: block;
-  margin: -18px 0 16px -22px;
+  margin: -18px auto 16px;
   object-fit: contain;
   filter: drop-shadow(0 22px 30px rgba(35, 29, 69, 0.16));
 }
@@ -440,9 +440,11 @@ const handleSubmit = async () => {
    with no gaps between the rows to fall through. */
 .signup-points {
   list-style: none;
-  margin: 28px 0 0;
+  margin: 28px auto 0;
   padding: 0;
   display: grid;
+  max-width: 320px;
+  text-align: left;
 }
 .signup-points li {
   display: flex;

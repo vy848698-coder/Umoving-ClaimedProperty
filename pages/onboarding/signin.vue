@@ -7,7 +7,7 @@
           <span class="signin-logo-mark"><img src="/op-icons/logo.png" alt="umu" /></span>
           <strong>umovingu</strong>
         </div>
-        <p class="signin-tagline">A simpler way to own your home.</p>
+        <p class="signin-tagline">You own the home. Own its story.</p>
       </div>
 
       <div class="signin-aside-body">
