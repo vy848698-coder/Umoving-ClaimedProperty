@@ -12,7 +12,7 @@
       </div>
       <div v-if="displayedHelp" class="help-section">
         <div class="help-content">
-          <h4 class="help-title"><span class="help-icon">💡</span>What is this?</h4>
+          <h4 class="help-title"><img src="/op-icons/homescore/lightbulb.png" alt="" class="help-icon-img" />What is this?</h4>
           <p class="help-text">
             {{ displayedHelp }}
             <span v-if="showHelpCursor" class="typing-cursor typing-cursor--small">|</span>
@@ -84,25 +84,25 @@
 
                 <!-- Single-line text (item name) -->
                 <template v-if="part.type === 'text' && part.title">
-                  <label class="form-label">{{ part.title }}</label>
+                  <label class="form-label" for="a11y-field-RepeatableItemQuestion-68">{{ part.title }}</label>
                   <input
                     type="text"
                     class="form-input"
                     :placeholder="part.placeholder"
                     :value="currentItem[part.partKey] || ''"
                     @input="(e) => setField(part.partKey, e.target.value)"
-                  />
+                   aria-label="part.placeholder"  id="a11y-field-RepeatableItemQuestion-68"/>
                 </template>
 
                 <!-- Textarea (description / comments — no title or empty title) -->
                 <template v-else-if="part.type === 'text'">
-                  <label v-if="part.title" class="form-label">{{ part.title }}</label>
+                  <label v-if="part.title" class="form-label" for="a11y-field-RepeatableItemQuestion-69">{{ part.title }}</label>
                   <textarea
                     class="form-textarea"
                     :placeholder="part.placeholder"
                     :value="currentItem[part.partKey] || ''"
                     @input="(e) => setField(part.partKey, e.target.value)"
-                  />
+                   aria-label="part.placeholder"  id="a11y-field-RepeatableItemQuestion-69"/>
                 </template>
 
                 <!-- Radio -->
@@ -113,7 +113,7 @@
                     class="radio-opt"
                     :class="{ 'radio-opt--selected': currentItem[part.partKey] === opt.value }"
                     @click="setField(part.partKey, opt.value)"
-                  >
+                   role="button" tabindex="0" @keydown.enter="setField(part.partKey, opt.value)" @keydown.space.prevent="setField(part.partKey, opt.value)">
                     <div
                       class="radio-circle"
                       :class="{ 'radio-circle--checked': currentItem[part.partKey] === opt.value }"
@@ -552,6 +552,16 @@ const itemSubtext = (item) => {
   transition: background 0.2s;
 }
 .save-btn:active { background: #009d90; }
+
+/* "What is this?" lightbulb - the same illustrated icon the app uses. */
+.help-icon-img {
+  width: 15px;
+  height: 15px;
+  object-fit: contain;
+  flex-shrink: 0;
+  vertical-align: -2px;
+  margin-right: 5px;
+}
 </style>
 
 
