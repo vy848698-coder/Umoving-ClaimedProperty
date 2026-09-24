@@ -34,8 +34,10 @@ export const CLAIM_STEPS: ClaimStepInfo[] = [
     title: 'Get your Property Passport',
     short: 'Get Passport',
     text: 'Your Passport is issued, ready to build and share.',
-    // The real Seller Passport cover render, so the last step shows the thing
-    // the user is actually being given.
-    image: '/op-icons/passport-covers/seller_tilted_right_on_tile.png',
+    // The real Passport cover render, so the last step shows the thing the
+    // user is actually being given. Left-facing, so it turns back toward the
+    // steps before it. A 440px copy of property_passport_teal_tilted_left_on_tile.png
+    // - the original is 1MB for an icon drawn at ~64px.
+    image: '/op-icons/passport-covers/property_passport_teal_tilted_left_on_tile_sm.png',
   },
 ]
