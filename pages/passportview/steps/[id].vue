@@ -142,7 +142,7 @@
 
               <div class="task-info">
                 <h3 class="task-title">
-                  {{ toSmartTitleCase(task.title) }}
+                  {{ toSentenceCase(task.title) }}
                   <span v-if="task.hasPublishRequired" class="task-required-badge">
                     Required to publish
                   </span>
@@ -255,7 +255,7 @@ import HelpDrawer from '@/components/passport-view/HelpDrawer.vue'
 import VideoModal from '@/components/passport-view/VideoModal.vue'
 import ProfileMenu from '~/components/core/ProfileMenu.vue'
 import PassportNavButton from '~/components/core/PassportNavButton.vue'
-import { toSmartTitleCase } from '~/utils/titleCase'
+import { toSmartTitleCase, toSentenceCase } from '~/utils/titleCase'
 
 const route = useRoute()
 const router = useRouter()

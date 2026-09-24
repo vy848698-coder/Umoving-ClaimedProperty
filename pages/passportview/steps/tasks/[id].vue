@@ -39,7 +39,7 @@
         </div>
 
         <h1 class="side-title">{{ currentStep?.title || '' }}</h1>
-        <p class="side-sub">{{ currentTask?.title || '' }}</p>
+        <p class="side-sub">{{ toSentenceCase(currentTask?.title) }}</p>
 
         <div class="side-divider"></div>
 
@@ -331,6 +331,7 @@ import HelpDrawer from '~/components/passport-view/HelpDrawer.vue'
 import VideoModal from '~/components/passport-view/VideoModal.vue'
 import ProfileMenu from '~/components/core/ProfileMenu.vue'
 import OnboardingTour from '~/components/ui/OnboardingTour.vue'
+import { toSentenceCase } from '~/utils/titleCase'
 import { normalizeUploadUrl, normalizeUploadUrls } from '~/utils/normalizeUploadUrl'
 import PassportNavButton from '~/components/core/PassportNavButton.vue'
 

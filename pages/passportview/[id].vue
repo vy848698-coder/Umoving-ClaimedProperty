@@ -650,7 +650,7 @@ import Toast from '~/components/ui/Toast.vue'
 import FoundingMemberModal from '~/components/claim/FoundingMemberModal.vue'
 import { useAppToast } from '~/composables/useCustomToast'
 import { useFounderCelebration } from '~/composables/useFounderCelebration'
-import { toSmartTitleCase } from '~/utils/titleCase'
+import { toSmartTitleCase, toSentenceCase } from '~/utils/titleCase'
 
 // Guided tour — auto-runs once per browser, replays from the "?" button.
 const passportTourRef = ref(null)
@@ -845,7 +845,7 @@ async function fetchResumeTarget() {
       for (const s of steps.value) {
         const t = s.tasks?.find((x) => x.id === resumeTarget.value.taskId)
         if (t) {
-          resumeTaskTitle.value = `${s.title} · ${t.title || 'Continue'}`
+          resumeTaskTitle.value = `${s.title} · ${toSentenceCase(t.title) || 'Continue'}`
           break
         }
       }
@@ -1234,14 +1234,14 @@ const getStepExpiringDoc = (step) => {
       if (diff < 0) {
         return {
           expired: true,
-          label: `${t.title || 'A document'} has expired, please re-upload`,
+          label: `${toSentenceCase(t.title) || 'A document'} has expired, please re-upload`,
         }
       }
       if (diff <= SOON_MS) {
         const days = Math.max(1, Math.ceil(diff / (24 * 60 * 60 * 1000)))
         return {
           expired: false,
-          label: `${t.title || 'A document'} expires in ${days} day${days === 1 ? '' : 's'}`,
+          label: `${toSentenceCase(t.title) || 'A document'} expires in ${days} day${days === 1 ? '' : 's'}`,
         }
       }
     }
