@@ -603,8 +603,10 @@ const onPrimary = () => {
   flex: 1;
   display: flex;
   flex-direction: column;
+  align-items: center;
   justify-content: center;
   max-width: 500px;
+  text-align: center;
   /* Truly centred here, unlike sign-up. That page's column is tall enough to
      need lifting off the floor; this one is three short blocks, and the form
      beside it is centred too - biasing one and not the other would give the
@@ -620,16 +622,13 @@ const onPrimary = () => {
   color: #231d45;
 }
 .signin-welcome-sub {
-  margin: 15px 0 0;
+  margin: 15px auto 0;
   font-size: 18px;
   line-height: 1.52;
   color: #635f7b;
   max-width: 32ch;
 }
 
-/* The real Property Passport cover artwork - full-size, not the small
-   thumbnail crop used elsewhere, since it's the panel's lead visual here
-   rather than a supporting detail next to an address card. */
 /* Real 3D render, already tilted right with its own tile/shadow baked in -
    no CSS transform needed. */
 .signin-passport-illus {
@@ -637,7 +636,7 @@ const onPrimary = () => {
   max-width: 260px;
   height: auto;
   display: block;
-  margin: 32px 0 0;
+  margin: 32px auto 0;
   object-fit: contain;
 }
 
