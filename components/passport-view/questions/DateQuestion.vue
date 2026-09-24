@@ -55,7 +55,7 @@
                 {{ formatValue(getDateValue(option), option) }}
               </span>
               <span v-else class="date-placeholder">
-                {{ option.datePlaceholder || '—' }}
+                {{ option.datePlaceholder || 'Select a date' }}
               </span>
               <input
                 :ref="(el) => setDateInputRef(el, index)"

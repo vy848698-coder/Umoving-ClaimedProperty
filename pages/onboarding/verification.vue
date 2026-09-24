@@ -34,7 +34,7 @@ import VerificationCode from '@/components/VerificationCode.vue'
 
 if (typeof definePageMeta === 'function') {
   definePageMeta({
-    title: 'Email Verification - UmovingU',
+    title: 'Email Verification | UmovingU',
   })
 }
 </script>

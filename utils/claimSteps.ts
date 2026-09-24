@@ -21,7 +21,7 @@ export const CLAIM_STEPS: ClaimStepInfo[] = [
   {
     title: 'Verify your identity',
     short: 'Verify identity',
-    text: 'A quick photo ID and selfie check — done once only.',
+    text: 'A quick photo ID and selfie check, done once only.',
     image: '/build/idCard.png',
   },
   {

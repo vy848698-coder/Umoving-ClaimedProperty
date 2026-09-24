@@ -24,7 +24,7 @@
              "Start with your home." rather than running the words together. -->
         <h1 class="signup-welcome">Start with <br />your home<span class="signup-q">.</span></h1>
         <p class="signup-welcome-sub">
-          A few details and you're in — then claim the property that's already yours.
+          A few details and you're in, then claim the property that's already yours.
         </p>
 
         <!-- What the account actually gets them. The old numbered steps only
@@ -36,7 +36,7 @@
           </li>
           <li>
             <span class="signup-point-k" aria-hidden="true"></span>
-            <p><b>Free to create</b> — you only pay when you claim a property.</p>
+            <p><b>Free to create.</b> You only pay when you claim a property.</p>
           </li>
           <li>
             <span class="signup-point-k" aria-hidden="true"></span>
@@ -58,7 +58,7 @@
       <div class="signup-main-inner">
         <div class="signup-form-head">
           <h2 class="signup-form-title">Create your account</h2>
-          <p class="signup-form-sub">Start with your home — it takes about a minute.</p>
+          <p class="signup-form-sub">Start with your home. It takes about a minute.</p>
         </div>
 
         <form class="auth-form signup-panel" @submit.prevent="handleSubmit">
@@ -126,7 +126,7 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
               </svg>
-              <span>We only text you about <strong>your Passport</strong> — never marketing.</span>
+              <span>We only text you about <strong>your Passport</strong>, never marketing.</span>
             </div>
           </div>
 
@@ -202,7 +202,7 @@ import TermsModal from '~/components/modals/TermsModal.vue'
 import OPIcon from '~/components/ui/OPIcon.vue'
 
 definePageMeta({
-  title: 'Create Account - UmovingU',
+  title: 'Create Account | UmovingU',
   middleware: 'guest',
 })
 

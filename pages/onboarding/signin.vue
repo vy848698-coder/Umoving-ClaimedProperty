@@ -12,7 +12,7 @@
 
       <div class="signin-aside-body">
         <h1 class="signin-welcome">{{ heroTitle }}</h1>
-        <p class="signin-welcome-sub">Good to see you again — your Property Passport is right where you left it.</p>
+        <p class="signin-welcome-sub">Good to see you again. Your Property Passport is right where you left it.</p>
 
         <div class="signin-home-card">
           <img src="/build/umu-passport-sm.png" alt="" class="signin-home-thumb" />
@@ -300,7 +300,7 @@ import { resolvePostAuthPath } from '~/utils/appFlow'
 import OPIcon from '~/components/ui/OPIcon.vue'
 
 definePageMeta({
-  title: 'Sign In - UmovingU',
+  title: 'Sign In | UmovingU',
   middleware: 'guest',
 })
 

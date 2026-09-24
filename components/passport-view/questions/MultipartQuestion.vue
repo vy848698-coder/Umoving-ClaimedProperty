@@ -158,8 +158,9 @@
             <div class="counter-buttons">
               <button
                 class="counter-btn"
+                aria-label="Decrease"
                 @click.prevent="decrementCounter(part.partKey)"
-              >—</button>
+              >−</button>
               <span class="counter-divider">|</span>
               <button
                 class="counter-btn"

@@ -499,7 +499,7 @@
 import BaseDrawer from '@/components/ui/BaseDrawer.vue'
 import PhoneInput from '@/components/form/PhoneInput.vue'
 import FlowHeader from '~/components/core/FlowHeader.vue'
-definePageMeta({ title: 'Personal Information - UmovingU', middleware: 'auth' })
+definePageMeta({ title: 'Personal Information | UmovingU', middleware: 'auth' })
 
 const {
   profile,

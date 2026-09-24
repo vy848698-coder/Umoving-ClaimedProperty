@@ -115,7 +115,7 @@
             <h2 class="section-title">Question groups</h2>
             <p class="section-desc">
               {{ totalTaskCount }} {{ totalTaskCount === 1 ? 'task makes' : 'tasks make' }} up the
-              {{ currentStep?.title || 'section' }} — tap any group to review the answers.
+              {{ currentStep?.title || 'section' }}. Tap any group to review the answers.
             </p>
             <div class="legend">
               <span class="legend-item"><span class="ld done"></span> Complete</span>

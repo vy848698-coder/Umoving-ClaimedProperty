@@ -8,7 +8,7 @@
       </svg>
     </summary>
     <ul class="ah-tips">
-      <li>Search by <strong>postcode only</strong> — e.g. <em>SK7 4BL</em> — then pick your home from the list.</li>
+      <li>Search by <strong>postcode only</strong> (for example <em>SK7 4BL</em>), then pick your home from the list.</li>
       <li>Try the <strong>house number and street</strong>, e.g. <em>12 Mill Lane</em>.</li>
       <li>Flats and new builds are often listed under the <strong>building name</strong>.</li>
     </ul>

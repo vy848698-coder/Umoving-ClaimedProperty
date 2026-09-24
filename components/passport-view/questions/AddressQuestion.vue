@@ -15,7 +15,7 @@
     </div>
 
     <p v-if="prefilled" class="address-hint">
-      Filled in from your Passport — edit it if this isn't right.
+      Filled in from your Passport. Edit it if this isn't right.
     </p>
   </div>
 </template>

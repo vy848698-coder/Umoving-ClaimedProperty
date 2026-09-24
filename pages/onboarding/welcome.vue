@@ -11,7 +11,7 @@
         <div class="wl-allset">You're all set</div>
         <h1 class="wl-title">Welcome,<br /><span class="wl-name">{{ firstName }}.</span></h1>
         <p class="wl-sub">
-          Next, find your home and verify you own it — then we'll issue its Property Passport.
+          Next, find your home and verify you own it. Then we'll issue its Property Passport.
         </p>
 
         <button class="wl-cta" @click="continueToApp">
@@ -82,7 +82,7 @@ import { computed } from 'vue'
 import { resolvePostAuthPath } from '~/utils/appFlow'
 
 definePageMeta({
-  title: 'Welcome - UmovingU',
+  title: 'Welcome | UmovingU',
 })
 
 // Best-effort first name from profile (falls back gracefully)

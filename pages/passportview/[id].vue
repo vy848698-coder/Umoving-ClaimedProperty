@@ -31,7 +31,7 @@
           <p class="ppv-kicker">Property Passport</p>
           <h1>Your Passport</h1>
           <p class="ppv-lede">
-            Manage, publish and share your property information —
+            Manage, publish and share your property information, with
             every answer ready before anyone asks.
           </p>
         </div>
@@ -133,7 +133,7 @@
             {{ collaborators.length === 1 ? 'collaborator' : 'collaborators' }}
           </div>
           <div class="pp-collab-sub">
-            Invite your solicitor, agent or co-owner — control exactly who sees
+            Invite your solicitor, agent or co-owner and control exactly who sees
             what.
           </div>
         </div>
@@ -386,7 +386,7 @@
             <div class="pp-empty-ic"><Icon name="i-lucide-archive" /></div>
             <p>Your vault is empty</p>
             <p style="font-size: 11.5px; margin-top: 6px; color: #94a3b8">
-              As you complete sections, the verified documents are stored here —
+              As you complete sections, the verified documents are stored here,
               and you choose which are private and which publish with your
               passport.
             </p>
@@ -399,15 +399,15 @@
             <div class="vault-legend-row">
               <span class="vault-legend-ico private"><img src="/passport-seller-and-buyer-icon/padlock.png" alt="" loading="lazy" /></span>
               <div>
-                <b>Private</b> — only you. Kept out of the passport when you
-                publish — for personal documents you're not required to
+                <b>Private</b>: only you. Kept out of the passport when you
+                publish, for personal documents you're not required to
                 disclose.
               </div>
             </div>
             <div class="vault-legend-row">
               <span class="vault-legend-ico public"><img src="/passport-seller-and-buyer-icon/globe.png" alt="" loading="lazy" /></span>
               <div>
-                <b>Public</b> — published with your passport. Visible to
+                <b>Public</b>: published with your passport. Visible to
                 everyone once you publish (it doesn't go to anyone before
                 then).
               </div>
@@ -430,8 +430,8 @@
               <div class="vault-vis-meta">
                 {{
                   s.visibility === 'PRIVATE'
-                    ? 'Verified · Private — only you. Not included when you publish.'
-                    : 'Verified · Public — published with your passport when you go live.'
+                    ? 'Verified · Private, only you. Not included when you publish.'
+                    : 'Verified · Public, published with your passport when you go live.'
                 }}
               </div>
             </div>
@@ -457,7 +457,7 @@
         <div class="tl-intro">
           <span class="lockico">🔐</span>
           <div>
-            An <b>immutable, time-stamped record</b> of every step — so
+            An <b>immutable, time-stamped record</b> of every step, so
             everyone in the chain can see exactly where the sale is, and trust
             nothing has been altered.
           </div>
@@ -486,7 +486,7 @@
 
           <div class="tl-list-h">Verified activity</div>
           <div v-if="timelineEvents.length === 0" class="pp-empty" style="margin: 0 18px">
-            No activity yet — events will appear here as your Passport progresses.
+            No activity yet. Events will appear here as your Passport progresses.
           </div>
           <div v-for="e in timelineEvents" :key="e.id" class="tl-item">
             <div class="tl-rail">
@@ -574,8 +574,8 @@
         </div>
 
         <p class="pp-share-intro">
-          Anyone with this link can view a read-only copy of your Passport —
-          they don't need an account.
+          Anyone with this link can view a read-only copy of your Passport.
+          They don't need an account.
         </p>
 
         <div v-if="shareLoading" class="pp-share-state">Creating your link…</div>
@@ -905,7 +905,7 @@ function onBuyerSelect(buyer) {
 function onBuyerAction(kind) {
   if (!selectedBuyer.value?.userId) {
     console.warn(
-      '[buyer-action] Selected buyer has no userId — cannot invite/share/message. ' +
+      '[buyer-action] Selected buyer has no userId, cannot invite/share/message. ' +
         'Backend /property/:id/matched-buyers must return { userId }.',
     )
     return
@@ -922,10 +922,10 @@ function onBuyerActionDone(kind, _result) {
   showToast({
     message:
       kind === 'invite'
-        ? 'Invite sent — the buyer will be notified.'
+        ? 'Invite sent. The buyer will be notified.'
         : kind === 'share'
-          ? 'Passport shared — the buyer can preview and unlock it.'
-          : 'Message sent — carry on in your inbox.',
+          ? 'Passport shared. The buyer can preview and unlock it.'
+          : 'Message sent. Carry on in your inbox.',
     iconEmoji: '✓',
     duration: 3000,
   })
@@ -1045,7 +1045,7 @@ async function generateShare() {
       { method: 'POST', headers: { Authorization: `Bearer ${token}` } },
     )
     shareUrl.value = result?.url ?? ''
-    if (!shareUrl.value) shareError.value = 'No link came back — please try again.'
+    if (!shareUrl.value) shareError.value = 'No link came back. Please try again.'
   } catch (e) {
     shareError.value =
       e?.data?.message ?? e?.message ?? 'Could not create a link. Please try again.'
@@ -1061,7 +1061,7 @@ async function copyShare() {
     shareCopied.value = true
     setTimeout(() => (shareCopied.value = false), 1800)
   } catch {
-    shareError.value = 'Copy failed — select the link and copy it manually.'
+    shareError.value = 'Copy failed. Select the link and copy it manually.'
   }
 }
 
@@ -1234,7 +1234,7 @@ const getStepExpiringDoc = (step) => {
       if (diff < 0) {
         return {
           expired: true,
-          label: `${t.title || 'A document'} has expired — please re-upload`,
+          label: `${t.title || 'A document'} has expired, please re-upload`,
         }
       }
       if (diff <= SOON_MS) {

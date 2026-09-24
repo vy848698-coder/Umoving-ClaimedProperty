@@ -21,8 +21,8 @@
         <p class="clw-kicker"><span class="clw-kicker-dot" />Claim your Passport</p>
         <h1>Claim your Property Passport</h1>
         <p class="clw-lede">
-          Find your property and we'll verify ownership via HM Land Registry —
-          then your Property Passport is yours to build and share.
+          Find your property and we'll verify ownership via HM Land Registry.
+          Then your Property Passport is yours to build and share.
         </p>
         <ClaimStepTracker :current="1" class="clw-tracker" />
       </div>
@@ -63,7 +63,7 @@
             <div class="cl-lock-ic"><img src="/build/padlock.png" alt="" /></div>
             <div class="cl-lock-body">
               We verify ownership via
-              <strong>HM Land Registry</strong> — encrypted and never sold.
+              <strong>HM Land Registry</strong>. Your details are encrypted and never sold.
             </div>
           </div>
         </section>

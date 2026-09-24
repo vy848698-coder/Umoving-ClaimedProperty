@@ -31,7 +31,7 @@ const props = defineProps<{
 }>()
 const emit = defineEmits<{ (e: 'change'): void }>()
 
-const line1 = computed(() => toTitleCase(props.property.addressLine1 ?? '') || '—')
+const line1 = computed(() => toTitleCase(props.property.addressLine1 ?? '') || 'Address not available')
 const line2 = computed(() =>
   [
     props.property.city ? toTitleCase(props.property.city) : null,

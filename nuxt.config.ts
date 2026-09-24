@@ -87,9 +87,9 @@ export default defineNuxtConfig({
     registerType: 'autoUpdate',
     strategies: 'generateSW',
     manifest: {
-      name: 'UmovingU - Property Toolkit',
+      name: 'UmovingU | Property Toolkit',
       short_name: 'UmovingU',
-      description: 'Your complete property toolkit—track progress, store documents, and connect with trusted trades in one place.',
+      description: 'Your complete property toolkit. Track progress, store documents, and connect with trusted trades in one place.',
       theme_color: '#00a19a',
       background_color: '#ffffff',
       display: 'standalone',
@@ -178,7 +178,7 @@ export default defineNuxtConfig({
 
   app: {
     head: {
-      title: 'UmovingU - Your Property Toolkit',
+      title: 'UmovingU | Your Property Toolkit',
       meta: [
         { charset: 'utf-8' },
         {
@@ -188,7 +188,7 @@ export default defineNuxtConfig({
         {
           name: 'description',
           content:
-            'Your complete property toolkit—track progress, store documents, and connect with trusted trades in one place.',
+            'Your complete property toolkit. Track progress, store documents, and connect with trusted trades in one place.',
         },
         { name: 'apple-mobile-web-app-capable', content: 'yes' },
         { name: 'apple-mobile-web-app-title', content: 'UmovingU' },

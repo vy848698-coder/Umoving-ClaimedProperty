@@ -74,7 +74,7 @@
         <div class="cl-lock-ic"><img src="/build/padlock.png" alt="" /></div>
         <div class="cl-lock-body">
           We verify ownership via
-          <strong>HM Land Registry</strong> — encrypted and never sold.
+          <strong>HM Land Registry</strong>. Your details are encrypted and never sold.
         </div>
       </div>
     </div>
@@ -91,9 +91,9 @@
         <div class="cl-navy-glow" />
         <img class="cl-navy-img" src="/dashboard-art/searchHouse.png" alt="" />
         <div class="cl-navy-eyebrow">Found on Land Registry</div>
-        <div class="cl-navy-addr1">{{ toTitleCase(selectedProperty?.addressLine1) || '—' }}</div>
+        <div class="cl-navy-addr1">{{ toTitleCase(selectedProperty?.addressLine1) || 'Address not available' }}</div>
         <div class="cl-navy-addr2">
-          {{ [toTitleCase(selectedProperty?.city), selectedProperty?.postcode?.toUpperCase()].filter(Boolean).join(', ') || '—' }}
+          {{ [toTitleCase(selectedProperty?.city), selectedProperty?.postcode?.toUpperCase()].filter(Boolean).join(', ') }}
         </div>
         <div class="cl-tile-grid">
           <div class="cl-tile">
@@ -184,7 +184,7 @@
         <h1 class="cl-h1">Verify your identity</h1>
         <p class="cl-body">
           We need to confirm who you are before we check ownership. Takes around
-          2 minutes — done once only.
+          2 minutes, and it is done once only.
         </p>
       </div>
 
@@ -209,7 +209,7 @@
             <div class="cl-step-ic"><img src="/build/shield.png" alt="" /></div>
             <div>
               <div class="cl-step-t">AML screening</div>
-              <div class="cl-step-s">Automatic check — takes seconds</div>
+              <div class="cl-step-s">Automatic check, takes seconds</div>
             </div>
           </div>
         </div>
@@ -221,7 +221,7 @@
           <div>
             <div class="cl-pale-t">Usually under 2 minutes</div>
             <div class="cl-pale-s">
-              Powered by Persona — used by major UK fintechs.
+              Powered by Persona, used by major UK fintechs.
             </div>
           </div>
         </div>
@@ -711,22 +711,22 @@ const topbarSub = computed(
 
 // ── Display fields (from selectedProperty) ─────────────────────
 const tenureDisplay = computed(
-  () => selectedProperty.value?.tenure || '—',
+  () => selectedProperty.value?.tenure || 'Not available',
 )
 const titleDisplay = computed(
-  () => selectedProperty.value?.titleNumber || '—',
+  () => selectedProperty.value?.titleNumber || 'Not available',
 )
 const typeDisplay = computed(
-  () => selectedProperty.value?.propertyType || '—',
+  () => selectedProperty.value?.propertyType || 'Not available',
 )
 const registeredDisplay = computed(() => {
   const d = selectedProperty.value?.createdAt
-  if (!d) return '—'
+  if (!d) return 'Not available'
   try {
     const date = new Date(d)
     return date.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })
   } catch {
-    return '—'
+    return 'Not available'
   }
 })
 const proprietorDisplay = computed(
@@ -929,7 +929,7 @@ const claimPriceExplainer = computed(() => {
     case 'hmlr':
       return `Your identity has already been verified, so this fee only covers the ${HMLR_TERM} ownership check for this property.`
     case 'both':
-      return `Identity checks and ${HMLR_TERM} ownership lookups cost us real money per property, so we ask for this one-off fee upfront - identity verification (${KYC_TERM}) and the ${HMLR_TERM} ownership check. Once it's paid, we'll run those checks next.`
+      return `Identity checks and ${HMLR_TERM} ownership lookups cost us real money per property, so we ask for this one-off fee upfront: identity verification (${KYC_TERM}) and the ${HMLR_TERM} ownership check. Once it's paid, we'll run those checks next.`
     default:
       return ''
   }
@@ -1067,7 +1067,7 @@ async function startPersonaKyc() {
       // prior attempt), auto-check picks the result up without them having
       // to find and tap "Resume auto-check" themselves.
       personaError.value =
-        'Pop-ups blocked — allow pop-ups for this site and try again, or open the verification link manually.'
+        'Pop-ups blocked. Allow pop-ups for this site and try again, or open the verification link manually.'
     }
     runPolling()
   } catch (e: any) {
@@ -1097,7 +1097,7 @@ async function runPolling() {
         'Identity verification failed. Please retry or contact support.'
     } else if (finalStatus === 'needs_review') {
       personaError.value =
-        "Your details need a manual review — we'll email you when it's done."
+        "Your details need a manual review. We'll email you when it's done."
     }
   } catch (e: any) {
     if (e?.message === 'timeout') {
@@ -1128,10 +1128,10 @@ async function checkPersonaNow() {
         'Identity verification failed. Please retry or contact support.'
     } else if (r.status === 'needs_review') {
       personaError.value =
-        "Your details need a manual review — we'll email you when it's done."
+        "Your details need a manual review. We'll email you when it's done."
     } else if (r.status === 'pending') {
       personaError.value =
-        "We can't see your result yet — Persona usually takes a few seconds. Try again in a moment."
+        "We can't see your result yet. Persona usually takes a few seconds, so try again in a moment."
     } else {
       personaError.value = "We haven't received a verification result yet."
     }
@@ -1221,7 +1221,7 @@ function describeLrFailure(lr: LrCheckResult): string {
   if (lr.status === 'IN_PROGRESS') {
     const eta = lr.acknowledgement?.expectedResponseDateTime
     return (
-      "HM Land Registry is currently out of service hours - we've queued " +
+      "HM Land Registry is currently out of service hours, so we've queued " +
       'your ownership check' +
       (eta ? ` (expected back by ${eta})` : '') +
       '. Please try again shortly.'
@@ -1291,7 +1291,7 @@ async function issuePassport() {
     }
     if (!claimPassportId.value) {
       issueError.value =
-        'Something went wrong with your claim - please start again.'
+        'Something went wrong with your claim. Please start again.'
       return
     }
     const { setPassportType, activatePassport } = usePassportClaim()

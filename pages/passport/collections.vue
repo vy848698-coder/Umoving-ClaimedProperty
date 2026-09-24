@@ -211,7 +211,7 @@
                   <span class="ppw-sort-label">Sort:</span>
                   <select v-model="sortMode" class="ppw-sort-select">
                     <option value="recent">Recently updated</option>
-                    <option value="az">A–Z</option>
+                    <option value="az">A to Z</option>
                     <option value="progress">Progress</option>
                   </select>
                   <svg class="ppw-sort-caret" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
@@ -687,7 +687,7 @@ const collectionsTourSteps = [
   {
     selector: '[data-tour="resume"]',
     title: 'Pick up where you left off',
-    body: 'Tap this card to jump straight back to your most recently edited passport — exactly where you stopped.',
+    body: 'Tap this card to jump straight back to your most recently edited passport, exactly where you stopped.',
   },
   {
     selector: '[data-tour="tour-btn"]',
