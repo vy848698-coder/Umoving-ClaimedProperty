@@ -1001,9 +1001,12 @@ const handleViewProfile = () => {
 .task-card:hover::before {
   background: #00a19a;
 }
-.task-card:hover .task-required-badge {
+/* "Required to publish" is a small amber pill, always - it used to take this
+   style only while the card was hovered and otherwise read as part of the
+   task title. */
+.task-required-badge {
   display: inline-block;
-  margin-left: 6px;
+  margin-left: 8px;
   padding: 2px 7px;
   font-size: 9px;
   font-weight: 800;
