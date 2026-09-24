@@ -134,7 +134,10 @@
             >
               <span class="task-index">{{ String(index + 1).padStart(2, '0') }}</span>
               <div class="task-icon" :class="getTaskStatus(task)">
-                <OPIcon :name="task.icon || 'instructions'" class="w-[20px] h-[20px]" />
+                <!-- Tasks carry no art of their own; they take their section's
+                     illustration (the navy open book for Ownership Profile),
+                     never the old tan instructions book. -->
+                <OPIcon :name="task.icon || currentStep?.icon || 'ownershipProfile'" class="w-[20px] h-[20px]" />
               </div>
 
               <div class="task-info">
@@ -215,7 +218,7 @@
           <!-- Up next -->
           <button v-if="nextStep" class="upnext-card" @click="goToNextSection">
             <div class="upnext-ic">
-              <OPIcon :name="nextStep.icon || 'instructions'" class="w-[20px] h-[20px]" />
+              <OPIcon :name="nextStep.icon || 'ownershipProfile'" class="w-[20px] h-[20px]" />
             </div>
             <div class="upnext-text">
               <small>Up next · Section {{ sectionNumber + 1 }}</small>
