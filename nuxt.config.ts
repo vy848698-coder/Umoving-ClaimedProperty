@@ -51,16 +51,45 @@ export default defineNuxtConfig({
     // file for why.
   },
 
-  modules: ['@pinia/nuxt', '@vite-pwa/nuxt'],
+  // @nuxt/icon provides the <Icon> component, used ~430 times across the app
+  // (heroicons and lucide). It used to arrive as a dependency of @nuxt/ui;
+  // when that was dropped, every one of those icons silently rendered nothing
+  // - Vue logged "Failed to resolve component: Icon" and left an empty element
+  // behind, which is why the green confirm circles had no tick in them. It is
+  // registered directly here so it no longer depends on a UI library we don't
+  // otherwise use.
+  modules: ['@pinia/nuxt', '@vite-pwa/nuxt', '@nuxt/icon'],
   css: ['~/assets/css/main.css'],
+
+  icon: {
+    // Both collections are installed (@iconify-json/heroicons, -lucide), so
+    // icons are served from the bundle rather than fetched from Iconify's API
+    // at runtime - no third-party request on render, and they work offline.
+    serverBundle: 'local',
+  },
+
+  // Tailwind runs through Nuxt's own PostCSS pipeline. It used to be pulled in
+  // as a side effect of @nuxt/ui (which registers @nuxtjs/tailwindcss); when
+  // that dependency was dropped, nothing processed the `@import 'tailwindcss/*'`
+  // lines in assets/css/main.css any more, so every utility class in the app
+  // silently stopped existing - `w-[18px] h-[18px]` on the 3D PNG icons meant
+  // nothing and they rendered at their full intrinsic size, over the text
+  // beside them. Declaring the plugin here keeps it independent of whichever UI
+  // library happens to be installed. Nuxt's defaults (postcss-import,
+  // postcss-url, autoprefixer, cssnano) still apply around it.
+  postcss: {
+    plugins: {
+      tailwindcss: {},
+    },
+  },
 
   pwa: {
     registerType: 'autoUpdate',
     strategies: 'generateSW',
     manifest: {
-      name: 'UmovingU - Property Toolkit',
+      name: 'UmovingU | Property Toolkit',
       short_name: 'UmovingU',
-      description: 'Your complete property toolkit—track progress, store documents, and connect with trusted trades in one place.',
+      description: 'Your complete property toolkit. Track progress, store documents, and connect with trusted trades in one place.',
       theme_color: '#00a19a',
       background_color: '#ffffff',
       display: 'standalone',
@@ -149,7 +178,7 @@ export default defineNuxtConfig({
 
   app: {
     head: {
-      title: 'UmovingU - Your Property Toolkit',
+      title: 'UmovingU | Your Property Toolkit',
       meta: [
         { charset: 'utf-8' },
         {
@@ -159,7 +188,7 @@ export default defineNuxtConfig({
         {
           name: 'description',
           content:
-            'Your complete property toolkit—track progress, store documents, and connect with trusted trades in one place.',
+            'Your complete property toolkit. Track progress, store documents, and connect with trusted trades in one place.',
         },
         { name: 'apple-mobile-web-app-capable', content: 'yes' },
         { name: 'apple-mobile-web-app-title', content: 'UmovingU' },

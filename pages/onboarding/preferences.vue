@@ -9,7 +9,7 @@
           </span>
 
           <h2 class="pf-side-title">
-            {{ phase === 'role' ? "We'll set up the right journey for you — takes 30 seconds." : headerSub }}
+            {{ phase === 'role' ? "We'll set up the right journey for you. It takes 30 seconds." : headerSub }}
           </h2>
 
           <!-- Step tracker -->
@@ -261,7 +261,7 @@
                           "
                         >
                           <span v-if="opt.icon" class="chip-emoji">{{ opt.icon }}</span
-                          >{{ opt.v }}
+                          >{{ optLabel(opt.v) }}
                         </button>
                         <template v-if="expanded[q.id] && q.expandOpts">
                           <button
@@ -273,7 +273,7 @@
                             @click="pick(q.id, opt.v, !!q.multiSelect)"
                           >
                             <span v-if="opt.icon" class="chip-emoji">{{ opt.icon }}</span
-                            >{{ opt.v }}
+                            >{{ optLabel(opt.v) }}
                           </button>
                         </template>
                       </div>
@@ -336,7 +336,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
 
-definePageMeta({ title: 'Preferences - UmovingU', middleware: 'auth' })
+definePageMeta({ title: 'Preferences | UmovingU', middleware: 'auth' })
 
 const config = useRuntimeConfig()
 const route = useRoute()
@@ -560,7 +560,7 @@ const buyQuestions: Question[] = [
     type: 'locations',
     label: 'WHERE ARE YOU LOOKING?',
     placeholder: 'Add a city, area or postcode…',
-    hint: 'Add as many as you like — we\'ll search all of them.',
+    hint: 'Add as many as you like and we\'ll search all of them.',
   },
   {
     id: 'buyBudget',
@@ -626,7 +626,7 @@ const buyQuestions: Question[] = [
     id: 'buyTenure',
     type: 'chips',
     label: 'TENURE PREFERENCE',
-    hint: 'Leasehold properties carry extra risk — we surface this in every listing',
+    hint: 'Leasehold properties carry extra risk, so we surface this in every listing',
     opts: [{ v: 'Freehold' }, { v: 'Leasehold' }, { v: 'Either' }],
   },
   {
@@ -741,7 +741,7 @@ const sellQuestions: Question[] = [
     id: 'sellChain',
     type: 'chips',
     label: 'CHAIN POSITION',
-    hint: 'Buyers pay more for chain-free — this appears on your Passport',
+    hint: 'Buyers pay more for chain-free, and this appears on your Passport',
     opts: [
       { v: 'Chain-free', icon: '⛓️' },
       { v: 'Buying onward' },
@@ -806,9 +806,9 @@ const activeQuestions = computed((): Question[] => {
 const headerLabel = computed(() => {
   if (phase.value === 'role') return 'One quick question'
   const map: Record<string, string> = {
-    buy: 'Step 2 of 2 — Your preferences',
-    sell: 'Step 2 of 2 — Your property',
-    both: 'Step 2 of 2 — Your move',
+    buy: 'Step 2 of 2 · Your preferences',
+    sell: 'Step 2 of 2 · Your property',
+    both: 'Step 2 of 2 · Your move',
   }
   return map[selectedRole.value] ?? ''
 })
@@ -949,13 +949,13 @@ const headerTitle = computed(() => {
   const map: Record<string, string> = {
     buy: 'Tell us about your search',
     sell: 'About your property',
-    both: 'Your move — buying & selling',
+    both: 'Your move: buying & selling',
   }
   return map[selectedRole.value] ?? ''
 })
 const headerSub = computed(() => {
   if (phase.value === 'role')
-    return "We'll set up the right journey for you — takes 30 seconds."
+    return "We'll set up the right journey for you. It takes 30 seconds."
   const map: Record<string, string> = {
     buy: "We'll match you with properties and flag risk before you offer.",
     sell: "We'll get your Passport started and connect you with the right people.",
@@ -1010,6 +1010,13 @@ const answeredCount = computed(() => {
 })
 
 // ── Save ──────────────────────────────────────────────────────────────────
+
+// Option values double as lookup keys (below) and as what the preferences API
+// stores, so they keep their original text. Only the chip label drops the
+// dashes: ranges read "£200k to £350k", asides take a comma.
+function optLabel(v: string): string {
+  return v.replace(/\s*–\s*/g, ' to ').replace(/\s+—\s+/g, ', ')
+}
 
 const budgetToRange: Record<string, [number, number]> = {
   'Under £200k': [0, 200000],

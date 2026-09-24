@@ -39,11 +39,11 @@
         </div>
 
         <h1 class="side-title">{{ currentStep?.title || '' }}</h1>
-        <p class="side-sub">{{ currentTask?.title || '' }}</p>
+        <p class="side-sub">{{ toSentenceCase(currentTask?.title) }}</p>
 
         <div class="side-divider"></div>
 
-        <div class="side-progress">
+        <div class="side-progress" data-tour="q-progress">
           <div class="side-ring" :style="{ '--p': taskProgress }">
             <span>{{ totalQuestions - remainingQuestions }}/{{ totalQuestions }}</span>
           </div>
@@ -57,7 +57,7 @@
           </div>
         </div>
 
-        <div class="side-actions">
+        <div class="side-actions" data-tour="q-help-video">
           <button class="side-btn ghost" @click="openHelp">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="10" />
@@ -93,6 +93,7 @@
                 :src="img"
                 :alt="`Photo ${index + 1}`"
                 class="property-photo-thumb"
+                @error="onPropertyPhotoError($event, index)"
               />
               <button
                 class="property-photo-delete"
@@ -131,7 +132,7 @@
         <div class="tk-content">
           <span class="eyebrow">This section</span>
 
-          <div class="q-head">
+          <div class="q-head" data-tour="q-nav">
             <div class="q-head-left">
               <h2 class="q-head-title">Question {{ currentQuestionIndex + 1 }}</h2>
               <div class="q-head-sub">
@@ -172,6 +173,21 @@
             <span>{{ remainingQuestions }} remaining</span>
           </div>
 
+          <!-- "What is this?" tip, as in the app. Suppressed for question types
+               whose own component already renders an inner "What is this?"
+               (see TYPES_WITH_INNER_TIP), otherwise the same help text shows
+               twice. Text, address, chips, multi-text, multi-field and
+               collaborators questions have no inner tip, so this is theirs. -->
+          <div v-if="showOuterTip" class="qtip">
+            <div class="qtip-ic">
+              <img src="/op-icons/homescore/lightbulb.png" alt="" />
+            </div>
+            <div class="qtip-body">
+              <strong>What is this?</strong>
+              <p>{{ tipBody }}</p>
+            </div>
+          </div>
+
           <div class="question-section">
             <div v-if="currentQuestion" class="question-content">
               <div
@@ -194,7 +210,7 @@
                       currentQuestion.display || currentQuestion.type?.toLowerCase()
                     "
                     :passport-id="route.query.propertyId || ''"
-                    :property-address="propertyAddress"
+                    :property-facts="propertyFacts"
                     :displayed-question="displayedQuestion"
                     :show-question-cursor="showQuestionCursor"
                     :displayed-description="displayedDescription"
@@ -214,7 +230,7 @@
                     currentQuestion.display || currentQuestion.type?.toLowerCase()
                   "
                   :passport-id="route.query.propertyId || ''"
-                  :property-address="propertyAddress"
+                  :property-facts="propertyFacts"
                   :displayed-question="displayedQuestion"
                   :show-question-cursor="showQuestionCursor"
                   :displayed-description="displayedDescription"
@@ -243,7 +259,9 @@
           </div>
 
           <button
+            v-if="!isAutoSaveType"
             class="submit-btn"
+            data-tour="q-save"
             @click="saveAnswer"
             :disabled="!isAnswerValid"
           >
@@ -252,8 +270,8 @@
             </svg>
             Save and go to next question
           </button>
-          <p v-if="!isAnswerValid" class="submit-hint">
-            Select an answer to continue
+          <p v-if="!isAutoSaveType && !isAnswerValid && submitHint" class="submit-hint">
+            {{ submitHint }}
           </p>
         </div>
       </main>
@@ -272,6 +290,12 @@
       @continue="handleContinue"
     />
   </div>
+
+  <OnboardingTour
+    ref="questionTourRef"
+    :steps="questionTourSteps"
+    storage-key="umu_tour_question_v1"
+  />
 
   <HelpDrawer
     :show="showHelp"
@@ -306,6 +330,9 @@ import OPIcon from '~/components/ui/OPIcon.vue'
 import HelpDrawer from '~/components/passport-view/HelpDrawer.vue'
 import VideoModal from '~/components/passport-view/VideoModal.vue'
 import ProfileMenu from '~/components/core/ProfileMenu.vue'
+import OnboardingTour from '~/components/ui/OnboardingTour.vue'
+import { toSentenceCase } from '~/utils/titleCase'
+import { normalizeUploadUrl, normalizeUploadUrls } from '~/utils/normalizeUploadUrl'
 import PassportNavButton from '~/components/core/PassportNavButton.vue'
 
 const route = useRoute()
@@ -373,28 +400,44 @@ function recordPointsEarned(pointsAwarded) {
   }, 3200)
 }
 
-// The property's own address, so questions that ask for it can pre-fill
-// instead of making the seller retype what the passport already knows.
-// route.query.propertyId carries the PASSPORT id (see navigateToStep in
-// pages/passportview/[id].vue), which is the same record the passport header
-// reads its address from.
-const propertyAddress = ref('')
+// What we already hold for this passport's property - address, UPRN, title
+// number, type (OS Places / EPC / HM Land Registry enrichment) - passed down
+// so the "address of the property" question confirms it instead of asking the
+// owner to retype it. route.query.propertyId carries the PASSPORT id (see
+// navigateToStep in pages/passportview/[id].vue). If the facts endpoint has
+// nothing, the passport record's own address still fills the question.
+const propertyFacts = ref(null)
 
-async function loadPropertyAddress() {
+async function loadPropertyFacts() {
   const id = route.query.propertyId
   const token =
     typeof window !== 'undefined' ? localStorage.getItem('token') : null
   if (!id || !token) return
+  const cfg = useRuntimeConfig()
+  const headers = { Authorization: `Bearer ${token}` }
   try {
-    const cfg = useRuntimeConfig()
-    const res = await $fetch(`${cfg.public.apiBase}/passport/${id}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-    propertyAddress.value = [res?.addressLine1, res?.postcode]
-      .filter(Boolean)
-      .join(', ')
+    const facts = await $fetch(
+      `${cfg.public.apiBase}/passport/${id}/property-facts`,
+      { headers },
+    )
+    if (facts && (facts.addressLine1 || facts.postcode)) {
+      propertyFacts.value = facts
+      return
+    }
   } catch {
-    /* non-critical — the field just stays empty and the seller types it */
+    /* fall through to the passport record */
+  }
+  try {
+    const res = await $fetch(`${cfg.public.apiBase}/passport/${id}`, {
+      headers,
+    })
+    propertyFacts.value = {
+      addressLine1: res?.addressLine1,
+      city: res?.city,
+      postcode: res?.postcode,
+    }
+  } catch {
+    /* non-critical - the question just shows "Address on file" */
   }
 }
 
@@ -464,6 +507,7 @@ const showOptions = ref(false)
 // ── Property image upload (give_your_home_a_story task) ────────────────────
 const { getPropertyImages, updatePropertyImages, uploadPropertyImage } =
   usePassportApi()
+const uploadApiBase = String(useRuntimeConfig().public.apiBase ?? '')
 const propertyImages = ref([])
 const uploadingImages = ref(false)
 
@@ -472,7 +516,9 @@ async function loadPropertyImages() {
   if (!passportId) return
   try {
     const res = await getPropertyImages(passportId)
-    propertyImages.value = res.images ?? []
+    // Heal legacy URLs pointing at localhost:3002 from an earlier
+    // misconfigured backend deploy so old uploads still render.
+    propertyImages.value = normalizeUploadUrls(res.images, uploadApiBase)
   } catch {
     // ignore — not critical
   }
@@ -489,7 +535,10 @@ async function handlePropertyImageUpload(event) {
     const uploaded = await Promise.all(
       files.map((file) => uploadPropertyImage(passportId, file)),
     )
-    const newImages = [...propertyImages.value, ...uploaded.map((r) => r.url)]
+    const newImages = [
+      ...propertyImages.value,
+      ...uploaded.map((r) => normalizeUploadUrl(r.url, uploadApiBase)),
+    ]
     propertyImages.value = newImages
     await updatePropertyImages(passportId, newImages)
   } catch (err) {
@@ -511,14 +560,33 @@ async function removePropertyImage(index) {
     console.error('Failed to update property images:', err)
   }
 }
+// On thumbnail load failure, swap the broken <img> for an inline "Image
+// unavailable" tile rather than the browser's grey placeholder.
+function onPropertyPhotoError(event) {
+  const el = event?.target
+  if (!(el instanceof HTMLImageElement)) return
+  el.onerror = null
+  const svg = encodeURIComponent(
+    `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'>
+      <rect width='120' height='120' fill='#f4f5f7'/>
+      <g fill='none' stroke='#8f9094' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'>
+        <rect x='24' y='30' width='72' height='54' rx='6'/>
+        <circle cx='44' cy='50' r='6'/>
+        <path d='M28 78l22-22 18 18 12-12 14 14'/>
+      </g>
+      <text x='60' y='104' text-anchor='middle' font-family='sans-serif' font-size='10' fill='#8f9094'>Image unavailable</text>
+    </svg>`,
+  )
+  el.src = `data:image/svg+xml;utf8,${svg}`
+}
 // ──────────────────────────────────────────────────────────────────────────
 
 onMounted(async () => {
+  loadPropertyFacts()
+
   if (!currentStep.value) {
     await loadPassport(route.query.propertyId)
   }
-
-  loadPropertyAddress()
 
   setCurrentStep(stepId)
   setCurrentTask(taskId)
@@ -741,6 +809,77 @@ const normalizeQuestionType = (question) => {
     .replace(/-/g, '_')
 }
 
+// Question types whose component renders its own "What is this?" inside the
+// answer card - the outer tip is hidden for these so the copy never shows
+// twice. These are the `q.type` values the API sends (see
+// getQuestionComponent), not component names; a repeatable multipart is
+// type 'multipart' with repeatable:true, so it is covered by 'multipart'.
+const TYPES_WITH_INNER_TIP = new Set([
+  'multipart',
+  'radio',
+  'single_choice',
+  'checkbox',
+  'multiple_choice',
+  'date',
+  'note',
+  'scale',
+  'boundary',
+  'text',
+  'upload',
+])
+const typeHasInnerTip = computed(() =>
+  TYPES_WITH_INNER_TIP.has(currentQuestionType.value),
+)
+
+// The tip falls back to the question's description, which the answer card
+// already prints right below it - skip it then rather than say it twice.
+const showOuterTip = computed(() => {
+  if (!tipBody.value || typeHasInnerTip.value) return false
+  const desc = (currentQuestion.value?.description || '').trim()
+  return tipBody.value.trim() !== desc
+})
+
+// Plain radio questions save the moment an option is picked (see
+// updateAnswer), so they have no Save button.
+const isAutoSaveType = computed(
+  () => currentQuestion.value?.type?.toLowerCase() === 'radio',
+)
+
+// Why Save is still disabled. A Notes question isn't answered by picking
+// anything - it completes when its notes are opened and closed.
+const submitHint = computed(() =>
+  currentQuestionType.value === 'note'
+    ? 'Tap the notes above to read them. Closing them saves and continues.'
+    : 'Answer the question to continue',
+)
+
+// One-time walkthrough of the question screen, as in the app. Auto-runs once
+// per browser (storage-key). The app's "Earn as you go" step is left out
+// because this website doesn't show points.
+const questionTourRef = ref(null)
+const questionTourSteps = [
+  {
+    selector: '[data-tour="q-progress"]',
+    title: 'Your progress',
+    body: 'Each section is a set of short questions. This ring tracks how many you have answered and roughly how long is left.',
+  },
+  {
+    selector: '[data-tour="q-help-video"]',
+    title: 'Stuck on a question?',
+    body: 'Help opens plain-English guidance for the question you are on. Play Video is a short explainer for the whole section.',
+  },
+  {
+    selector: '[data-tour="q-nav"]',
+    title: 'Move around',
+    body: 'Use Previous and Skip to jump between questions. Skipped questions stay open, so you can always come back.',
+  },
+  {
+    selector: '[data-tour="q-save"]',
+    title: 'Save and continue',
+    body: 'When your answer looks right, save it here and the next question loads automatically. Finish every question in a section to unlock the next one.',
+  },
+]
+
 const currentQuestionType = computed(() =>
   normalizeQuestionType(currentQuestion.value),
 )
@@ -888,8 +1027,21 @@ const isAnswerValid = computed(() => {
 
       if (partType === 'checkbox')
         return Array.isArray(partAnswer) && partAnswer.length > 0
-      if (partType === 'upload')
+      if (partType === 'upload') {
+        if (
+          partAnswer &&
+          typeof partAnswer === 'object' &&
+          !Array.isArray(partAnswer)
+        ) {
+          const hasText =
+            typeof partAnswer.text === 'string' &&
+            partAnswer.text.trim().length > 0
+          const hasFiles =
+            Array.isArray(partAnswer.files) && partAnswer.files.length > 0
+          return hasText || hasFiles
+        }
         return Array.isArray(partAnswer) && partAnswer.length > 0
+      }
       if (partType === 'multitextinput')
         return Array.isArray(partAnswer) && partAnswer.length > 0
       if (partType === 'multifieldform') {
@@ -1556,6 +1708,49 @@ const handleContinue = () => {
 }
 
 /* ── Question card ─────────────────────────────────────────────────── */
+/* "What is this?" tip above the answer card (types without an inner tip). */
+.qtip {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  margin: 0 0 16px;
+  padding: 13px 15px;
+  background: rgba(0, 161, 154, 0.06);
+  border: 1px solid rgba(0, 161, 154, 0.18);
+  border-radius: 14px;
+}
+.qtip-ic {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: #fff;
+  display: grid;
+  place-items: center;
+}
+.qtip-ic img {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+}
+.qtip-body {
+  min-width: 0;
+}
+.qtip-body strong {
+  display: block;
+  margin-bottom: 3px;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #00857f;
+}
+.qtip-body p {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: #5a5570;
+}
+
 .question-section {
   margin-top: 0;
 }
@@ -1721,9 +1916,15 @@ const handleContinue = () => {
   .tk-split {
     grid-template-columns: 1fr;
   }
+  /* Stacked above the questions, the dark panel ran edge to edge with square
+     corners - it read as stuck to the screen. It sits inset as a card instead,
+     matching the section page's hero. */
   .tk-side {
     min-height: 0;
-    padding: 26px 22px 30px;
+    margin: 12px 20px 0;
+    padding: 26px 22px 8px;
+    border-radius: 24px;
+    box-shadow: 0 18px 40px rgba(29, 24, 56, 0.24);
   }
   .side-title {
     font-size: 28px;
@@ -1746,6 +1947,45 @@ const handleContinue = () => {
   }
   .q-nav {
     margin-top: 0;
+  }
+  /* Two 20px gutters (page + card) left answers a 240px column on a 320px
+     phone; trimmed so inputs and options get room to breathe. */
+  .tk-main {
+    padding: 24px 16px 90px;
+  }
+  /* Same 16px gutter as the questions below it. */
+  .tk-side {
+    margin: 12px 16px 0;
+    padding: 22px 18px 4px;
+    border-radius: 22px;
+  }
+  .side-title {
+    font-size: 26px;
+  }
+  .side-divider {
+    margin: 20px 0;
+  }
+  .side-actions {
+    margin: 20px 0;
+  }
+  .question-card {
+    padding: 20px 16px;
+    border-radius: 18px;
+  }
+  /* The label broke round its arrow onto two ragged lines. */
+  .submit-btn {
+    gap: 8px;
+    padding: 16px 14px;
+    font-size: 14.5px;
+  }
+  .submit-btn svg {
+    flex-shrink: 0;
+  }
+}
+
+@media (max-width: 360px) {
+  .submit-btn {
+    font-size: 13.5px;
   }
 }
 

@@ -21,8 +21,8 @@
         <p class="clw-kicker"><span class="clw-kicker-dot" />Claim your Passport</p>
         <h1>Claim your Property Passport</h1>
         <p class="clw-lede">
-          Find your property and we'll verify ownership via HM Land Registry —
-          then your Property Passport is yours to build and share.
+          Find your property and we'll verify ownership via HM Land Registry.
+          Then your Property Passport is yours to build and share.
         </p>
         <ClaimStepTracker :current="1" class="clw-tracker" />
       </div>
@@ -63,7 +63,7 @@
             <div class="cl-lock-ic"><img src="/build/padlock.png" alt="" /></div>
             <div class="cl-lock-body">
               We verify ownership via
-              <strong>HM Land Registry</strong> — encrypted and never sold.
+              <strong>HM Land Registry</strong>. Your details are encrypted and never sold.
             </div>
           </div>
         </section>
@@ -700,7 +700,12 @@ function continueToClaim() {
 /* ── Responsive ───────────────────────────────────────────────────── */
 @media (max-width: 980px) {
   .clw-layout {
-    grid-template-columns: 1fr;
+    /* minmax(0, 1fr), not 1fr: a grid column's default minimum is its
+       content's min-content width, so a child that can't wrap - the selected
+       address card, which holds an image, a nowrap address and a Change
+       button on one row - pushed this column wider than the screen. The card
+       was then clipped rather than shrunk. */
+    grid-template-columns: minmax(0, 1fr);
     gap: 24px;
   }
 
@@ -744,6 +749,26 @@ function continueToClaim() {
 
   .cl-h2 {
     font-size: 23px;
+  }
+}
+
+/* Small phones (320-380px class). */
+@media (max-width: 420px) {
+  .clw-card {
+    padding: 20px 14px 22px;
+  }
+
+  /* The label wraps to two lines here, so the button can't keep a fixed
+     height without clipping it. */
+  .cl-continue {
+    height: auto;
+    min-height: 52px;
+    padding: 13px 14px;
+    font-size: 14.5px;
+    line-height: 1.25;
+  }
+  .cl-continue svg {
+    flex-shrink: 0;
   }
 }
 

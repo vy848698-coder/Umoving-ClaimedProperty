@@ -4,102 +4,137 @@
       {{ question.description }}
     </h3>
 
-    <div class="address-input">
-      <input
-        :placeholder="question.placeholder || 'Start typing address...'"
-        v-model="text"
-        @input="onInput"
-        class="text-field"
-      />
-      <button class="btn" @click="$emit('update', text)">Find URN</button>
+    <!-- The property was claimed, so the address / UPRN / title number are
+         already known and won't change - shown read-only for confirmation
+         rather than as an editable field. -->
+    <div class="addr-confirm">
+      <div class="addr-confirm-line">{{ displayAddress || 'Address on file' }}</div>
+      <div class="uprn-panel">
+        <div class="uprn-panel-h">From HM Land Registry &amp; Ordnance Survey</div>
+        <template v-if="hasKnownRefs">
+          <div v-if="facts.uprn" class="uprn-row">
+            <span class="uprn-label">UPRN</span>
+            <span class="uprn-val">{{ facts.uprn }}</span>
+          </div>
+          <div v-if="facts.titleNumber" class="uprn-row">
+            <span class="uprn-label">Title number</span>
+            <span class="uprn-val">{{ facts.titleNumber }}</span>
+          </div>
+          <div v-if="facts.propertyType" class="uprn-row">
+            <span class="uprn-label">Type</span>
+            <span class="uprn-val">{{ facts.propertyType }}</span>
+          </div>
+        </template>
+        <div v-else class="uprn-empty">
+          UPRN and title number are still being confirmed. We'll add them
+          once the property has been through Land Registry lookup.
+        </div>
+      </div>
+      <p class="addr-confirm-note">
+        Something not right? Your solicitor can correct the record during the
+        transaction.
+      </p>
     </div>
-
-    <p v-if="prefilled" class="address-hint">
-      Filled in from your Passport — edit it if this isn't right.
-    </p>
   </div>
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { computed, watch, onMounted } from 'vue'
 const props = defineProps({
   question: { type: Object, required: true },
   answer: { type: String, default: '' },
-  // The address held on the passport record, passed down from the task page.
-  // Used only to seed an empty field: a saved answer always wins, because the
-  // seller may have corrected it.
-  propertyAddress: { type: String, default: '' },
+  propertyFacts: { type: Object, default: null },
 })
 const emit = defineEmits(['update'])
 
-const text = ref(props.answer || '')
-// Whether what's in the box came from the passport rather than the seller, so
-// the hint below is only shown when it is actually theirs to check.
-const prefilled = ref(false)
+const facts = computed(() => props.propertyFacts || {})
 
-// The address arrives asynchronously (the task page fetches it on mount), so
-// this has to react to it landing rather than read it once on setup.
-function seedFromProperty() {
-  if (text.value) return
-  const addr = (props.propertyAddress || '').trim()
-  if (!addr) return
-  text.value = addr
-  prefilled.value = true
-  // Emit so the answer is recorded without the seller having to touch the
-  // field — filling the box but leaving it unsaved would defeat the point.
-  emit('update', addr)
-}
+const knownAddress = computed(() => {
+  const f = facts.value
+  return [f.addressLine1, f.city, f.postcode].filter(Boolean).join(', ')
+})
 
-watch(() => props.propertyAddress, seedFromProperty, { immediate: true })
+// Prefer what's already saved as the answer; fall back to the known
+// property address.
+const displayAddress = computed(() => props.answer?.trim() || knownAddress.value)
 
-watch(
-  () => props.answer,
-  (v) => {
-    // A saved answer always replaces a seeded value.
-    if (v) {
-      text.value = v
-      prefilled.value = false
-    } else {
-      text.value = ''
-      seedFromProperty()
-    }
-  },
+const hasKnownRefs = computed(
+  () => !!(facts.value.uprn || facts.value.titleNumber || facts.value.propertyType),
 )
 
-const onInput = () => {
-  // Once the seller edits it, it is their answer, not ours.
-  prefilled.value = false
-  emit('update', text.value)
+// Record the confirmed address as the answer so the question counts as
+// answered (there's nothing for the user to type). Never clobber an
+// existing answer.
+function syncAnswer() {
+  if (!props.answer?.trim() && knownAddress.value) {
+    emit('update', knownAddress.value)
+  }
 }
+onMounted(syncAnswer)
+watch(knownAddress, syncAnswer)
 </script>
 
 <style scoped>
-.address-input {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-.text-field {
-  flex: 1;
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
-}
-.btn {
-  padding: 8px 12px;
-  border-radius: 8px;
-  background: #00a19a;
-  color: white;
-  border: none;
-}
+/* Read-only confirmation card, in the question card's palette. */
 .section-title {
   font-size: 15px;
-  margin-bottom: 8px;
-  color: #111;
+  font-weight: 700;
+  margin: 0 0 12px;
+  color: #231d45;
 }
-.address-hint {
-  margin: 8px 0 0;
+.addr-confirm-line {
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.35;
+  color: #231d45;
+  margin-bottom: 12px;
+  overflow-wrap: anywhere;
+}
+.uprn-panel {
+  padding: 14px 16px;
+  background: rgba(0, 161, 154, 0.06);
+  border: 1px solid rgba(0, 161, 154, 0.18);
+  border-radius: 14px;
+}
+.uprn-panel-h {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #00857f;
+  margin-bottom: 8px;
+}
+.uprn-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: 5px 0;
+  font-size: 14px;
+}
+.uprn-row + .uprn-row {
+  border-top: 1px solid rgba(0, 161, 154, 0.12);
+}
+.uprn-label {
+  font-weight: 600;
+  color: #5a5570;
+}
+.uprn-val {
+  font-weight: 800;
+  color: #231d45;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+.uprn-empty {
+  font-size: 13px;
+  color: #5a5570;
+  line-height: 1.5;
+}
+.addr-confirm-note {
   font-size: 12.5px;
-  color: #6b6783;
+  color: #8b8799;
+  line-height: 1.5;
+  margin: 12px 0 0;
 }
 </style>

@@ -11,7 +11,7 @@
 
       <div v-if="loading" class="ct-state" aria-live="polite">
         <span class="ct-spinner" />
-        {{ justClaimed ? 'One moment - preparing your Founding Homeowner certificate…' : 'Preparing your certificate…' }}
+        {{ justClaimed ? 'One moment, preparing your Founding Homeowner certificate…' : 'Preparing your certificate…' }}
       </div>
 
       <div v-else-if="error" class="ct-state ct-state--error" role="alert">
@@ -152,7 +152,7 @@ const headline = computed(() => {
   // Founding Homeowner. On a later property they already are one.
   return multiple.value
     ? 'Your certificate for this property'
-    : 'You did it - welcome to the first 1,000,000'
+    : 'You did it! Welcome to the first 1,000,000'
 })
 
 const lede = computed(() => {
@@ -162,7 +162,7 @@ const lede = computed(() => {
       : "You're officially a Founding Homeowner. We've also emailed you a copy of this certificate."
   }
   return multiple.value
-    ? 'Built from your profile and the property you pick below, each dated the day you claimed it - your founder number stays the same for every one.'
+    ? 'Built from your profile and the property you pick below, each dated the day you claimed it. Your founder number stays the same for every one.'
     : 'Built from your profile and your claimed property, so it always shows your current name.'
 })
 

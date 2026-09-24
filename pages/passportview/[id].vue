@@ -31,7 +31,7 @@
           <p class="ppv-kicker">Property Passport</p>
           <h1>Your Passport</h1>
           <p class="ppv-lede">
-            Manage, publish and share your property information —
+            Manage, publish and share your property information, with
             every answer ready before anyone asks.
           </p>
         </div>
@@ -133,7 +133,7 @@
             {{ collaborators.length === 1 ? 'collaborator' : 'collaborators' }}
           </div>
           <div class="pp-collab-sub">
-            Invite your solicitor, agent or co-owner — control exactly who sees
+            Invite your solicitor, agent or co-owner and control exactly who sees
             what.
           </div>
         </div>
@@ -386,7 +386,7 @@
             <div class="pp-empty-ic"><Icon name="i-lucide-archive" /></div>
             <p>Your vault is empty</p>
             <p style="font-size: 11.5px; margin-top: 6px; color: #94a3b8">
-              As you complete sections, the verified documents are stored here —
+              As you complete sections, the verified documents are stored here,
               and you choose who can see each one.
             </p>
           </div>
@@ -455,7 +455,7 @@
         <div class="tl-intro">
           <span class="lockico">🔐</span>
           <div>
-            An <b>immutable, time-stamped record</b> of every step — so
+            An <b>immutable, time-stamped record</b> of every step, so
             everyone in the chain can see exactly where the sale is, and trust
             nothing has been altered.
           </div>
@@ -484,7 +484,7 @@
 
           <div class="tl-list-h">Verified activity</div>
           <div v-if="timelineEvents.length === 0" class="pp-empty" style="margin: 0 18px">
-            No activity yet — events will appear here as your Passport progresses.
+            No activity yet. Events will appear here as your Passport progresses.
           </div>
           <div v-for="e in timelineEvents" :key="e.id" class="tl-item">
             <div class="tl-rail">
@@ -588,8 +588,8 @@
         </div>
 
         <p class="pp-share-intro">
-          Anyone with this link can view a read-only copy of your Passport —
-          they don't need an account.
+          Anyone with this link can view a read-only copy of your Passport.
+          They don't need an account.
         </p>
 
         <div v-if="shareLoading" class="pp-share-state">Creating your link…</div>
@@ -667,7 +667,7 @@ import Toast from '~/components/ui/Toast.vue'
 import FoundingMemberModal from '~/components/claim/FoundingMemberModal.vue'
 import { useAppToast } from '~/composables/useCustomToast'
 import { useFounderCelebration } from '~/composables/useFounderCelebration'
-import { toSmartTitleCase } from '~/utils/titleCase'
+import { toSmartTitleCase, toSentenceCase } from '~/utils/titleCase'
 
 // Guided tour — auto-runs once per browser, replays from the "?" button.
 const passportTourRef = ref(null)
@@ -862,7 +862,7 @@ async function fetchResumeTarget() {
       for (const s of steps.value) {
         const t = s.tasks?.find((x) => x.id === resumeTarget.value.taskId)
         if (t) {
-          resumeTaskTitle.value = `${s.title} · ${t.title || 'Continue'}`
+          resumeTaskTitle.value = `${s.title} · ${toSentenceCase(t.title) || 'Continue'}`
           break
         }
       }
@@ -922,7 +922,7 @@ function onBuyerSelect(buyer) {
 function onBuyerAction(kind) {
   if (!selectedBuyer.value?.userId) {
     console.warn(
-      '[buyer-action] Selected buyer has no userId — cannot invite/share/message. ' +
+      '[buyer-action] Selected buyer has no userId, cannot invite/share/message. ' +
         'Backend /property/:id/matched-buyers must return { userId }.',
     )
     return
@@ -939,10 +939,10 @@ function onBuyerActionDone(kind, _result) {
   showToast({
     message:
       kind === 'invite'
-        ? 'Invite sent — the buyer will be notified.'
+        ? 'Invite sent. The buyer will be notified.'
         : kind === 'share'
-          ? 'Passport shared — the buyer can preview and unlock it.'
-          : 'Message sent — carry on in your inbox.',
+          ? 'Passport shared. The buyer can preview and unlock it.'
+          : 'Message sent. Carry on in your inbox.',
     iconEmoji: '✓',
     duration: 3000,
   })
@@ -1070,7 +1070,7 @@ async function generateShare(documentIds) {
       },
     )
     shareUrl.value = result?.url ?? ''
-    if (!shareUrl.value) shareError.value = 'No link came back — please try again.'
+    if (!shareUrl.value) shareError.value = 'No link came back. Please try again.'
   } catch (e) {
     shareError.value =
       e?.data?.message ?? e?.message ?? 'Could not create a link. Please try again.'
@@ -1086,7 +1086,7 @@ async function copyShare() {
     shareCopied.value = true
     setTimeout(() => (shareCopied.value = false), 1800)
   } catch {
-    shareError.value = 'Copy failed — select the link and copy it manually.'
+    shareError.value = 'Copy failed. Select the link and copy it manually.'
   }
 }
 
@@ -1259,14 +1259,14 @@ const getStepExpiringDoc = (step) => {
       if (diff < 0) {
         return {
           expired: true,
-          label: `${t.title || 'A document'} has expired — please re-upload`,
+          label: `${toSentenceCase(t.title) || 'A document'} has expired, please re-upload`,
         }
       }
       if (diff <= SOON_MS) {
         const days = Math.max(1, Math.ceil(diff / (24 * 60 * 60 * 1000)))
         return {
           expired: false,
-          label: `${t.title || 'A document'} expires in ${days} day${days === 1 ? '' : 's'}`,
+          label: `${toSentenceCase(t.title) || 'A document'} expires in ${days} day${days === 1 ? '' : 's'}`,
         }
       }
     }
@@ -4005,33 +4005,79 @@ function formatStamp(iso) {
 
 /* ── Small screens ─────────────────────────────────────────────────────
    These have to sit after the pill-style .pp-subtabs/.pp-subtab overrides
-   further up, which drop the row out of `flex: 1` and let it size to its
-   content — 425px for four icon-and-label tabs, wider than any phone, and
-   the app shell clips the overflow so "Timeline" simply vanished. Four tabs
-   will not fit at this width, so the row scrolls sideways instead, which
-   keeps every tab and its icon reachable. */
+   further up, which size the row to its content — 425px for four
+   icon-and-label tabs, wider than any phone. A sideways-scrolling strip hid
+   "Timeline" and cut "Vault" in half, so on phones the four tabs become a
+   fitted segmented bar instead: equal columns, icon stacked over the label,
+   every tab visible at once. */
 @media (max-width: 700px) {
+  .pp-tabs-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
   .pp-subtabs {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px;
     width: 100%;
-    max-width: 100%;
-    overflow-x: auto;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
-  }
-  .pp-subtabs::-webkit-scrollbar {
-    display: none;
-  }
-  /* Nothing else signals that the row runs past the edge, so it fades out on
-     the right — otherwise the last tab reads as if it were the last one. */
-  .pp-subtabs {
-    -webkit-mask-image: linear-gradient(to right, #000 82%, transparent 99%);
-    mask-image: linear-gradient(to right, #000 82%, transparent 99%);
+    padding: 4px;
+    border-radius: 14px;
+    background: #fff;
   }
   .pp-subtab {
-    flex: 0 0 auto;
-    padding: 10px 14px;
+    position: relative;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+    padding: 8px 2px 7px;
+    border-radius: 10px;
+    font-size: 11.5px;
+    line-height: 1.1;
     white-space: nowrap;
+  }
+  .pp-subtab-ic {
+    width: 22px;
+    height: 22px;
+  }
+  /* Count badges ride the icon's corner instead of widening the label. */
+  .pp-subtab-badge {
+    position: absolute;
+    top: 4px;
+    left: calc(50% + 6px);
+    margin: 0;
+    min-width: 16px;
+    padding: 1px 4px;
+    font-size: 9.5px;
+    line-height: 14px;
+    text-align: center;
+  }
+  /* List / Map fills the row as two equal halves. */
+  .view-toggle :deep(.switch-container) {
+    display: flex;
+    width: 100%;
+    border-radius: 14px;
+  }
+  .view-toggle :deep(.switch-btn) {
+    flex: 1 1 0;
+    justify-content: center;
+    border-radius: 10px !important;
+    padding: 9px 12px;
+  }
+  /* The "0 of 17 complete" chip squeezed the heading into three lines;
+     below the heading it gets the full width back. */
+  .pp-sec-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 18px 0 14px;
+  }
+  .pp-sec-title {
+    font-size: 21px;
+  }
+  .pp-sec-complete {
+    padding: 6px 12px;
+    font-size: 12px;
   }
   /* Was 34px — the only control in the hero's corner. */
   .pp-hero-switch {

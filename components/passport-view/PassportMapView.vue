@@ -41,11 +41,11 @@
     </div>
 
     <div class="map-content">
-      <div class="map-placeholder">
+      <div ref="mapPlaceholder" class="map-placeholder">
         <div v-if="!steps.length" class="map-empty">
           Your Passport's sections are still being set up. Refresh in a moment.
         </div>
-        <div v-else class="isometric-map" :style="mapCanvasStyle">
+        <div v-else class="isometric-map" :style="[mapCanvasStyle, mapScaleStyle]">
           <div
             v-for="(decoration, index) in visibleDecorations"
             :key="`decoration-${index}-${decoration.icon}`"
@@ -189,7 +189,7 @@
                 </template>
               </div>
               <div class="task-info">
-                <div class="task-title">{{ toSmartTitleCase(task.title) }}</div>
+                <div class="task-title">{{ toSentenceCase(task.title) }}</div>
                 <p
                   v-if="task.description"
                   class="task-description"
@@ -227,8 +227,8 @@
 </template>
 
 <script setup>
-import { toSmartTitleCase } from '~/utils/titleCase'
-import { computed, ref, watch } from 'vue'
+import { toSmartTitleCase, toSentenceCase } from '~/utils/titleCase'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { usePassportRuntime } from '~/composables/usePassportRuntime'
 import OPIcon from '~/components/ui/OPIcon.vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -364,6 +364,33 @@ const mapCanvasHeight = computed(
   () => Math.max(steps.value.length - 1, 0) * STEP_ADVANCE + PLATFORM_HEIGHT + 60,
 )
 const mapCanvasStyle = computed(() => ({ minHeight: `${mapCanvasHeight.value}px` }))
+
+// The canvas is laid out at a fixed 300px, but the 200px tiles and their glow
+// bleed past both edges - about MAP_VISUAL_WIDTH across in all. On a phone the
+// green panel is narrower than that, and the right-hand column of platforms
+// ran off the screen. Measure the panel and zoom the whole canvas down to fit;
+// `zoom` (not transform) so the canvas height shrinks with it and no empty
+// band is left under the last step.
+const MAP_VISUAL_WIDTH = 400
+const mapPlaceholder = ref(null)
+const mapScale = ref(1)
+const mapScaleStyle = computed(() =>
+  mapScale.value < 1 ? { zoom: mapScale.value } : {},
+)
+let mapResizeObserver = null
+const measureMap = () => {
+  const width = mapPlaceholder.value?.clientWidth || 0
+  if (!width) return
+  mapScale.value = Math.min(1, Math.round((width / MAP_VISUAL_WIDTH) * 100) / 100)
+}
+onMounted(() => {
+  measureMap()
+  if (typeof ResizeObserver !== 'undefined' && mapPlaceholder.value) {
+    mapResizeObserver = new ResizeObserver(measureMap)
+    mapResizeObserver.observe(mapPlaceholder.value)
+  }
+})
+onBeforeUnmount(() => mapResizeObserver?.disconnect())
 
 const decorativeObjects = [
   { icon: 'tree', x: 18, y: 90 },
@@ -566,8 +593,17 @@ const navigateToStep = (stepId) => {
   background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%);
   border-radius: 16px;
   padding: 40px 20px;
-  /* overflow-x: auto; */
+  /* The tiles' glow may bleed past the canvas; keep it inside the panel's
+     rounded edge rather than widening the page. */
+  overflow: hidden;
   min-height: 500px;
+}
+
+@media (max-width: 520px) {
+  .map-placeholder {
+    padding: 28px 0;
+    min-height: 0;
+  }
 }
 
 .map-empty {
@@ -792,6 +828,23 @@ const navigateToStep = (stepId) => {
   color: #fff;
 }
 
+/* On phones the four filters did not fit on one line - "To Do" sat past the
+   edge behind a scrollbar. They become a 2x2 grid of equal cells instead. */
+@media (max-width: 520px) {
+  .map-filter-tabs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    overflow: visible;
+  }
+  .map-filter-tab {
+    justify-content: space-between;
+    min-width: 0;
+    padding: 9px 12px;
+    border-radius: 11px;
+  }
+}
+
 /* ── Currently viewing card ──────────────────────────────────── */
 .map-now-card {
   background: linear-gradient(135deg, #f4fbfa, #fff);
@@ -856,6 +909,25 @@ const navigateToStep = (stepId) => {
   flex-shrink: 0;
   white-space: nowrap;
   box-shadow: 0 2px 8px rgba(0, 161, 154, 0.28);
+}
+/* Beside the button a section name like "Rights And Informal Arrangements"
+   was cut to a couple of words; on phones the button drops below instead. */
+@media (max-width: 520px) {
+  .map-now-row {
+    flex-wrap: wrap;
+  }
+  .map-now-body {
+    flex: 1 1 calc(100% - 52px);
+  }
+  .map-now-title {
+    white-space: normal;
+    line-height: 1.25;
+  }
+  .map-now-cta {
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 12.5px;
+  }
 }
 
 /* ── Step pin badge (% / ✓) ──────────────────────────────────── */

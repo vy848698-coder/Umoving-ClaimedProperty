@@ -12,7 +12,7 @@
         <p v-if="firstClaim" class="fmm-body">
           You're officially one of the first 1,000,000 people to claim a
           property with us. We've emailed a copy of your certificate to your
-          registered email address — you can also view or download it any
+          registered email address. You can also view or download it any
           time from the Founding Homeowner certificate page in your Profile
           menu.
         </p>

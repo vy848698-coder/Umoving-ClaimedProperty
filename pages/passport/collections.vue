@@ -211,7 +211,7 @@
                   <span class="ppw-sort-label">Sort:</span>
                   <select v-model="sortMode" class="ppw-sort-select">
                     <option value="recent">Recently updated</option>
-                    <option value="az">A–Z</option>
+                    <option value="az">A to Z</option>
                     <option value="progress">Progress</option>
                   </select>
                   <svg class="ppw-sort-caret" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
@@ -687,7 +687,7 @@ const collectionsTourSteps = [
   {
     selector: '[data-tour="resume"]',
     title: 'Pick up where you left off',
-    body: 'Tap this card to jump straight back to your most recently edited passport — exactly where you stopped.',
+    body: 'Tap this card to jump straight back to your most recently edited passport, exactly where you stopped.',
   },
   {
     selector: '[data-tour="tour-btn"]',
@@ -2202,8 +2202,10 @@ const executeDelete = async () => {
 }
 
 @media (max-width: 640px) {
+  /* 16px of gutter either side. At 12px the cards read as stuck to the edges
+     of the screen rather than laid on it. */
   .pp-shell {
-    width: calc(100% - 24px);
+    width: calc(100% - 32px);
   }
   .ppw-controls {
     flex-direction: column;
@@ -2219,8 +2221,12 @@ const executeDelete = async () => {
   .ppw-sort {
     justify-content: space-between;
   }
+  /* minmax(0, 1fr), not 1fr: a grid column's default minimum is its content's
+     min-content width, so a card that can't wrap would push the column past
+     the screen instead of shrinking to it. The default track is
+     minmax(340px, 1fr), which is already wider than a small phone. */
   .passport-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
   .ppw-stat {
     min-width: calc(50% - 7px);
@@ -2270,6 +2276,39 @@ const executeDelete = async () => {
   }
   .ppw-chip-sub {
     font-size: 11px;
+  }
+}
+
+/* Small phones. */
+@media (max-width: 440px) {
+  /* The resume card runs book + text + arrow across one row. On a 320px
+     screen that left the address about 90px to live in, so "102 Shorncliffe
+     Road" broke over three lines. The book and the arrow both come down, and
+     the arrow loses its fixed circle - the whole card is the button, so the
+     arrow is a pointer, not the target. */
+  .coll-resume {
+    gap: 12px;
+    padding: 14px;
+    align-items: flex-start;
+  }
+  .coll-resume-book {
+    width: 72px;
+  }
+  .coll-resume-book :deep(.passport-container) {
+    height: 72px;
+  }
+  .coll-resume-name {
+    font-size: 15px;
+  }
+  .coll-resume-meta {
+    font-size: 11.5px;
+    margin-bottom: 7px;
+  }
+  .coll-resume-cta {
+    width: 30px;
+    height: 30px;
+    font-size: 17px;
+    align-self: center;
   }
 }
 

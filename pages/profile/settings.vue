@@ -265,7 +265,7 @@
 import { useProfile } from '~/composables/useProfile'
 import FlowHeader from '~/components/core/FlowHeader.vue'
 
-definePageMeta({ title: 'Settings - UmovingU', middleware: 'auth' })
+definePageMeta({ title: 'Settings | UmovingU', middleware: 'auth' })
 
 const config = useRuntimeConfig()
 const { profile, fetchProfile } = useProfile()
