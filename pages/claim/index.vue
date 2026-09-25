@@ -697,6 +697,13 @@ function continueToClaim() {
   display: none;
 }
 
+/* ── Big screens ──────────────────────────────────────────────────── */
+/* Scale the nav row and the main column by the shared desktop factor so a
+   desktop monitor shows the laptop proportions instead of a 1180px island. */
+@media (min-width: 1536px) {
+  .hsw-shell { zoom: var(--desk-zoom); }
+}
+
 /* ── Responsive ───────────────────────────────────────────────────── */
 @media (max-width: 980px) {
   .clw-layout {

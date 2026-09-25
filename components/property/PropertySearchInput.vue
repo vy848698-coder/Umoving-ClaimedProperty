@@ -455,12 +455,17 @@ async function fitDropdown() {
   // enter transition runs it is offset by a transform, which made it read
   // higher than where it settles and left it a few pixels off screen.
   const anchor = drop.parentElement ?? field
-  const dropTop = anchor.getBoundingClientRect().bottom + DROP_OFFSET
-  const wanted = Math.min(DROP_MAX_HEIGHT, drop.scrollHeight)
+  // On big screens the page is scaled with CSS zoom (--desk-zoom). Bounding
+  // rects come back in screen pixels but scrollHeight and the max-height we
+  // set are in the list's own, unscaled pixels - so the sums below are done in
+  // screen pixels and the final cap converted back.
+  const zoom = (drop as HTMLElement & { currentCSSZoom?: number }).currentCSSZoom || 1
+  const dropTop = anchor.getBoundingClientRect().bottom + DROP_OFFSET * zoom
+  const wanted = Math.min(DROP_MAX_HEIGHT, drop.scrollHeight) * zoom
   const overflow = dropTop + wanted + VIEWPORT_GAP - window.innerHeight
   if (overflow <= 0) return
 
-  const canScroll = Math.max(0, field.getBoundingClientRect().top - HEADER_CLEARANCE)
+  const canScroll = Math.max(0, field.getBoundingClientRect().top - HEADER_CLEARANCE * zoom)
   // The list is absolutely positioned, so it doesn't make the page taller:
   // near the bottom of a short page the browser can't scroll as far as we'd
   // like. Plan with the scroll that can actually happen, so the height cap
@@ -477,9 +482,9 @@ async function fitDropdown() {
   // Re-measure once the page has settled (its height can shift while it
   // scrolls) and cap the list to the room really left, keeping a gap above
   // the bottom edge instead of letting it touch it.
-  const settledTop = anchor.getBoundingClientRect().bottom + DROP_OFFSET
+  const settledTop = anchor.getBoundingClientRect().bottom + DROP_OFFSET * zoom
   const room = Math.floor(window.innerHeight - settledTop - VIEWPORT_GAP)
-  if (room < wanted) dropMaxHeight.value = Math.max(DROP_MIN_HEIGHT, room)
+  if (room < wanted) dropMaxHeight.value = Math.max(DROP_MIN_HEIGHT, Math.floor(room / zoom))
 }
 
 // Resolves once the page has actually stopped scrolling: the scroll position
