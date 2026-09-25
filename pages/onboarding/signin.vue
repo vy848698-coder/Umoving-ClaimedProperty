@@ -4,7 +4,8 @@
     <aside class="signin-aside">
       <div class="signin-aside-top">
         <div class="signin-logo">
-          <span class="signin-logo-word"><span class="signin-logo-word-a">umo</span><span class="signin-logo-word-b">vingu</span></span>
+          <span class="signin-logo-mark"><img src="/op-icons/logo.png" alt="umu" /></span>
+          <strong>umovingu</strong>
         </div>
         <p class="signin-tagline">You own the home. Own its story.</p>
       </div>
@@ -579,17 +580,20 @@ const onPrimary = () => {
   gap: 16px;
 }
 
+/* Same lockup as sign-up and verification: the mark plus the wordmark. */
 .signin-logo {
   display: inline-flex;
   align-items: center;
+  gap: 13px;
 }
-.signin-logo-word {
-  font-size: 26px;
+.signin-logo-mark { display: grid; place-items: center; flex-shrink: 0; }
+.signin-logo-mark img { width: 42px; height: 42px; display: block; }
+.signin-logo strong {
+  font-size: 24px;
   font-weight: 800;
   letter-spacing: -0.5px;
+  color: #231d45;
 }
-.signin-logo-word-a { color: #231d45; }
-.signin-logo-word-b { color: #00a19a; }
 .signin-tagline {
   margin: 0;
   font-size: 15px;
@@ -638,6 +642,24 @@ const onPrimary = () => {
   display: block;
   margin: 32px auto 0;
   object-fit: contain;
+}
+
+/* Side by side (the stacked layout below 881px stays centred). The column
+   reads left-aligned on the logo's line, as on sign-up. The book render is
+   ~5:6 portrait, so at its full 260px it made the column taller than a laptop
+   window: the column overflowed its centring box and "Welcome back." was
+   shoved up against the logo. Its width is now tied to the window height so
+   the column always fits and keeps real space above and below it. */
+@media (min-width: 881px) {
+  .signin-aside-body {
+    align-items: flex-start;
+    text-align: left;
+  }
+  .signin-welcome-sub { margin-inline: 0; }
+  .signin-passport-illus {
+    width: clamp(150px, 30vh, 260px);
+    margin: clamp(18px, 4vh, 36px) 0 0 -12px;
+  }
 }
 
 .signin-aside-foot {
@@ -1194,7 +1216,9 @@ const onPrimary = () => {
 @media (max-width: 600px) {
   .signin-aside { padding: 20px 20px 22px; }
   .signin-aside-top { margin-bottom: 18px; }
-  .signin-logo-word { font-size: 20px; }
+  .signin-logo { gap: 10px; }
+  .signin-logo-mark img { width: 34px; height: 34px; }
+  .signin-logo strong { font-size: 20px; }
   .signin-tagline { display: none; }
 
   .signin-welcome {
@@ -1204,7 +1228,7 @@ const onPrimary = () => {
   }
   .signin-welcome-sub { margin-top: 8px; font-size: 13.5px; line-height: 1.5; }
 
-  .signin-passport-illus { max-width: 170px; margin-top: 18px; }
+  .signin-passport-illus { max-width: 124px; margin-top: 14px; }
   .signin-aside-foot { margin-top: 16px; font-size: 12px; gap: 7px; }
 
   .signin-main { padding: 26px 20px 40px; }
@@ -1225,7 +1249,7 @@ const onPrimary = () => {
   .signin-main { padding: 22px 16px 36px; }
   .signin-welcome { font-size: 24px; }
   .signin-welcome-sub { font-size: 13px; }
-  .signin-passport-illus { max-width: 150px; }
+  .signin-passport-illus { max-width: 108px; }
   .signin-form-title { font-size: 21px; }
   .otp-boxes { gap: 6px; }
   .otp-box { height: 50px; font-size: 20px; }
