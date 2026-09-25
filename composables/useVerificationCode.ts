@@ -1,5 +1,5 @@
 ﻿import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useAuth } from '~/composables/useAuth'
+import { useAuth, storeTokens } from '~/composables/useAuth'
 import { useSession } from '~/composables/useSession'
 import { setSessionFlag } from '~/composables/useSessionFlag'
 
@@ -99,7 +99,7 @@ export const useVerificationCode = () => {
           ...(postcode ? { postcode } : {}),
           password,
         })
-        localStorage.setItem('token', regRes.token)
+        storeTokens(regRes)
         setSessionFlag()
         sessionStorage.removeItem('umu-pending-email')
         setPendingSignup(null)

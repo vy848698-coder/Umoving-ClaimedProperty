@@ -285,7 +285,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { useAuth } from '~/composables/useAuth'
+import { useAuth, storeTokens } from '~/composables/useAuth'
 import { setSessionFlag } from '~/composables/useSessionFlag'
 import { resolvePostAuthPath } from '~/utils/appFlow'
 
@@ -356,7 +356,7 @@ const handleLogin = async () => {
   loginLoading.value = true
   try {
     const response: any = await login(emailInput.value, passwordInput.value)
-    localStorage.setItem('token', response.token)
+    storeTokens(response)
     setSessionFlag()
     await redirectAfterAuth()
   } catch {
