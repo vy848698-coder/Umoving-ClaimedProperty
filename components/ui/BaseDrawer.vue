@@ -191,6 +191,13 @@ onUnmounted(() => {
     zoom: var(--wide-zoom, 1);
     max-height: min(760px, calc(100dvh / var(--wide-zoom, 1) - 48px));
   }
+  /* Full-screen drawers (Notes) keep their edge-to-edge frame; the rows
+     inside scale, so the page reads as it does on a 1366px laptop. */
+  .drawer--fullscreen > .drawer__header,
+  .drawer--fullscreen > .drawer__content,
+  .drawer--fullscreen > .drawer__footer {
+    zoom: var(--wide-zoom, 1);
+  }
 }
 
 @keyframes drawer-pop-in {
