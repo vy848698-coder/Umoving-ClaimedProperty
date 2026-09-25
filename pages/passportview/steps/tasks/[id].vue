@@ -79,8 +79,7 @@
         >
           <h3 class="property-photos-title">Property Photos</h3>
           <p class="property-photos-sub">
-            Upload photos of your property. These will appear in your listing and
-            buyer passport.
+            Upload photos of your property. These will appear in your listing.
           </p>
 
           <div v-if="propertyImages.length > 0" class="property-photos-grid">
