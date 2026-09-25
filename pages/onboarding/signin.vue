@@ -664,10 +664,45 @@ const onPrimary = () => {
   }
 }
 
+/* Side by side, the brand column centres its hero between the logo row
+   (~66px) and the footnote (~46px), which puts that centre ~10px below the
+   panel's middle. The form centred in the plain panel therefore sat ~10px
+   high next to it (more on big screens, where both are zoomed). The extra
+   20px of top padding - zoomed like the rows it mirrors - puts the two
+   centres on one line. */
+@media (min-width: 881px) {
+  .signin-split .signin-main {
+    padding-top: calc(48px + 20px * var(--desk-zoom, 1));
+    padding-bottom: 48px;
+  }
+}
 /* Short laptop windows: the form (~505px) plus 48px above and below ran just
    past a ~600px browser window and the page scrolled by a few pixels. */
 @media (min-width: 881px) and (max-height: 700px) {
-  .signin-split .signin-main { padding-block: 28px; }
+  .signin-split .signin-main {
+    padding-top: calc(28px + 20px * var(--desk-zoom, 1));
+    padding-bottom: 28px;
+  }
+}
+/* Very short windows (a browser that isn't maximised, or with a bookmarks
+   bar and devtools open): the form itself is taller than the window, so the
+   page scrolled and cut its heading off. Its vertical rhythm tightens so it
+   still fits in one screen - nothing is hidden, only the gaps shrink. */
+@media (min-width: 881px) and (max-height: 620px) {
+  .signin-split .signin-main {
+    padding-top: calc(14px + 20px * var(--desk-zoom, 1));
+    padding-bottom: 14px;
+  }
+  .signin-split .signin-form-head { margin-bottom: 14px; }
+  .signin-split .signin-form-title { font-size: 25px; }
+  .signin-split .signin-form-sub { margin-top: 4px; }
+  .signin-split .signin-panel-wrap .form-field { margin-bottom: 12px; }
+  .signin-split .signin-panel-wrap .form-label { margin-bottom: 6px; }
+  .signin-split .signin-panel-wrap .form-input { padding-block: 11px; }
+  .signin-split .signin-panel .btn-primary--futuristic { padding-block: 13px; }
+  .signin-split .signin-panel .btn-text { padding-block: 6px; margin-top: 4px; }
+  .signin-split .signin-divider { margin: 12px 0 2px; }
+  .signin-split .logged-out-toast { margin-bottom: 14px; }
 }
 
 /* Wide screens - the same composition as sign-up: the copy on the left, the
