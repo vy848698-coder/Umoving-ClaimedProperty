@@ -2370,6 +2370,13 @@ onMounted(() => {
   }
 }
 
+/* Big screens - scale the sidebar + main body by the shared desktop factor.
+   Its height comes from flex-grow inside the 100dvh page, not a vh unit, so
+   zoom doesn't make it overshoot the screen. */
+@media (min-width: 1536px) {
+  .pf-body { zoom: var(--desk-zoom); }
+}
+
 @media (max-width: 980px) {
   .pf-body {
     flex-direction: column;
