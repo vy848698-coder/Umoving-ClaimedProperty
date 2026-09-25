@@ -802,7 +802,18 @@ const handleSubmit = async () => {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ── Responsive: stack to single column ── */
+/* ── Big screens ── same as sign-in: scale each content block by the shared
+   desktop factor (not the full-height columns) and let the brand column's side
+   padding grow with the screen. */
+@media (min-width: 1536px) {
+  .signup-aside-top,
+  .signup-aside-body,
+  .signup-aside-foot,
+  .signup-main-inner { zoom: var(--desk-zoom); }
+  .signup-aside { padding: 40px clamp(48px, 5.5vw, 150px); }
+  .signup-main { padding-inline: clamp(40px, 5vw, 140px); }
+}
+
 /* ── Responsive: stack to single column ──
    Stacked, the brand panel is a header band above the form rather than a
    second full screen — at 320px the full-size panel ran ~1180px, putting the
