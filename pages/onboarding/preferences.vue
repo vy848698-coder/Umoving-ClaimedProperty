@@ -4,9 +4,14 @@
       <!-- ── Left context sidebar ── -->
       <aside class="pf-side">
         <div class="pf-side-inner">
-          <span class="pf-welcome">
-            <span class="pf-welcome-dot" />{{ phase === 'role' ? 'WELCOME TO UMOVINGU' : eyebrowLabel.toUpperCase() }}
-          </span>
+          <!-- Same lockup as sign-in / sign-up / verification, in the light
+               version of the mark for the dark panel. On step 1 it is the
+               welcome; step 2 adds its own label under it. -->
+          <div class="pf-logo">
+            <img src="/op-icons/logo.svg" alt="umu" />
+            <strong>umovingu</strong>
+          </div>
+          <p v-if="phase !== 'role'" class="pf-eyebrow">{{ eyebrowLabel }}</p>
 
           <h2 class="pf-side-title">
             {{ phase === 'role' ? "We'll set up the right journey for you. It takes 30 seconds." : headerSub }}
@@ -1224,24 +1229,21 @@ onMounted(() => {
   max-width: 400px;
   margin-left: auto;
 }
-.pf-welcome {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 11px;
+.pf-logo { display: flex; align-items: center; gap: 12px; }
+.pf-logo img { width: 42px; height: auto; display: block; flex-shrink: 0; }
+.pf-logo strong {
+  font-size: 23px;
   font-weight: 800;
-  letter-spacing: 1.2px;
-  color: #6fe6dc;
-  border: 1px solid rgba(47, 191, 182, 0.4);
-  background: rgba(47, 191, 182, 0.1);
-  border-radius: 100px;
-  padding: 7px 14px;
+  letter-spacing: -0.5px;
+  color: #fff;
 }
-.pf-welcome-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #17b3a6;
+.pf-eyebrow {
+  margin: 30px 0 0;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  color: #6fe6dc;
 }
 .pf-side-title {
   font-size: 29px;
@@ -1249,13 +1251,14 @@ onMounted(() => {
   line-height: 1.18;
   letter-spacing: -0.8px;
   color: #fff;
-  margin: 24px 0 28px;
+  margin: 30px 0 26px;
 }
+.pf-eyebrow + .pf-side-title { margin-top: 10px; }
 
 /* Step tracker */
 .pf-steps {
   list-style: none;
-  margin: 0 0 30px;
+  margin: 0 0 24px;
   padding: 0;
 }
 .pf-step {
@@ -2381,7 +2384,9 @@ onMounted(() => {
    shrinks with the window and everything fits on one screen. */
 @media (min-width: 981px) and (max-height: 729px) {
   .pf-side { padding-top: clamp(18px, 4vh, 36px); padding-bottom: clamp(18px, 4vh, 36px); }
-  .pf-side-title { font-size: clamp(23px, 4vh, 29px); margin: clamp(12px, 2.4vh, 22px) 0 clamp(12px, 2.8vh, 26px); }
+  .pf-side-title { font-size: clamp(23px, 4vh, 29px); margin: clamp(14px, 3.4vh, 30px) 0 clamp(12px, 2.8vh, 26px); }
+  .pf-eyebrow { margin-top: clamp(14px, 3.4vh, 30px); }
+  .pf-logo img { width: clamp(34px, 6vh, 42px); }
   .pf-steps { margin-bottom: clamp(10px, 2.2vh, 26px); }
   .pf-step { padding-bottom: clamp(10px, 2.2vh, 20px); }
   .pf-info p { line-height: 1.45; }
@@ -2428,7 +2433,9 @@ onMounted(() => {
   .pf-steps,
   .pf-info,
   .pf-stats { display: none; }
-  .pf-welcome { margin-bottom: 0; }
+  .pf-eyebrow { display: none; }
+  .pf-logo img { width: 36px; }
+  .pf-logo strong { font-size: 20px; }
 }
 @media (max-width: 700px) {
   .pf-side { padding: 14px 20px; }

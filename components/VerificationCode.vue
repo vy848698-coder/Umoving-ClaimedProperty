@@ -81,7 +81,6 @@ const {
 <style scoped>
 .otp-form {
   width: 100%;
-  max-width: 548px;
   font-family:
     'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI',
     Roboto, Inter, sans-serif;
@@ -96,11 +95,11 @@ const {
   border: none;
   cursor: pointer;
   font-family: inherit;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
   color: #00a19a;
   padding: 0;
-  margin-bottom: 34px;
+  margin-bottom: 24px;
 }
 .otp-back svg {
   width: 17px;
@@ -110,45 +109,46 @@ const {
   color: #00857f;
 }
 
-/* Heading */
+/* Heading - the same form-title scale as sign-up and sign-in; the page's
+   big headline lives in the brand panel. */
 .otp-title {
-  font-size: clamp(34px, 4vw, 50px);
+  font-size: 28px;
   font-weight: 800;
-  letter-spacing: -0.035em;
-  line-height: 1.05;
+  letter-spacing: -0.8px;
+  line-height: 1.15;
   color: #231d45;
-  margin: 0 0 14px;
+  margin: 0 0 8px;
 }
 .otp-subtitle {
-  font-size: 17px;
+  font-size: 14px;
   font-weight: 500;
-  color: #5d5878;
-  line-height: 1.6;
-  margin: 0 0 22px;
+  color: #6b6783;
+  line-height: 1.5;
+  margin: 0 0 16px;
 }
 .otp-email-row {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 14px;
-  margin: 0 0 36px;
+  gap: 12px;
+  margin: 0 0 26px;
 }
 .otp-email {
   min-width: 0;
   overflow-wrap: anywhere;
   font-weight: 600;
   color: #4d4868;
-  font-size: 16px;
+  font-size: 14.5px;
 }
 .otp-email-divider {
   width: 1px;
-  height: 22px;
+  height: 18px;
   background: rgba(35, 29, 69, 0.16);
   flex-shrink: 0;
 }
 .otp-edit-email {
   font-family: inherit;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
   color: #00a19a;
   background: none;
@@ -162,8 +162,10 @@ const {
 
 /* Fields */
 .otp-fields {
-  margin-bottom: 28px;
+  margin-bottom: 22px;
 }
+/* Six boxes span the form's full width, edge to edge with the button. */
+.otp-fields :deep(.code-input__fields) { gap: 12px; justify-content: space-between; }
 
 .otp-error {
   color: #dc2626;
@@ -175,11 +177,11 @@ const {
 /* Continue */
 .otp-continue {
   width: 100%;
-  height: 60px;
+  height: 54px;
   border: none;
   border-radius: 12px;
   font-family: inherit;
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 700;
   color: #fff;
   background: #00a19a;
@@ -212,8 +214,8 @@ const {
   flex-wrap: wrap;
   justify-content: center;
   gap: 4px 8px;
-  margin-top: 26px;
-  font-size: 15px;
+  margin-top: 22px;
+  font-size: 14px;
 }
 .otp-resend-lead {
   font-weight: 500;
@@ -226,7 +228,7 @@ const {
 }
 .otp-resend-btn {
   font-family: inherit;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
   color: #00a19a;
   background: none;
@@ -240,45 +242,31 @@ const {
 
 .otp-spam-note {
   text-align: center;
-  margin: 10px 0 0;
-  font-size: 13.5px;
+  margin: 8px 0 0;
+  font-size: 12.5px;
   font-weight: 500;
   color: #8d89a0;
 }
 
-/* Short desktop / laptop windows - see pages/onboarding/verification.vue.
-   Every vertical gap, the code boxes and the button scale with window height
-   so the form fits one screen without scrolling. */
-@media (min-width: 901px) and (max-height: 820px),
-  (min-width: 701px) and (orientation: landscape) and (max-height: 820px) {
-  .otp-back { margin-bottom: clamp(14px, 3.4vh, 34px); }
-  .otp-title { margin-bottom: clamp(8px, 1.6vh, 14px); }
-  .otp-subtitle {
-    font-size: 16px;
-    line-height: 1.55;
-    margin-bottom: clamp(10px, 2.2vh, 22px);
-  }
-  .otp-email-row { margin-bottom: clamp(16px, 3.6vh, 36px); }
-  .otp-fields { margin-bottom: clamp(14px, 2.8vh, 28px); }
-  .otp-fields :deep(.code-input__field) { max-width: clamp(52px, 10.5vh, 80px); }
-  /* Smaller boxes still span the full row, edge to edge with the button. */
-  .otp-fields :deep(.code-input__fields) { justify-content: space-between; }
-  .otp-continue { height: clamp(48px, 8vh, 60px); }
-  .otp-resend { margin-top: clamp(12px, 2.6vh, 26px); }
-  .otp-spam-note { margin-top: clamp(4px, 1vh, 10px); }
+/* Short laptop windows - see pages/onboarding/verification.vue. Below 730px
+   tall the desktop zoom is 1, so vh is safe: the gaps and the button shrink
+   with the window so the form fits one screen. */
+@media (min-width: 881px) and (max-height: 729px) {
+  .otp-back { margin-bottom: clamp(12px, 3.2vh, 24px); }
+  .otp-subtitle { margin-bottom: clamp(10px, 2.2vh, 16px); }
+  .otp-email-row { margin-bottom: clamp(14px, 3.4vh, 26px); }
+  .otp-fields { margin-bottom: clamp(12px, 2.8vh, 22px); }
+  .otp-continue { height: clamp(46px, 8vh, 54px); }
+  .otp-resend { margin-top: clamp(12px, 2.8vh, 22px); }
 }
 
 @media (max-width: 600px) {
-  .otp-back { font-size: 15px; margin-bottom: 20px; }
-  .otp-title { font-size: 28px; margin-bottom: 10px; }
-  .otp-subtitle { font-size: 15px; margin-bottom: 16px; }
-  .otp-email-row { gap: 10px; margin-bottom: 26px; }
-  .otp-email { font-size: 15px; }
-  .otp-email-divider { height: 18px; }
-  .otp-edit-email { font-size: 14px; }
-  .otp-fields { margin-bottom: 22px; }
-  .otp-continue { height: 54px; font-size: 16px; }
-  .otp-resend { margin-top: 20px; font-size: 14px; }
-  .otp-spam-note { font-size: 12.5px; }
+  .otp-back { margin-bottom: 18px; }
+  .otp-title { font-size: 24px; letter-spacing: -0.6px; }
+  .otp-subtitle { font-size: 13.5px; }
+  .otp-email-row { gap: 10px; margin-bottom: 22px; }
+  .otp-fields :deep(.code-input__fields) { gap: 8px; }
+  .otp-continue { height: 52px; font-size: 15.5px; }
+  .otp-resend { margin-top: 18px; }
 }
 </style>
