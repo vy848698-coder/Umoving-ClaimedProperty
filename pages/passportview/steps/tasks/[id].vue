@@ -852,9 +852,14 @@ const showOuterTip = computed(() => {
 })
 
 // Plain radio questions save the moment an option is picked (see
-// updateAnswer), so they have no Save button.
+// updateAnswer), so they have no Save button. One with an additional-info
+// box (write details / upload) waits for Save instead - saving on the pick
+// moved on before that box, which only appears once an option is picked,
+// could be filled in.
 const isAutoSaveType = computed(
-  () => currentQuestion.value?.type?.toLowerCase() === 'radio',
+  () =>
+    currentQuestion.value?.type?.toLowerCase() === 'radio' &&
+    !currentQuestion.value?.additionalInfoType,
 )
 
 // Why Save is still disabled. A Notes question isn't answered by picking
@@ -905,7 +910,17 @@ const isAnswerValid = computed(() => {
   const isCheckboxType = type === 'checkbox' || type === 'multiple_choice'
 
   if (type === 'text') {
-    return answer && answer.trim().length > 0
+    // TextUploadQuestion answers with a string (text), a file list (upload)
+    // or { text, files } (both) - any typed text or uploaded file counts.
+    if (typeof answer === 'string') return answer.trim().length > 0
+    if (Array.isArray(answer)) return answer.length > 0
+    if (answer && typeof answer === 'object') {
+      return (
+        String(answer.text || '').trim().length > 0 ||
+        (Array.isArray(answer.files) && answer.files.length > 0)
+      )
+    }
+    return false
   }
 
   if (isRadioType) {
@@ -1193,7 +1208,7 @@ const updateAnswer = async (answer) => {
   }
 
   // Auto-save plain RADIO questions immediately on selection
-  if (currentQuestion.value.type?.toLowerCase() === 'radio') {
+  if (isAutoSaveType.value) {
     isSaving.value = true
     try {
       const { pointsAwarded } = await apiSaveAnswer(
