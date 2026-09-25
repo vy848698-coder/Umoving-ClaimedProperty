@@ -1348,6 +1348,12 @@ const handleViewProfile = () => {
   color: #00857f;
 }
 
+/* ── Big screens ──────────────────────────────────────────────────── */
+/* Scale the nav row and main column by the shared desktop factor. */
+@media (min-width: 1536px) {
+  .hsw-shell { zoom: var(--desk-zoom); }
+}
+
 /* ── Responsive ───────────────────────────────────────────────────── */
 @media (max-width: 1040px) {
   .stw-layout {

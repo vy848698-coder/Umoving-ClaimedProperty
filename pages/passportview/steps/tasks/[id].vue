@@ -1899,6 +1899,17 @@ const handleContinue = () => {
   display: none;
 }
 
+/* ── Big screens ───────────────────────────────────────────────────── */
+/* Scale the nav row and the sidebar + question split by the shared desktop
+   factor. Zoom multiplies the sidebar's dvh too, so its full-height rule
+   divides the viewport back out: it still ends at the bottom of the screen,
+   below the (now taller) nav. */
+@media (min-width: 1536px) {
+  .hsw-shell,
+  .tk-split { zoom: var(--desk-zoom); }
+  .tk-side { min-height: calc(100dvh / var(--desk-zoom) - 66px); }
+}
+
 /* ── Responsive ────────────────────────────────────────────────────── */
 @media (max-width: 899px) {
   .hsw-links {
