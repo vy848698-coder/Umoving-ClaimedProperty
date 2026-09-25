@@ -471,31 +471,40 @@ const handleCurrencyBlur = (event) => {
   );
 }
 
+/* The real (invisible) range input over the drawn track. The whole bar
+   takes clicks and drags, not just the thumb. A native thumb's centre only
+   travels from half a thumb in from each end, so the input overhangs the
+   track by half a thumb (14px) on both sides: the thumb's centre then runs
+   exactly 0%-100% of the track, under the drawn handle. */
 .budget-slider__input {
   position: absolute;
-  width: 100%;
-  height: 20px;
-  top: -6px;
-  left: 0;
+  width: calc(100% + 28px);
+  height: 28px;
+  top: -10px;
+  left: -14px;
   margin: 0;
-  pointer-events: none;
   opacity: 0;
   z-index: 3;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  touch-action: none;
 }
 
 .budget-slider__input::-webkit-slider-thumb {
-  pointer-events: all;
   width: 28px;
   height: 28px;
   border-radius: 50%;
   cursor: pointer;
+  -webkit-appearance: none;
   appearance: none;
 }
 
 .budget-slider__input::-moz-range-thumb {
-  pointer-events: all;
   width: 28px;
   height: 28px;
+  border: 0;
   border-radius: 50%;
   cursor: pointer;
 }
