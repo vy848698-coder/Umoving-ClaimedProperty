@@ -1026,6 +1026,14 @@ const securityLabel = computed(() => {
   color: rgba(255, 255, 255, 0.45);
 }
 
+/* ── Big screens ────────────────────────────────────────── */
+/* Scale the centred columns (body and footer) by the shared desktop factor. */
+@media (min-width: 1536px) {
+  .st-body,
+  .st-footer-grid,
+  .st-footer-bottom { zoom: var(--desk-zoom); }
+}
+
 /* ── Responsive ─────────────────────────────────────────── */
 @media (max-width: 1024px) {
   .st-grid { grid-template-columns: repeat(2, 1fr); }

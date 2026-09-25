@@ -497,4 +497,8 @@ onBeforeUnmount(revoke)
     animation-duration: 2.4s;
   }
 }
+/* Big screens - scale the centred column by the shared desktop factor. */
+@media (min-width: 1536px) {
+  .ct-main { zoom: var(--desk-zoom); }
+}
 </style>

@@ -1130,6 +1130,11 @@ const ringStyle = computed(() => ({
   letter-spacing: -0.2px;
 }
 
+/* Big screens - scale the centred column by the shared desktop factor. */
+@media (min-width: 1536px) {
+  .pi-body { zoom: var(--desk-zoom); }
+}
+
 @media (max-width: 1180px) {
   .pi-grid { grid-template-columns: 1fr 1fr; }
   .pi-card-verify { grid-column: 1 / -1; }

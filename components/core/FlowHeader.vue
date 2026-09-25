@@ -112,6 +112,11 @@ const goBack = useGoBack(FLOW_HOME)
   height: 15px;
 }
 
+/* Big screens - the bar's row scales with the page below it. */
+@media (min-width: 1536px) {
+  .fh-inner { zoom: var(--desk-zoom); }
+}
+
 @media (max-width: 640px) {
   .fh-inner {
     width: calc(100% - 32px);
