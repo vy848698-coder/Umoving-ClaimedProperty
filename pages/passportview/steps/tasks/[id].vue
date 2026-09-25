@@ -133,9 +133,9 @@
 
           <div class="q-head" data-tour="q-nav">
             <div class="q-head-left">
-              <h2 class="q-head-title">Question {{ currentQuestionIndex + 1 }}</h2>
+              <h2 class="q-head-title">Question {{ questionNumber }}</h2>
               <div class="q-head-sub">
-                {{ currentQuestionIndex + 1 }} of {{ totalQuestions }} in this section
+                {{ questionNumber }} of {{ sectionQuestionCount }} in this section
               </div>
             </div>
             <div class="q-nav">
@@ -158,17 +158,18 @@
 
           <div v-if="totalQuestions > 0" class="q-segments" aria-hidden="true">
             <span
-              v-for="i in totalQuestions"
-              :key="i"
+              v-for="(q, i) in allSectionQuestions"
+              :key="q.id"
               class="q-seg"
               :class="{
-                done: i - 1 < currentQuestionIndex,
-                current: i - 1 === currentQuestionIndex,
+                skipped: !currentQuestions.includes(q),
+                done: i + 1 < questionNumber,
+                current: i + 1 === questionNumber,
               }"
             />
           </div>
           <div v-if="totalQuestions > 0" class="q-seg-labels">
-            <span>Question {{ currentQuestionIndex + 1 }} of {{ totalQuestions }}</span>
+            <span>Question {{ questionNumber }} of {{ sectionQuestionCount }}</span>
             <span>{{ remainingQuestions }} remaining</span>
           </div>
 
@@ -343,6 +344,7 @@ const {
   currentQuestions,
   currentQuestionIndex,
   currentQuestion,
+  allSectionQuestions,
   setCurrentStep,
   setCurrentTask,
   loadPassport,
@@ -748,6 +750,17 @@ async function finishAfterSave(questionId) {
 }
 
 const totalQuestions = computed(() => currentQuestions.value.length || 0)
+
+// Questions keep their number within the whole section even when some are
+// skipped for this passport (utils/questionBranching): a leaseholder goes
+// from Question 8 to Question 10, never seeing a renumbered "Question 9".
+const sectionQuestionCount = computed(
+  () => allSectionQuestions.value.length || totalQuestions.value,
+)
+const questionNumber = computed(() => {
+  const i = allSectionQuestions.value.indexOf(currentQuestion.value)
+  return i >= 0 ? i + 1 : currentQuestionIndex.value + 1
+})
 
 const taskProgress = computed(() => {
   if (!currentTask.value || totalQuestions.value === 0) return 0
@@ -1688,6 +1701,10 @@ const handleContinue = () => {
 }
 .q-seg.current {
   background: #b6ede8;
+}
+/* A question skipped for this ownership type keeps its slot, faded. */
+.q-seg.skipped {
+  opacity: 0.35;
 }
 .q-seg.current::after {
   content: '';
