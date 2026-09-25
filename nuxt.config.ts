@@ -225,12 +225,21 @@ export default defineNuxtConfig({
           // browser zoom, since both show up as a resize.
           //   1920x1080 -> ~1.31   2560x1440 -> ~1.78   4K at 100% -> 2.2 (cap)
           // The cap keeps the raster artwork from being blown up past its
-          // resolution. Inline in <head> so it lands before the first paint;
-          // the stepped values in main.css are the fallback without JS.
+          // resolution. That is about screen pixels, not CSS pixels: with the
+          // browser zoomed out (devicePixelRatio below 1) each CSS pixel
+          // covers less than one screen pixel, so the cap rises by the same
+          // factor. A fixed 2.2 stopped the page growing once zoomed out past
+          // ~45% and left it as a small island in the window.
+          // --desk-fit is the other direction, for pages that must fit one
+          // window (the claim flow): a side-by-side window shorter than the
+          // 730px design height - a 1366x768 laptop is ~607px - scales them
+          // down to the window, but never below 0.86 so text stays readable.
+          // Inline in <head> so it lands before the first paint; the stepped
+          // values in main.css are the fallback without JS.
           key: 'desk-zoom',
           tagPosition: 'head',
           innerHTML:
-            "(function(){var r=document.documentElement;function s(){var w=innerWidth,h=innerHeight,z=w<1536?1:Math.min(w/1440,h/730);z=Math.max(1,Math.min(z,2.2));r.style.setProperty('--desk-zoom',z.toFixed(3))}s();addEventListener('resize',s)})()",
+            "(function(){var r=document.documentElement;function s(){var w=innerWidth,h=innerHeight,z=w<1536?1:Math.min(w/1440,h/730);z=Math.max(1,Math.min(z,2.2/Math.min(devicePixelRatio||1,1)));r.style.setProperty('--desk-zoom',z.toFixed(3));r.style.setProperty('--desk-fit',(w<981||h>=730?1:Math.max(.86,h/730)).toFixed(3))}s();addEventListener('resize',s)})()",
         },
       ],
     },

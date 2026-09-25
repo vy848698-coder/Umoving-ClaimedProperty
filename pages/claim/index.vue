@@ -706,13 +706,14 @@ function continueToClaim() {
   .hsw-shell { zoom: var(--desk-zoom); }
 }
 
-/* Desktop. Stacked, the heading, lede and tracker pushed the search card -
-   the one thing to do on this page - below the fold once the column above
-   is scaled up for a monitor. Side by side they take one band, and the
-   postcode field lands on the first screen. */
+/* Desktop: the page fits one window, no scrolling. The column is scaled by
+   --desk-zoom (at most window height / 730), so fitting 730px here fills any
+   monitor. The heading and tracker share a band, and the room kept below
+   the card for the address list goes - the list sizes itself to the space
+   left under the field (PropertySearchInput). */
 @media (min-width: 981px) {
   .clw-main {
-    padding-top: 36px;
+    padding: 22px 0 20px;
   }
   .clw-head {
     max-width: none;
@@ -724,32 +725,79 @@ function continueToClaim() {
   .clw-head-text {
     min-width: 0;
   }
+  .clw-kicker {
+    margin-bottom: 10px;
+  }
   .clw-head h1 {
     white-space: nowrap;
   }
   .clw-lede {
+    margin-top: 12px;
     max-width: 560px;
-  }
-  .clw-lede {
-    margin-top: 14px;
   }
   .clw-tracker {
     flex: 0 1 480px;
     margin: 0 0 4px;
   }
   .clw-layout {
-    margin-top: 28px;
+    margin-top: 22px;
+  }
+  .clw-aside {
+    position: static;
   }
   .clw-card {
-    padding-top: 26px;
+    padding-top: 24px;
   }
   .cl-icon-square,
   .cl-icon-square img {
-    width: 76px;
-    height: 76px;
+    width: 72px;
+    height: 72px;
   }
   .cl-icon-square {
-    margin-bottom: 12px;
+    margin-bottom: 10px;
+  }
+  .clw-aside-card {
+    padding: 22px 24px;
+  }
+  .clw-aside-title {
+    margin-bottom: 14px;
+  }
+  .clw-aside-time {
+    margin-bottom: 14px;
+  }
+  .clw-steps {
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .clw-step-ic {
+    width: 52px;
+    height: 52px;
+    border-radius: 15px;
+  }
+  .clw-step-ic img {
+    width: 40px;
+    height: 40px;
+  }
+  .clw-steps li:not(:last-child)::after {
+    left: 25px;
+    top: 56px;
+    bottom: -10px;
+  }
+  .clw-trust {
+    padding-top: 14px;
+  }
+}
+
+/* Short side-by-side windows (a 1366x768 laptop leaves ~607px): the
+   column scales down to the window by --desk-fit (never below 0.86, see
+   nuxt.config.ts) and the spacing tightens, so the step still fits. */
+@media (min-width: 981px) and (max-height: 729px) {
+  .hsw-shell { zoom: var(--desk-fit, 1); }
+  .clw-main {
+    padding: 14px 0 12px;
+  }
+  .clw-layout {
+    margin-top: 18px;
   }
 }
 

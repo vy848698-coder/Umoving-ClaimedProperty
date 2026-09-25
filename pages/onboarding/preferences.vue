@@ -2376,20 +2376,27 @@ onMounted(() => {
   .pf-body { zoom: var(--desk-zoom); }
 }
 
-/* Side by side, step 2's seven questions run a few hundred px past the
-   window at every desktop size, which left "Build my Passport" off screen.
-   The action row sticks to the bottom of the window instead; its top rule
-   sits exactly on the divider, so at rest it looks unchanged. */
+/* Step 2 side by side: questions in two columns. Stacked one per row,
+   the answers ran 1000-2200px down the page; paired up, and with the
+   heading tighter, the form needs far less of the window. Free-text and
+   location questions keep the full width for their input. */
 @media (min-width: 981px) {
-  .pf-divider { margin-bottom: 0; }
-  .pf-actions {
-    position: sticky;
-    bottom: 0;
-    z-index: 5;
-    padding: 18px 0 22px;
-    background: #faf9f5;
-    box-shadow: 0 -1px 0 #ece7dc;
+  .pf-main-inner.is-detail { max-width: 1080px; }
+  .is-detail .pf-top { margin-bottom: 24px; }
+  .is-detail .pf-title { font-size: clamp(30px, 2.6vw, 36px); margin-bottom: 6px; }
+  .is-detail .pf-sub { margin-bottom: 18px; }
+  .is-detail .pf-detail { gap: 14px; margin-top: 0; }
+  .is-detail .pf-card { padding: 18px 26px 20px; }
+  .is-detail .pf-card-head { margin-bottom: 0; }
+  .is-detail .pf-card-body {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 36px;
+    align-items: start;
   }
+  .is-detail .pf-card-body > .pref-section { padding-top: 14px; }
+  .is-detail .pf-card-body > .pref-section:has(.pref-input) { grid-column: 1 / -1; }
+  .is-detail .pf-divider { margin: 18px 0 14px; }
 }
 
 /* ── Short side-by-side windows ──
@@ -2413,8 +2420,7 @@ onMounted(() => {
   .pf-main { padding-top: clamp(20px, 5vh, 40px); padding-bottom: clamp(16px, 2.6vh, 64px); }
   .pf-top { margin-bottom: clamp(20px, 5vh, 40px); }
   .pf-sub { margin-bottom: clamp(18px, 4.2vh, 32px); }
-  .pf-divider { margin: clamp(18px, 4.2vh, 34px) 0 0; }
-  .pf-actions { padding: clamp(12px, 2.6vh, 18px) 0 clamp(12px, 2.6vh, 22px); }
+  .pf-divider { margin: clamp(18px, 4.2vh, 34px) 0 clamp(14px, 2.8vh, 22px); }
 }
 
 @media (max-width: 980px) {

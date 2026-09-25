@@ -151,18 +151,20 @@
         <p class="cl-body" style="margin: 0" v-html="claimPriceExplainer" />
       </div>
 
-      <div class="cl-card cl-mb-sm">
-        <div class="cl-lrf-rows">
-          <div class="cl-lrf-row">
-            <span class="cl-lrf-l">Verification fee</span>
-            <span class="cl-lrf-v">{{ claimPriceDisplay }}</span>
+      <div class="cl-pay-row">
+        <div class="cl-card cl-mb-sm">
+          <div class="cl-lrf-rows">
+            <div class="cl-lrf-row cl-lrf-row-last">
+              <span class="cl-lrf-l">Verification fee</span>
+              <span class="cl-lrf-v">{{ claimPriceDisplay }}</span>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="cl-card cl-mb-sm">
-        <div class="cl-eyebrow cl-mb-sm">Card details</div>
-        <div id="claim-stripe-card-element" class="cl-stripe-box" />
+        <div class="cl-card cl-mb-sm">
+          <div class="cl-eyebrow cl-mb-sm">Card details</div>
+          <div id="claim-stripe-card-element" class="cl-stripe-box" />
+        </div>
       </div>
 
       <div v-if="paymentError" class="cl-err-banner" role="alert">
@@ -2775,22 +2777,23 @@ async function issuePassport() {
   .hsw-shell { zoom: var(--desk-zoom); }
 }
 
-/* Desktop. At its phone-first spacing a step ran ~1150px tall, so on a
-   monitor - where the column above is also scaled up - the primary button
-   sat a screen or more below the fold. Here the title and the tracker share
-   one row, the columns line up with the navbar edges, the hero is tighter,
-   and the button sticks to the bottom of the window whenever the panel runs
-   past it. */
+/* Desktop: every step fits one window, no scrolling.
+   The whole column is scaled by --desk-zoom (above), which is at most
+   window height / 730, so a step that fits 730px here fills any monitor
+   edge to edge. At phone spacing the steps ran 750-960px tall, so the
+   layout tightens: title and tracker share a row, the step icon sits beside
+   its heading, and the step content spreads across instead of stacking. */
 @media (min-width: 981px) {
-  .claim-main {
-    padding-top: 28px;
-    padding-bottom: 40px;
+  .claim-main,
+  .claim-main--search {
+    padding-top: 18px;
+    padding-bottom: 20px;
   }
   .claim-top {
     display: flex;
     align-items: center;
     gap: 48px;
-    margin-bottom: 24px;
+    margin-bottom: 16px;
   }
   .claim-head {
     width: auto;
@@ -2812,42 +2815,177 @@ async function issuePassport() {
     gap: 32px;
   }
   .claim-panel {
-    padding: 30px 34px 0;
+    padding: 24px 30px;
   }
   .claim-aside {
-    top: 86px;
+    position: static;
   }
-  .cl-hero {
-    margin-bottom: 20px;
+
+  /* Step heading: icon beside the title and lede. */
+  .cl-hero:has(> .cl-hero-ic) {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    column-gap: 18px;
+    align-items: center;
+    align-self: stretch;
+    text-align: left;
+    margin-bottom: 18px;
   }
-  .cl-hero-ic {
-    width: 76px;
-    height: 76px;
-    border-radius: 23px;
-    margin-bottom: 14px;
+  .cl-hero > .cl-hero-ic {
+    grid-row: 1 / span 2;
+    width: 64px;
+    height: 64px;
+    border-radius: 20px;
+    margin: 0;
+    box-shadow:
+      0 0 0 6px rgba(0, 161, 154, 0.06),
+      0 10px 22px rgba(0, 161, 154, 0.14);
   }
-  .cl-hero-ic img {
-    width: 54px;
-    height: 54px;
+  .cl-hero > .cl-hero-ic img {
+    width: 46px;
+    height: 46px;
   }
-  .cl-hero-img {
-    width: 120px;
-    height: 120px;
+  .cl-hero:has(> .cl-hero-ic) .cl-h1 {
+    align-self: end;
+    margin-bottom: 4px;
+  }
+  .cl-hero:has(> .cl-hero-ic) .cl-body {
+    align-self: start;
+    max-width: none;
+  }
+  .cl-hero .cl-hero-img {
+    width: 96px;
+    height: 96px;
+    margin-bottom: 8px;
+  }
+  .cl-pill-row {
+    margin-bottom: 18px;
+  }
+
+  /* Confirm: the four title facts on one row. */
+  .cl-navy-card {
+    padding: 18px 20px;
     margin-bottom: 12px;
   }
-  .cl-cta-inline {
-    position: sticky;
-    bottom: 0;
-    z-index: 3;
-    margin: 22px -34px 0;
-    padding: 16px 34px 26px;
-    background: #fff;
-    border-radius: 0 0 22px 22px;
-    box-shadow: 0 -12px 22px -18px rgba(17, 52, 88, 0.35);
+  .cl-navy-img {
+    width: 72px;
+    height: 72px;
   }
-  /* Steps without the button still need the panel's bottom padding. */
-  .claim-panel > .cl-screen:last-child {
-    padding-bottom: 28px;
+  .cl-navy-addr2 {
+    margin-bottom: 14px;
+  }
+  .cl-tile-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .cl-link-center {
+    padding: 6px;
+  }
+
+  /* Identity explainer: the three checks side by side. */
+  .cl-center-col > .cl-card-pale {
+    align-self: stretch;
+  }
+  .cl-row-list {
+    flex-direction: row;
+    gap: 16px;
+  }
+  .cl-step-row {
+    flex: 1;
+    min-width: 0;
+    gap: 10px;
+  }
+  .cl-step-ic {
+    width: 44px;
+    height: 44px;
+  }
+
+  /* Payment: fee and card details side by side. */
+  .cl-owned {
+    margin-bottom: 18px;
+  }
+  .cl-owned-illus {
+    width: 64px;
+    height: 64px;
+  }
+  .cl-pay-row {
+    display: grid;
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+  .cl-pay-row > .cl-card {
+    margin-bottom: 0;
+  }
+  .cl-pay-row > .cl-card:first-child {
+    display: flex;
+    align-items: center;
+  }
+  .cl-pay-row > .cl-card:first-child > .cl-lrf-rows {
+    flex: 1;
+  }
+  .cl-screen > .cl-btn-brand {
+    width: 100%;
+  }
+
+  /* Ownership confirmed: title data in two columns. */
+  .cl-lrf-head {
+    margin-bottom: 10px;
+  }
+  .cl-lrf-head + .cl-lrf-rows {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 28px;
+    row-gap: 8px;
+  }
+  .cl-lrf-head + .cl-lrf-rows > .cl-lrf-row {
+    padding-bottom: 8px;
+  }
+  .cl-lrf-head + .cl-lrf-rows > .cl-lrf-row:nth-last-child(2) {
+    border-bottom: none;
+  }
+  .cl-ready {
+    padding: 12px 18px;
+  }
+  .cl-ready-img {
+    width: 40px;
+    height: 56px;
+  }
+
+  .cl-cta-inline {
+    margin-top: 18px;
+    padding-top: 18px;
+  }
+}
+
+/* Short side-by-side windows (a 1366x768 laptop leaves ~607px): the
+   column scales down to the window by --desk-fit (never below 0.86, see
+   nuxt.config.ts) and the spacing tightens, so the step still fits. */
+@media (min-width: 981px) and (max-height: 729px) {
+  .hsw-shell { zoom: var(--desk-fit, 1); }
+  .claim-main,
+  .claim-main--search {
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+  .claim-panel {
+    padding: 20px 30px;
+  }
+  .cl-cta-inline {
+    margin-top: 14px;
+    padding-top: 14px;
+  }
+  .claim-aside-prop {
+    margin-bottom: 12px;
+  }
+  .claim-aside-card {
+    padding: 18px 22px;
+  }
+  .claim-aside-list {
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .cl-hero:has(> .cl-hero-ic) {
+    margin-bottom: 14px;
   }
 }
 
