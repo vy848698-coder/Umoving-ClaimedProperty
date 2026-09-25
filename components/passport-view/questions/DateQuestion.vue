@@ -114,7 +114,28 @@
 
         <span class="option-label">{{ option.label }}</span>
 
-        <div v-if="option.hasDate" class="date-badge">
+        <!-- Free-text answer ("e.g. Early Tuesdays"): a real, visible input
+             in the badge, so the user sees the caret and what they type.
+             keydown.stop keeps the row's space/enter handlers from eating
+             the keystrokes. -->
+        <div
+          v-if="option.hasDate && getOptionFormat(option) === 'text'"
+          class="date-badge date-badge--text"
+        >
+          <input
+            :ref="(el) => setDateInputRef(el, index)"
+            type="text"
+            class="date-text-input"
+            :value="getInputValue(option)"
+            :placeholder="option.datePlaceholder || ''"
+            :size="textInputSize(option)"
+            :aria-label="option.label"
+            @input="(e) => updateDate(e, option)"
+            @click.stop
+            @keydown.stop
+          />
+        </div>
+        <div v-else-if="option.hasDate" class="date-badge">
           <span v-if="getDateValue(option)" class="date-text">
             {{ formatValue(getDateValue(option), option) }}
           </span>
@@ -192,7 +213,9 @@ const isMultiInputMode = computed(() => {
     return false
   return (
     props.question.options.every((opt) => opt.hasDate) &&
-    props.question.options.some((opt) => opt.inputType)
+    props.question.options.some(
+      (opt) => opt.inputType || isTextExample(opt),
+    )
   )
 })
 
@@ -282,8 +305,28 @@ const handleOptionClick = (value) => {
   selectOption(value)
 }
 
+// An option that sets neither inputType nor dateFormat but whose placeholder
+// is an example answer ("e.g. Early Tuesdays") asks for free text. Real date
+// options set a dateFormat or say "Select date"; defaulting these to a month
+// picker left the user nothing they could type into.
+const isTextExample = (option) =>
+  !option?.inputType &&
+  !option?.dateFormat &&
+  /^\s*e\.?\s?g\.?\s/i.test(option?.datePlaceholder || '')
+
 const getOptionFormat = (option) => {
+  if (isTextExample(option)) return 'text'
   return option.inputType || option.dateFormat || 'monthYear'
+}
+
+// Width, in characters, of a free-text badge: fits the placeholder, and
+// grows with the answer up to a cap.
+const textInputSize = (option) => {
+  const len = Math.max(
+    (option.datePlaceholder || '').length,
+    String(getDateValue(option) || '').length,
+  )
+  return Math.min(Math.max(len, 8), 34)
 }
 
 const isNumericInput = (option) => {
@@ -602,6 +645,36 @@ const formatValue = (rawValue, option) => {
   position: relative;
   z-index: 1;
   pointer-events: none;
+}
+
+/* Free-text badge: same pill, holding a real input styled like the badge
+   text, so at rest it looks identical to the other badges. */
+.date-badge--text {
+  cursor: text;
+  max-width: 60%;
+}
+.date-badge--text:focus-within {
+  background: rgba(0, 161, 154, 0.16);
+  box-shadow: 0 0 0 2px rgba(0, 161, 154, 0.35);
+}
+.date-text-input {
+  display: block;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #00857f;
+  text-align: right;
+}
+.date-text-input::placeholder {
+  font-size: 14px;
+  font-weight: 400;
+  color: #a5a1b4;
 }
 
 .date-input-overlay {
