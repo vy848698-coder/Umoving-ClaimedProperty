@@ -183,6 +183,16 @@ onUnmounted(() => {
   animation: drawer-pop-in 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+/* Big screens - scale with the page behind it (--wide-zoom = width / 1366,
+   nuxt.config.ts). Zoom multiplies dvh too, so the height cap divides it
+   back out and the drawer still fits the window. */
+@media (min-width: 1367px) {
+  .drawer:not(.drawer--fullscreen) {
+    zoom: var(--wide-zoom, 1);
+    max-height: min(760px, calc(100dvh / var(--wide-zoom, 1) - 48px));
+  }
+}
+
 @keyframes drawer-pop-in {
   from { transform: translateY(14px) scale(0.97); opacity: 0; }
   to { transform: translateY(0) scale(1); opacity: 1; }

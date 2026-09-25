@@ -3177,9 +3177,13 @@ function formatStamp(iso) {
 }
 
 /* ── Big screens ──────────────────────────────────────────────────── */
-/* Scale the nav row and main column by the shared desktop factor. */
-@media (min-width: 1536px) {
-  .hsw-shell { zoom: var(--desk-zoom); }
+/* Big screens - the nav row and main column scale with the window width
+   (--wide-zoom = width / 1366, nuxt.config.ts), so a desktop monitor shows
+   this page exactly as a 1366px laptop does, only bigger: same side
+   margins, same layout. */
+@media (min-width: 1367px) {
+  .hsw-shell,
+  .pp-share-modal { zoom: var(--wide-zoom, 1); }
 }
 
 /* ── Responsive ───────────────────────────────────────────────────── */

@@ -100,6 +100,11 @@ onBeforeUnmount(() => {
   padding: calc(20px + env(safe-area-inset-top)) 20px calc(24px + env(safe-area-inset-bottom));
   overflow-y: auto;
 }
+/* Big screens - the back link and card scale with the window width
+   (--wide-zoom = width / 1366, nuxt.config.ts), like the page behind them. */
+@media (min-width: 1367px) {
+  .scc-page > * { zoom: var(--wide-zoom, 1); }
+}
 .scc-fade-enter-active,
 .scc-fade-leave-active {
   transition: opacity 0.25s ease;

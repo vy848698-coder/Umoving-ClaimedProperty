@@ -107,6 +107,12 @@ function requestFullscreen() {
   flex-direction: column;
 }
 
+/* Big screens - scale with the page behind it (--wide-zoom = width / 1366,
+   nuxt.config.ts), so it keeps its laptop size relative to the window. */
+@media (min-width: 1367px) {
+  .video-modal { zoom: var(--wide-zoom, 1); }
+}
+
 .video-modal-header {
   display: flex;
   align-items: center;

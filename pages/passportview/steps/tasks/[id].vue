@@ -1900,14 +1900,15 @@ const handleContinue = () => {
 }
 
 /* ── Big screens ───────────────────────────────────────────────────── */
-/* Scale the nav row and the sidebar + question split by the shared desktop
-   factor. Zoom multiplies the sidebar's dvh too, so its full-height rule
-   divides the viewport back out: it still ends at the bottom of the screen,
-   below the (now taller) nav. */
-@media (min-width: 1536px) {
+/* The nav row and the sidebar + question split scale with the window width
+   (--wide-zoom = width / 1366, nuxt.config.ts), so a desktop monitor shows
+   this page exactly as a 1366px laptop does, only bigger. Zoom multiplies
+   the sidebar's dvh too, so its full-height rule divides the viewport back
+   out: it still ends at the bottom of the screen, below the (taller) nav. */
+@media (min-width: 1367px) {
   .hsw-shell,
-  .tk-split { zoom: var(--desk-zoom); }
-  .tk-side { min-height: calc(100dvh / var(--desk-zoom) - 66px); }
+  .tk-split { zoom: var(--wide-zoom, 1); }
+  .tk-side { min-height: calc(100dvh / var(--wide-zoom, 1) - 66px); }
 }
 
 /* ── Responsive ────────────────────────────────────────────────────── */

@@ -119,6 +119,12 @@ function viewCertificate() {
 }
 .fmm-handle { display: none; }
 
+/* Big screens - scale with the page behind it (--wide-zoom = width / 1366,
+   nuxt.config.ts), so it keeps its laptop size relative to the window. */
+@media (min-width: 1367px) {
+  .fmm-modal { zoom: var(--wide-zoom, 1); }
+}
+
 @media (max-width: 640px) {
   .fmm-overlay { align-items: flex-end; padding: 0; }
   .fmm-modal {

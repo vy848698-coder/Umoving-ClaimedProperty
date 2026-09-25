@@ -152,6 +152,16 @@ watch(
   flex-direction: column;
 }
 
+/* Big screens - scale with the page behind it (--wide-zoom = width / 1366,
+   nuxt.config.ts), so it keeps its laptop size relative to the window.
+   Zoom multiplies vh too, so the height cap divides it back out. */
+@media (min-width: 1367px) {
+  .your-properties-sheet {
+    zoom: var(--wide-zoom, 1);
+    max-height: calc(80vh / var(--wide-zoom, 1));
+  }
+}
+
 .sheet-title {
   font-size: 22px;
   font-weight: 700;

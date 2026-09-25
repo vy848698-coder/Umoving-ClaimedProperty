@@ -67,6 +67,11 @@ watch(
   pointer-events: none;
 }
 
+/* Big screens - scale with the page (--wide-zoom = width / 1366). */
+@media (min-width: 1367px) {
+  .toast { zoom: var(--wide-zoom, 1); }
+}
+
 .toast {
   background: linear-gradient(135deg, #00a19a 0%, #00d4c3 100%);
   border-radius: 100px;

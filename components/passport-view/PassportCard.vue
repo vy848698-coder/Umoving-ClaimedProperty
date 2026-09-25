@@ -282,7 +282,7 @@ function refit() {
   //   - the block height is summed from the two lines rather than read off the
   //     clipped plate
   //   - bounding rects are in screen pixels, so on a page scaled with CSS zoom
-  //     (--desk-zoom, big screens) they are divided back into the plate's own
+  //     (big screens) they are divided back into the plate's own
   //     pixels to compare with availH, which comes from clientHeight
   const zoom = pl.currentCSSZoom || 1
   const blockHeight = () => {

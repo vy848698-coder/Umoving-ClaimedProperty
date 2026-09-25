@@ -100,8 +100,15 @@ const spotlightStyle = computed(() => {
 
 const tipAbove = ref(false)
 
+// The zoom of the page region the tip points at. Pages scale by either
+// --desk-zoom or --wide-zoom, so read it off the target (or the page shell)
+// itself; the CSS variable is only the fallback for browsers without
+// currentCSSZoom.
 function deskZoom() {
   if (typeof window === 'undefined') return 1
+  const sel = currentStep.value?.selector
+  const el = (sel && document.querySelector(sel)) || document.querySelector('.hsw-shell')
+  if (el && el.currentCSSZoom > 0) return el.currentCSSZoom
   const z = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--desk-zoom'))
   return z > 0 ? z : 1
 }
@@ -110,7 +117,7 @@ const tipStyle = computed(() => {
   const r = targetRect.value
   const vh = typeof window !== 'undefined' ? window.innerHeight : 800
   const vw = typeof window !== 'undefined' ? window.innerWidth : 400
-  // On big screens the pages scale up with CSS zoom (--desk-zoom). The tip
+  // On big screens the pages scale up with CSS zoom. The tip
   // lives on <body>, outside that, so it takes the same zoom to match the
   // page it points at. Everything below is worked out in screen pixels, then
   // divided by the zoom because the tip's own top/left/width get multiplied.
