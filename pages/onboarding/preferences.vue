@@ -290,7 +290,7 @@
           <div class="pf-actions">
             <div class="pf-actions-meta">
               <span v-if="phase === 'role'">
-                <strong>{{ selectedRole ? '1' : '0' }} of 4</strong> options chosen
+                <strong>{{ selectedRole ? '1' : '0' }} of {{ roles.length }}</strong> options chosen
               </span>
               <span v-else>
                 <strong>{{ answeredCount }} of {{ totalQuestions }}</strong>
@@ -521,12 +521,8 @@ const trust = [
     gold: true,
     svg: '<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/></svg>',
   },
-  {
-    title: '12× faster',
-    sub: 'to exchange than average',
-    gold: true,
-    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8"/><path d="M12 17v4"/><path d="M17 4H7v6a5 5 0 1 0 10 0V4z"/><path d="M17 4h3v2a3 3 0 0 1-3 3"/><path d="M7 4H4v2a3 3 0 0 0 3 3"/></svg>',
-  },
+  // "12× faster" is not repeated as a card: the info card above already says
+  // it, and the extra card pushed the sidebar past the bottom of the screen.
 ]
 
 // ── Question definitions ──────────────────────────────────────────────────
@@ -1219,7 +1215,7 @@ onMounted(() => {
 /* Left sidebar */
 .pf-side {
   flex: 0 0 clamp(340px, 30%, 460px);
-  padding: 44px 40px;
+  padding: 36px 40px;
   background:
     radial-gradient(circle at 80% 6%, rgba(47, 191, 182, 0.10) 0%, transparent 44%),
     linear-gradient(158deg, #241d47 0%, #2c2658 55%, #201b46 100%);
@@ -1253,13 +1249,13 @@ onMounted(() => {
   line-height: 1.18;
   letter-spacing: -0.8px;
   color: #fff;
-  margin: 24px 0 34px;
+  margin: 24px 0 28px;
 }
 
 /* Step tracker */
 .pf-steps {
   list-style: none;
-  margin: 0 0 36px;
+  margin: 0 0 30px;
   padding: 0;
 }
 .pf-step {
@@ -2377,6 +2373,28 @@ onMounted(() => {
   .pf-body { zoom: var(--desk-zoom); }
 }
 
+/* ── Short side-by-side windows ──
+   The sidebar is sized to fit the 730px design height that the desktop zoom
+   scales from. A 1366x768 laptop leaves ~600px once the browser chrome is
+   taken, and the sidebar ran ~190px past the fold. Below 730px tall the zoom
+   is always 1, so vh is safe here: the vertical rhythm of both columns
+   shrinks with the window and everything fits on one screen. */
+@media (min-width: 981px) and (max-height: 729px) {
+  .pf-side { padding-top: clamp(18px, 4vh, 36px); padding-bottom: clamp(18px, 4vh, 36px); }
+  .pf-side-title { font-size: clamp(23px, 4vh, 29px); margin: clamp(12px, 2.4vh, 22px) 0 clamp(12px, 2.8vh, 26px); }
+  .pf-steps { margin-bottom: clamp(10px, 2.2vh, 26px); }
+  .pf-step { padding-bottom: clamp(10px, 2.2vh, 20px); }
+  .pf-info p { line-height: 1.45; }
+  .pf-info { padding: clamp(12px, 2.2vh, 18px); margin-bottom: clamp(10px, 1.8vh, 14px); }
+  .pf-stats { gap: clamp(8px, 1.4vh, 12px); }
+  .pf-stat { padding-top: clamp(9px, 1.7vh, 13px); padding-bottom: clamp(9px, 1.7vh, 13px); }
+  .pf-stat-ic { width: clamp(34px, 5.6vh, 40px); height: clamp(34px, 5.6vh, 40px); }
+  .pf-main { padding-top: clamp(20px, 5vh, 40px); padding-bottom: clamp(16px, 2.6vh, 64px); }
+  .pf-top { margin-bottom: clamp(20px, 5vh, 40px); }
+  .pf-sub { margin-bottom: clamp(18px, 4.2vh, 32px); }
+  .pf-divider { margin: clamp(18px, 4.2vh, 34px) 0 clamp(14px, 2.8vh, 22px); }
+}
+
 @media (max-width: 980px) {
   .pf-body {
     flex-direction: column;
@@ -2397,19 +2415,23 @@ onMounted(() => {
     grid-template-columns: 1fr;
   }
 }
-/* Phones and small tablets — the context sidebar becomes a slim brand band.
+/* Whenever the columns stack (phones and tablets) the context sidebar becomes
+   a slim brand band.
    Stacked, it sat above the question as a ~1200px preamble, so the actual
    options started two screens down. Everything dropped here is already on the
    main panel: the side title repeats .pf-sub verbatim, and the step tracker
    repeats the "STEP 1 OF 2" label and progress bar in .pf-top. The trust
    cards are reassurance that does not need to come before the question. */
-@media (max-width: 700px) {
-  .pf-side { padding: 14px 20px; }
+@media (max-width: 980px) {
+  .pf-side { padding: 14px 24px; }
   .pf-side-title,
   .pf-steps,
   .pf-info,
   .pf-stats { display: none; }
   .pf-welcome { margin-bottom: 0; }
+}
+@media (max-width: 700px) {
+  .pf-side { padding: 14px 20px; }
   .pf-main { padding: 22px 20px 44px; }
 }
 
