@@ -593,9 +593,9 @@ onMounted(async () => {
   // Load all questions from the entire section, starting at the clicked task
   await loadSectionQuestions(stepId, taskId)
 
-  // Deep-linked from the publish-readiness checklist ("N required questions
-  // left") — jump straight to that exact question instead of wherever
-  // loadSectionQuestions would otherwise land (first unanswered in this task).
+  // Deep-linked to one question (?questionId=) — jump straight to it instead
+  // of wherever loadSectionQuestions would otherwise land (first unanswered
+  // in this task).
   if (route.query.questionId) {
     goToQuestion(String(route.query.questionId))
   }

@@ -24,7 +24,7 @@
           </label>
 
           <p v-if="!allDocs.length" class="share-review-empty">
-            No documents are currently eligible or published — only your
+            No documents are set to be included when you share — only your
             Passport answers will be shared.
           </p>
         </div>
@@ -79,7 +79,7 @@ async function load() {
     const preview = await getSharePreview(props.passportId)
     homeRecords.value = preview.homeRecords ?? []
     personalDocuments.value = preview.personalDocuments ?? []
-    // Every eligible/published document starts checked - the owner
+    // Every included document starts checked - the owner
     // un-checks anything they don't want included in *this* send.
     selected.value = new Set(allDocs.value.map((d) => d.id))
   } catch (e) {

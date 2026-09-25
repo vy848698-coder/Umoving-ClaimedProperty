@@ -31,8 +31,8 @@
           <p class="ppv-kicker">Property Passport</p>
           <h1>Your Passport</h1>
           <p class="ppv-lede">
-            Manage, publish and share your property information, with
-            every answer ready before anyone asks.
+            Manage and share your property information, with every answer
+            ready before anyone asks.
           </p>
         </div>
       </div>
@@ -397,9 +397,9 @@
             <div class="vault-legend-t">Your documents, your choice</div>
             <p class="vault-legend-body">
               Keep documents private in your Vault, share them with selected
-              people, or choose which ones to include when you share or
-              publish your Property Passport. We'll show you exactly who can
-              see each document before you share it.
+              people, or choose which ones to include when you share your
+              Property Passport. We'll show you exactly who can see each
+              document before you share it.
             </p>
           </div>
 
@@ -519,7 +519,7 @@
       @removed="handleCollaboratorRemoved"
     />
 
-    <!-- Document access — per-document Private/Selected/Eligible/Published -->
+    <!-- Document access — per-document Private/Selected/Eligible -->
     <DocumentAccessDrawer
       v-model:show="docAccessOpen"
       :doc="activeDoc"
@@ -626,16 +626,6 @@
       </div>
     </div>
 
-    <!-- Publish confirmation + readiness checklist -->
-    <PublishPassportDrawer
-      :open="publishDrawerOpen"
-      :submitting="publishLoading"
-      :readiness="readiness"
-      @close="publishDrawerOpen = false"
-      @publish="onPublishConfirm"
-      @go-to-question="onGoToChecklistItem"
-    />
-
     <!-- Guided tour — auto-runs once, replays from the "?" in the nav -->
     <OnboardingTour
       ref="passportTourRef"
@@ -660,7 +650,6 @@ import DocumentAccessDrawer from '~/components/passport/DocumentAccessDrawer.vue
 import ShareReviewDrawer from '~/components/passport/ShareReviewDrawer.vue'
 import { useVaultDocuments } from '~/composables/useVaultDocuments'
 import OnboardingTour from '~/components/ui/OnboardingTour.vue'
-import PublishPassportDrawer from '~/components/passport/PublishPassportDrawer.vue'
 import BuyerDetailDrawer from '~/components/passport/BuyerDetailDrawer.vue'
 import BuyerActionDrawer from '~/components/passport/BuyerActionDrawer.vue'
 import Toast from '~/components/ui/Toast.vue'
@@ -684,8 +673,8 @@ const passportTourSteps = [
   },
   {
     selector: '.pp-hero-actions',
-    title: 'Match buyers or publish',
-    body: 'When you\'re ready, match to verified buyers or publish so anyone can view your verified record.',
+    title: 'Share your Passport',
+    body: 'When you\'re ready, share a read-only link to your verified record and choose which documents go with it.',
   },
   {
     selector: '.pp-subtabs',
@@ -748,15 +737,9 @@ const passportTown = ref('')
 // the real type is carried through rather than assumed.
 const passportType = ref('SELLER')
 const isPublished = ref(false)
-const publishLoading = ref(false)
-// Publish-readiness — null until first loaded, so the drawer never flashes
-// its "not ready" gate before we actually know. Separate from
-// overallProgress: this tracks only the disclosures required before a buyer
-// can be charged for this passport.
-const readiness = ref(null)
 
 // Resume state — populated by GET /passport/:id/resume on mount and after
-// every save / publish toggle so the "Pick up where you left off" CTA stays
+// every save so the "Pick up where you left off" CTA stays
 // in sync with backend completion state.
 const resumeTarget = ref(null)
 const resumeTaskTitle = ref('')
@@ -815,10 +798,6 @@ onMounted(async () => {
   // only issues Seller Passports, so every passport loads the seller view.
   loadSections()
   await loadCollaborators()
-  // Load readiness up front — the "Ready to publish" bar and the Publish
-  // button's label both key off it, so waiting for a click would mean the
-  // seller sees a plain "Publish Passport" they can't actually use yet.
-  fetchReadiness()
   try {
     const token =
       typeof window !== 'undefined' ? localStorage.getItem('token') : null
@@ -989,47 +968,6 @@ function epcColor(rating) {
   return map[rating?.toUpperCase()] ?? '#8e8e93'
 }
 
-// ── Publish confirmation drawer + readiness gate ───────────────────────
-const publishDrawerOpen = ref(false)
-
-async function fetchReadiness() {
-  const token =
-    typeof window !== 'undefined' ? localStorage.getItem('token') : null
-  if (!token) return
-  try {
-    readiness.value = await $fetch(
-      `${config.public.apiBase}/passport/${route.params.id}/readiness`,
-      { headers: { Authorization: `Bearer ${token}` } },
-    )
-  } catch (e) {
-    console.error('Failed to load publish readiness', e)
-  }
-}
-
-function onGoToChecklistItem(item) {
-  publishDrawerOpen.value = false
-  // System-fact checks (title number / EPC) aren't tied to a section the
-  // seller answers directly — the EPC one has an upload fallback in
-  // Environmental, so send them there; title number has nothing to action.
-  if (!item?.taskId || !item?.sectionId) {
-    if (item?.question?.toLowerCase().includes('epc')) {
-      const envStep = steps.value.find((s) => s.key === 'environmental')
-      if (envStep) navigateToStep(envStep.id)
-    }
-    return
-  }
-  // Deep-links straight to the exact question (not just its section) —
-  // steps/tasks/[id].vue reads ?questionId= and jumps to it directly.
-  router.push({
-    path: `/passportview/steps/tasks/${item.taskId}`,
-    query: {
-      stepId: item.sectionId,
-      propertyId: route.params.id,
-      ...(item.questionId ? { questionId: item.questionId } : {}),
-    },
-  })
-}
-
 // ── Share link ─────────────────────────────────────────────────────────
 // Same endpoint and shape the landlord view already uses
 // (pages/passportview/landlord/[id].vue): POST /passport/:id/share returns
@@ -1087,42 +1025,6 @@ async function copyShare() {
     setTimeout(() => (shareCopied.value = false), 1800)
   } catch {
     shareError.value = 'Copy failed. Select the link and copy it manually.'
-  }
-}
-
-async function onPublishConfirm() {
-  await togglePublish()
-  publishDrawerOpen.value = false
-  // Refresh the timeline so the freshly-logged "Published" entry shows up.
-  if (activeTab.value === 'timeline') fetchTimeline()
-  else timelineEvents.value = [] // force re-fetch next time
-}
-
-async function togglePublish() {
-  if (publishLoading.value) return
-  const token =
-    typeof window !== 'undefined' ? localStorage.getItem('token') : null
-  if (!token) return
-  publishLoading.value = true
-  try {
-    const endpoint = isPublished.value ? 'unpublish' : 'publish'
-    await $fetch(
-      `${config.public.apiBase}/passport/${route.params.id}/${endpoint}`,
-      { method: 'PUT', headers: { Authorization: `Bearer ${token}` } },
-    )
-    isPublished.value = !isPublished.value
-    fetchReadiness()
-  } catch (e) {
-    console.error('Failed to toggle publish state', e)
-    // The backend gates publish on readiness — a 403 for that carries the
-    // full result, so surface the checklist instead of failing silently.
-    const gate = e?.data?.readiness
-    if (gate) {
-      readiness.value = gate
-      publishDrawerOpen.value = true
-    }
-  } finally {
-    publishLoading.value = false
   }
 }
 
@@ -1327,12 +1229,13 @@ function accessBadgeLabel(doc) {
   switch (doc.accessLevel) {
     case 'PRIVATE': return 'Private'
     case 'SELECTED': return `Shared with ${doc.sharedWith?.length || 0}`
-    case 'ELIGIBLE': return 'Included when shared'
-    case 'PUBLISHED': return 'Published'
+    case 'ELIGIBLE':
+    case 'PUBLISHED': return 'Included when shared'
     default: return 'Private'
   }
 }
 function accessBadgeClass(level) {
+  if (level === 'PUBLISHED') return 'badge-eligible'
   return `badge-${(level || 'PRIVATE').toLowerCase()}`
 }
 
@@ -2223,34 +2126,6 @@ function formatStamp(iso) {
   color: #fff;
 }
 
-.match_publish_container {
-  display: flex;
-}
-
-.match_publish_container button {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  justify-content: center;
-  flex: 1;
-  margin: 10px 5px;
-  padding: 12px;
-  background: #ffffff;
-  border: none;
-  border-radius: 12px;
-  font-weight: 400;
-  font-size: 17px;
-  line-height: 22px;
-  letter-spacing: -0.43px;
-  color: #00a19a;
-  cursor: pointer;
-}
-
-.match_publish_container button.active {
-  background: #00a19a;
-  color: #ffffff;
-}
-
 .pp-match-badge {
   background: #fff;
   color: #00a19a;
@@ -3017,62 +2892,6 @@ function formatStamp(iso) {
   box-shadow: 0 0 0 2.5px #f1f9f4;
 }
 
-/* ── Action row (Match to Buyers + Publish) ────────────────────── */
-.pp-action-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-.pp-action-btn {
-  border: none;
-  border-radius: 12px;
-  padding: 11px 12px;
-  cursor: pointer;
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  transition:
-    transform 0.1s,
-    box-shadow 0.15s;
-}
-.pp-action-btn:active {
-  transform: scale(0.98);
-}
-.pp-action-outline {
-  background: #fff;
-  color: #231d45;
-  border: 1.5px solid #eef0f6;
-}
-.pp-action-outline:hover {
-  border-color: #e2f1ea;
-}
-.pp-action-primary {
-  background: #00a19a;
-  color: #fff;
-  box-shadow: 0 4px 14px rgba(0, 161, 154, 0.28);
-}
-.pp-action-primary:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-.pp-action-loading {
-  opacity: 0.85;
-}
-.pp-action-badge {
-  background: #00a19a;
-  color: #fff;
-  font-size: 10px;
-  font-weight: 800;
-  padding: 1px 6px;
-  border-radius: 999px;
-  margin-left: 2px;
-}
-
 /* ── Collaborators row ─────────────────────────────────────────── */
 .pp-collab-row {
   display: flex;
@@ -3231,7 +3050,6 @@ function formatStamp(iso) {
 .badge-private { background: #f1f0f6; color: #6b7089; }
 .badge-selected { background: rgba(217, 154, 43, 0.16); color: #c98a1e; }
 .badge-eligible { background: rgba(0, 161, 154, 0.12); color: #008a84; }
-.badge-published { background: rgba(21, 128, 61, 0.12); color: #15803d; }
 .vault-doc-chevron { width: 16px; height: 16px; color: #c9c7d4; flex-shrink: 0; }
 
 /* ── Timeline tab ──────────────────────────────────────────────── */
@@ -3670,8 +3488,6 @@ function formatStamp(iso) {
   border-radius: 999px;
 }
 
-/* ── Publish-readiness band — amber on purpose, so it never reads as a
-      second copy of the teal completion ring in the hero above it. ─── */
 .pp-empty-ic {
   font-size: 30px;
   line-height: 1;

@@ -143,9 +143,6 @@
               <div class="task-info">
                 <h3 class="task-title">
                   {{ toSentenceCase(task.title) }}
-                  <span v-if="task.hasPublishRequired" class="task-required-badge">
-                    Required to publish
-                  </span>
                 </h3>
                 <p v-if="task.description" class="task-description">{{ task.description }}</p>
 
@@ -175,25 +172,6 @@
         </section>
 
         <aside class="stw-aside">
-          <!-- Expert guidance -->
-          <section class="expert-card">
-            <span class="expert-badge"><span class="dot"></span> Under review</span>
-            <div class="expert-ic">
-              <OPIcon name="expertIcon" class="w-[22px] h-[22px]" />
-            </div>
-            <h3 class="expert-title">Need expert guidance?</h3>
-            <p class="expert-desc">
-              Get professional advice from a qualified property expert on this section.
-            </p>
-            <span class="expert-time">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
-              </svg>
-              Minimum time: 1 day
-            </span>
-            <button class="expert-btn" @click="handleViewProfile">View expert profile</button>
-          </section>
-
           <!-- Section summary -->
           <section class="summary-card">
             <h3 class="summary-title">Section summary</h3>
@@ -431,12 +409,6 @@ const goToNextSection = () => {
       `/passportview/steps/${nextStep.value.id}?propertyId=${route.query.propertyId}`,
     )
   }
-}
-
-const handleViewProfile = () => {
-  router.push(
-    `/passportview/expert?propertyId=${route.query.propertyId}&stepId=${route.params.id}`,
-  )
 }
 
 </script>
@@ -1001,25 +973,6 @@ const handleViewProfile = () => {
 .task-card:hover::before {
   background: #00a19a;
 }
-/* "Required to publish" is a small amber pill, always - it used to take this
-   style only while the card was hovered and otherwise read as part of the
-   task title. */
-.task-required-badge {
-  display: inline-block;
-  margin-left: 8px;
-  padding: 2px 7px;
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  color: #b45309;
-  background: #fff3dc;
-  border: 1px solid #fbe4bd;
-  border-radius: 999px;
-  vertical-align: middle;
-  white-space: nowrap;
-}
-
 .task-title {
   color: #00857f;
 }
@@ -1168,92 +1121,6 @@ const handleViewProfile = () => {
   display: flex;
   flex-direction: column;
   gap: 16px;
-}
-
-.expert-card {
-  border-radius: 22px;
-  padding: 24px;
-  color: #fff;
-  background:
-    radial-gradient(120% 120% at 90% 6%, rgba(0, 161, 154, 0.26), transparent 50%),
-    linear-gradient(160deg, #2a2355 0%, #201c42 60%, #1a1736 100%);
-  box-shadow: 0 18px 40px rgba(29, 24, 56, 0.2);
-}
-.expert-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #7fe6dd;
-}
-.expert-badge .dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #2fd0c6;
-}
-.expert-ic {
-  width: 46px;
-  height: 46px;
-  border-radius: 14px;
-  margin: 18px 0 14px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  display: grid;
-  place-items: center;
-}
-.expert-title {
-  font-size: 20px;
-  font-weight: 800;
-  letter-spacing: -0.01em;
-  margin: 0 0 8px;
-}
-.expert-desc {
-  font-size: 13.5px;
-  font-weight: 500;
-  line-height: 1.55;
-  color: rgba(255, 255, 255, 0.66);
-  margin: 0 0 16px;
-}
-.expert-time {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 7px 14px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  font-size: 12px;
-  font-weight: 700;
-  color: rgba(255, 255, 255, 0.82);
-  margin-bottom: 18px;
-}
-.expert-time svg {
-  width: 13px;
-  height: 13px;
-}
-.expert-btn {
-  width: 100%;
-  height: 48px;
-  border: 0;
-  border-radius: 14px;
-  background: #00a19a;
-  color: #fff;
-  font-family: inherit;
-  font-size: 14.5px;
-  font-weight: 800;
-  cursor: pointer;
-  box-shadow: 0 14px 26px -10px rgba(0, 161, 154, 0.7);
-  transition: background 0.16s ease, transform 0.12s ease;
-}
-.expert-btn:hover {
-  background: #00b3ab;
-}
-.expert-btn:active {
-  transform: scale(0.98);
 }
 
 .summary-card {

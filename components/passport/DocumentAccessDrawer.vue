@@ -64,18 +64,6 @@
         </label>
       </div>
 
-      <div class="doc-access-divider" />
-
-      <label class="doc-access-publish-row">
-        <input type="checkbox" v-model="published" />
-        <span class="doc-access-publish-body">
-          <span class="doc-access-opt-t">Show on published Passport</span>
-          <span class="doc-access-opt-s">
-            Anyone viewing your published Passport could see this document.
-          </span>
-        </span>
-      </label>
-
       <p v-if="error" class="doc-access-error">{{ error }}</p>
     </div>
 
@@ -105,13 +93,10 @@ const isOpen = ref(props.show)
 watch(() => props.show, (v) => { isOpen.value = v })
 watch(isOpen, (v) => emit('update:show', v))
 
-// The stored accessLevel is a single tier, but the UI splits "publish" out
-// as its own explicit toggle (per the client's brief: publish needs its
-// own confirmation, never bundled into the private/selected/eligible
-// choice). radioLevel holds the non-publish tier; `published` overrides it
-// to PUBLISHED when checked, and reverts to radioLevel when unchecked.
+// Passports aren't published in this app, so there is no PUBLISHED tier to
+// offer. A document left on it from before opens as ELIGIBLE - included when
+// the Passport is shared, which is all PUBLISHED can mean here.
 const radioLevel = ref('PRIVATE')
-const published = ref(false)
 const grantedIds = ref(new Set())
 const saving = ref(false)
 const grantBusy = ref(false)
@@ -122,8 +107,7 @@ watch(
   (doc) => {
     error.value = ''
     if (!doc) return
-    published.value = doc.accessLevel === 'PUBLISHED'
-    radioLevel.value = doc.accessLevel === 'PUBLISHED' ? 'PRIVATE' : doc.accessLevel
+    radioLevel.value = doc.accessLevel === 'PUBLISHED' ? 'ELIGIBLE' : doc.accessLevel
     grantedIds.value = new Set((doc.sharedWith ?? []).map((p) => p.id))
   },
   { immediate: true },
@@ -157,8 +141,7 @@ async function save() {
   saving.value = true
   error.value = ''
   try {
-    const finalLevel = published.value ? 'PUBLISHED' : radioLevel.value
-    await setDocumentAccess(props.doc.kind, props.doc.id, finalLevel)
+    await setDocumentAccess(props.doc.kind, props.doc.id, radioLevel.value)
     emit('changed')
     isOpen.value = false
   } catch (e) {
@@ -221,16 +204,6 @@ async function save() {
   display: grid; place-items: center; flex-shrink: 0;
 }
 .doc-access-person-name { font-size: 13.5px; font-weight: 600; color: #231d45; }
-
-.doc-access-divider { height: 1px; background: #eceaf3; margin: 18px 0; }
-
-.doc-access-publish-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  cursor: pointer;
-}
-.doc-access-publish-row input { margin-top: 3px; accent-color: #00a19a; }
 
 .doc-access-error {
   margin-top: 14px;
