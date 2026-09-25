@@ -11,8 +11,10 @@
       </div>
 
       <div class="signin-aside-body">
-        <h1 class="signin-welcome">{{ heroTitle }}</h1>
-        <p class="signin-welcome-sub">Good to see you again. Your Property Passport is right where you left it.</p>
+        <div class="signin-hero-copy">
+          <h1 class="signin-welcome">{{ heroTitle }}</h1>
+          <p class="signin-welcome-sub">Good to see you again. Your Property Passport is right where you left it.</p>
+        </div>
 
         <img src="/op-icons/passport-covers/seller_tilted_right_on_tile.png" alt="Property Passport" class="signin-passport-illus" />
       </div>
@@ -658,7 +660,52 @@ const onPrimary = () => {
   .signin-welcome-sub { margin-inline: 0; }
   .signin-passport-illus {
     width: clamp(150px, 30vh, 260px);
-    margin: clamp(18px, 4vh, 36px) 0 0 -12px;
+    margin: clamp(18px, 4vh, 36px) auto 0;
+  }
+}
+
+/* Short laptop windows: the form (~505px) plus 48px above and below ran just
+   past a ~600px browser window and the page scrolled by a few pixels. */
+@media (min-width: 881px) and (max-height: 700px) {
+  .signin-split .signin-main { padding-block: 28px; }
+}
+
+/* Wide screens - the same composition as sign-up: the copy on the left, the
+   passport beside it. Stacked, a laptop window only had room for a small book
+   and the heading crowded the logo; side by side the book can be sized to
+   most of the panel's height and the pair sits centred with real space above.
+   Its width is the smallest of: its design cap, a share of the panel width
+   (so the copy keeps its column), and what the window height allows (the
+   render is ~1:1.22). Lengths inside the zoomed body are multiplied by
+   --desk-zoom, so vw/vh are divided back out. */
+@media (min-width: 1200px) {
+  .signin-aside-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: clamp(16px, 2vw, 32px);
+    align-content: center;
+    align-items: center;
+    max-width: none;
+    padding-block: clamp(16px, 4vh, 48px);
+  }
+  .signin-hero-copy { grid-column: 1; min-width: 0; }
+  /* Two balanced lines ("Welcome / back.") to leave the book its room. */
+  .signin-welcome { max-width: 5.4em; text-wrap: balance; }
+  .signin-welcome-sub {
+    max-width: 24ch;
+    font-weight: 500;
+    color: #4f4a6b;
+  }
+  .signin-passport-illus {
+    grid-column: 2;
+    justify-self: center;
+    max-width: none;
+    width: min(
+      320px,
+      calc(24vw / var(--desk-zoom, 1)),
+      calc((100vh / var(--desk-zoom, 1) - 280px) / 1.22)
+    );
+    margin: 0;
   }
 }
 
