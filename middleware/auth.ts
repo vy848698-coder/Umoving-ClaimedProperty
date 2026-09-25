@@ -19,6 +19,10 @@ export default defineNuxtRouteMiddleware((to) => {
     if (to.fullPath !== '/onboarding/signin') {
       localStorage.setItem('redirectAfterLogin', to.fullPath)
     }
-    return navigateTo('/onboarding/signin?reason=session', { replace: true })
+    // A full page load, as in guest.ts. This runs while the server-rendered
+    // protected page is still hydrating, and an in-app hop reused that page's
+    // root element - sign-in came up wearing its class (e.g. `pref-page`) and
+    // lost its side-by-side layout.
+    return navigateTo('/onboarding/signin?reason=session', { replace: true, external: true })
   }
 })
