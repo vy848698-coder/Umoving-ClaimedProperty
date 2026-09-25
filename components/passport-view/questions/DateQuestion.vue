@@ -50,7 +50,31 @@
             >{{ option.label }}</span>
 
             <!-- Badge / input -->
-            <div v-if="option.hasDate" class="date-badge">
+            <div
+              v-if="option.hasDate && isTypedFormat(option)"
+              class="date-badge date-badge--text"
+            >
+              <span v-if="getDateValue(option) && affix(option).pre" class="date-affix">{{
+                affix(option).pre
+              }}</span>
+              <input
+                :ref="(el) => setDateInputRef(el, index)"
+                type="text"
+                class="date-text-input"
+                :inputmode="getInputMode(option)"
+                :value="getInputValue(option)"
+                :placeholder="option.datePlaceholder || ''"
+                :size="textInputSize(option)"
+                :aria-label="option.label"
+                @input="(e) => updateDate(e, option)"
+                @click.stop
+                @keydown.stop
+              />
+              <span v-if="getDateValue(option) && affix(option).post" class="date-affix">{{
+                affix(option).post
+              }}</span>
+            </div>
+            <div v-else-if="option.hasDate" class="date-badge">
               <span v-if="getDateValue(option)" class="date-text">
                 {{ formatValue(getDateValue(option), option) }}
               </span>
@@ -63,7 +87,7 @@
                 :inputmode="getInputMode(option)"
                 :value="getInputValue(option)"
                 @input="(e) => updateDate(e, option)"
-                @click.stop
+                @click.stop="openPicker"
                 class="date-input-overlay"
               />
             </div>
@@ -114,18 +138,22 @@
 
         <span class="option-label">{{ option.label }}</span>
 
-        <!-- Free-text answer ("e.g. Early Tuesdays"): a real, visible input
-             in the badge, so the user sees the caret and what they type.
-             keydown.stop keeps the row's space/enter handlers from eating
-             the keystrokes. -->
+        <!-- Typed answers (amounts, percentages, years, units, free text): a
+             real, visible input in the badge, so the user sees the caret and
+             what they type. keydown.stop keeps the row's space/enter handlers
+             from eating the keystrokes. -->
         <div
-          v-if="option.hasDate && getOptionFormat(option) === 'text'"
+          v-if="option.hasDate && isTypedFormat(option)"
           class="date-badge date-badge--text"
         >
+          <span v-if="getDateValue(option) && affix(option).pre" class="date-affix">{{
+            affix(option).pre
+          }}</span>
           <input
             :ref="(el) => setDateInputRef(el, index)"
             type="text"
             class="date-text-input"
+            :inputmode="getInputMode(option)"
             :value="getInputValue(option)"
             :placeholder="option.datePlaceholder || ''"
             :size="textInputSize(option)"
@@ -134,6 +162,9 @@
             @click.stop
             @keydown.stop
           />
+          <span v-if="getDateValue(option) && affix(option).post" class="date-affix">{{
+            affix(option).post
+          }}</span>
         </div>
         <div v-else-if="option.hasDate" class="date-badge">
           <span v-if="getDateValue(option)" class="date-text">
@@ -148,7 +179,7 @@
             :inputmode="getInputMode(option)"
             :value="getInputValue(option)"
             @input="(e) => updateDate(e, option)"
-            @click.stop
+            @click.stop="openPicker"
             class="date-input-overlay"
           />
         </div>
@@ -213,9 +244,7 @@ const isMultiInputMode = computed(() => {
     return false
   return (
     props.question.options.every((opt) => opt.hasDate) &&
-    props.question.options.some(
-      (opt) => opt.inputType || isTextExample(opt),
-    )
+    props.question.options.some((opt) => isTypedFormat(opt))
   )
 })
 
@@ -314,19 +343,57 @@ const isTextExample = (option) =>
   !option?.dateFormat &&
   /^\s*e\.?\s?g\.?\s/i.test(option?.datePlaceholder || '')
 
-const getOptionFormat = (option) => {
+// Many options arrive with neither inputType nor dateFormat, and used to
+// fall back to a month picker - "£ 1500", "00%", "Years" or "Units" badges
+// that could not be typed into. Their placeholder says what they want.
+const inferFormat = (option) => {
+  const ph = String(option?.datePlaceholder || '').trim()
   if (isTextExample(option)) return 'text'
-  return option.inputType || option.dateFormat || 'monthYear'
+  if (ph.includes('%')) return 'percentage'
+  if (ph.startsWith('£')) return 'currency'
+  if (/^years?$/i.test(ph)) return 'years'
+  if (/^units?$/i.test(ph)) return 'units'
+  if (/^\d+$/.test(ph)) return 'number'
+  if (/\bdate\b/i.test(ph)) return 'fullDate'
+  if (/\byear\b/i.test(ph)) return 'year'
+  return 'monthYear'
 }
 
-// Width, in characters, of a free-text badge: fits the placeholder, and
-// grows with the answer up to a cap.
+const getOptionFormat = (option) => {
+  return option.inputType || option.dateFormat || inferFormat(option)
+}
+
+const TYPED_FORMATS = ['text', 'percentage', 'currency', 'number', 'years', 'units']
+const isTypedFormat = (option) => TYPED_FORMATS.includes(getOptionFormat(option))
+
+// What the typed badge shows around the number once there is one.
+const affix = (option) => {
+  const format = getOptionFormat(option)
+  if (format === 'currency') return { pre: '£', post: '' }
+  if (format === 'percentage') return { pre: '', post: '%' }
+  if (format === 'years') return { pre: '', post: 'years' }
+  if (format === 'units') return { pre: '', post: 'units' }
+  return { pre: '', post: '' }
+}
+
+// Date/month pickers sit invisibly over their badge; open the picker on
+// click rather than relying on the browser to do so.
+const openPicker = (event) => {
+  try {
+    event.target.showPicker?.()
+  } catch {
+    /* focus alone still works */
+  }
+}
+
+// Width, in characters, of a typed badge: fits the placeholder, and grows
+// with the answer up to a cap.
 const textInputSize = (option) => {
-  const len = Math.max(
-    (option.datePlaceholder || '').length,
-    String(getDateValue(option) || '').length,
-  )
-  return Math.min(Math.max(len, 8), 34)
+  const value = String(getDateValue(option) || '')
+  // Empty: as wide as the placeholder. Filled: hug the answer, so the £ / %
+  // sits right against it.
+  const len = value ? value.length + 1 : (option.datePlaceholder || '').length
+  return Math.min(Math.max(len, 2), 34)
 }
 
 const isNumericInput = (option) => {
@@ -369,6 +436,15 @@ const getInputValue = (option) => {
 const updateDate = (event, option) => {
   let newValue = event.target.value
   const format = getOptionFormat(option)
+
+  // Numbers: keep digits, plus a decimal point for money and percentages.
+  if (isTypedFormat(option) && format !== 'text') {
+    const notAllowed =
+      format === 'currency' || format === 'percentage' ? /[^\d.]/g : /\D/g
+    const clean = newValue.replace(notAllowed, '')
+    if (clean !== newValue) event.target.value = clean
+    newValue = clean
+  }
 
   if (format === 'year') {
     const year = newValue.split('-')[0]
@@ -652,6 +728,15 @@ const formatValue = (rawValue, option) => {
 .date-badge--text {
   cursor: text;
   max-width: 60%;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.date-affix {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #00857f;
+  white-space: nowrap;
 }
 .date-badge--text:focus-within {
   background: rgba(0, 161, 154, 0.16);
@@ -670,6 +755,10 @@ const formatValue = (rawValue, option) => {
   font-weight: 700;
   color: #00857f;
   text-align: right;
+  /* Width follows the text (placeholder or answer), so the £ / % sits right
+     against the number; the size attribute is the fallback elsewhere. */
+  field-sizing: content;
+  min-width: 1ch;
 }
 .date-text-input::placeholder {
   font-size: 14px;
