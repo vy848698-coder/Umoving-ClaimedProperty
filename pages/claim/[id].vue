@@ -2723,6 +2723,12 @@ async function issuePassport() {
   }
 }
 
+/* Big screens - scale the nav row and main column by the shared desktop
+   factor, as on the claim start page. */
+@media (min-width: 1536px) {
+  .hsw-shell { zoom: var(--desk-zoom); }
+}
+
 @media (max-width: 980px) {
   .claim-layout {
     /* minmax(0, 1fr), not 1fr: a grid column's default minimum is its
