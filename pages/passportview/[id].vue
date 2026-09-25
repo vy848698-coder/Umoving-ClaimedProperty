@@ -3314,6 +3314,12 @@ function formatStamp(iso) {
   flex-shrink: 0;
 }
 
+/* ── Big screens ──────────────────────────────────────────────────── */
+/* Scale the nav row and main column by the shared desktop factor. */
+@media (min-width: 1536px) {
+  .hsw-shell { zoom: var(--desk-zoom); }
+}
+
 /* ── Responsive ───────────────────────────────────────────────────── */
 @media (max-width: 980px) {
   .ppv-head-house {

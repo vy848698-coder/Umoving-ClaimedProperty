@@ -2160,6 +2160,13 @@ const executeDelete = async () => {
   to { transform: rotate(360deg); }
 }
 
+/* ── Big screens ──────────────────────────────────────────────────── */
+/* Scale every centred column (nav row, hero, list) by the shared desktop
+   factor so a desktop monitor keeps the laptop proportions. */
+@media (min-width: 1536px) {
+  .pp-shell { zoom: var(--desk-zoom); }
+}
+
 /* ── Responsive ───────────────────────────────────────────────────── */
 @media (max-width: 980px) {
   .ppw-hero-grid {
