@@ -87,7 +87,9 @@ const iconMap: Record<string, string> = {
   // Filenames match the seller/buyer folder exactly,
   // including its typos (gurantess…, ownerShip…, parkings). Leasehold has no
   // illustration in that set, so it keeps its line-art SVG.
-  ownershipProfile: '/passport-seller-and-buyer-icon/ownerShipProfile.png',
+  // ?v=2: the PNG was re-exported with opaque pages; the version makes
+  // browsers and the service worker's image cache fetch the new file.
+  ownershipProfile: '/passport-seller-and-buyer-icon/ownerShipProfile.png?v=2',
   boundaries: '/passport-seller-and-buyer-icon/boundaries.png',
   disputesAndComplaints: '/passport-seller-and-buyer-icon/disputesAndComplaints.png',
   noticesAndProposals: '/passport-seller-and-buyer-icon/noticesAndProposals.png',
