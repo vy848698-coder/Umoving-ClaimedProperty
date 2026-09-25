@@ -630,12 +630,16 @@ const onPrimary = () => {
     align-items: center;
     text-align: center;
     max-width: none;
-    padding-block: clamp(8px, 3vh, 32px);
+    /* 32px more above than below: the group sits a little under the
+       middle, clear of the logo row. The form gets the same 32px (below). */
+    padding: calc(clamp(8px, 3vh, 32px) + 32px) 0 clamp(8px, 3vh, 32px);
   }
-  .signin-welcome-sub { margin-inline: auto; max-width: 34ch; }
+  /* The heading leads - clearly bigger than the subline under it. */
+  .signin-welcome { font-size: clamp(48px, 5.3vw, 74px); }
+  .signin-welcome-sub { margin: 12px auto 0; max-width: 36ch; font-size: 16px; line-height: 1.5; }
   .signin-passport-illus {
     max-width: none;
-    width: clamp(120px, calc(((100vh - 80px) / var(--desk-zoom, 1) - 342px) / 1.22), 300px);
+    width: clamp(120px, calc(((100vh - 80px) / var(--desk-zoom, 1) - 376px) / 1.22), 300px);
     margin: clamp(14px, 3.5vh, 32px) auto 0;
   }
 }
@@ -644,11 +648,12 @@ const onPrimary = () => {
    (~66px) and the footnote (~46px), which puts that centre ~10px below the
    panel's middle. The form centred in the plain panel therefore sat ~10px
    high next to it (more on big screens, where both are zoomed). The extra
-   20px of top padding - zoomed like the rows it mirrors - puts the two
+   top padding (20px for that, plus the 32px the hero is lowered by) -
+   zoomed like the rows it mirrors - puts the two
    centres on one line. */
 @media (min-width: 881px) {
   .signin-split .signin-main {
-    padding-top: calc(48px + 20px * var(--desk-zoom, 1));
+    padding-top: calc(48px + 52px * var(--desk-zoom, 1));
     padding-bottom: 48px;
   }
 }
@@ -656,8 +661,21 @@ const onPrimary = () => {
    past a ~600px browser window and the page scrolled by a few pixels. */
 @media (min-width: 881px) and (max-height: 700px) {
   .signin-split .signin-main {
-    padding-top: calc(28px + 20px * var(--desk-zoom, 1));
+    /* 32px for the shorter footnote row here, plus the 24px the hero is
+       lowered by (see below). */
+    padding-top: calc(28px + 56px * var(--desk-zoom, 1));
     padding-bottom: 28px;
+  }
+  /* The brand column tightens too, so on a laptop-height window the
+     passport keeps a good size instead of shrinking to a thumbnail. */
+  .signin-split .signin-aside { padding-block: 24px; }
+  .signin-split .signin-aside-body { padding: 24px 0 0; }
+  .signin-split .signin-welcome { font-size: clamp(48px, 4.6vw, 60px); }
+  .signin-split .signin-welcome-sub { margin-top: 8px; font-size: 15px; }
+  .signin-split .signin-aside-foot { margin-top: 16px; }
+  .signin-split .signin-passport-illus {
+    width: clamp(120px, calc((100vh / var(--desk-zoom, 1) - 330px) / 1.22), 300px);
+    margin-top: 12px;
   }
 }
 /* Very short windows (a browser that isn't maximised, or with a bookmarks
@@ -666,8 +684,7 @@ const onPrimary = () => {
    still fits in one screen - nothing is hidden, only the gaps shrink. */
 @media (min-width: 881px) and (max-height: 620px) {
   .signin-split .signin-main {
-    /* +32px, not +20px: the footnote row is 12px shorter here (see below). */
-    padding-top: calc(14px + 32px * var(--desk-zoom, 1));
+    padding-top: calc(14px + 56px * var(--desk-zoom, 1));
     padding-bottom: 14px;
   }
   .signin-split .signin-form-head { margin-bottom: 14px; }
@@ -680,17 +697,6 @@ const onPrimary = () => {
   .signin-split .signin-panel .btn-text { padding-block: 6px; margin-top: 4px; }
   .signin-split .signin-divider { margin: 12px 0 2px; }
   .signin-split .logged-out-toast { margin-bottom: 14px; }
-  /* The brand column tightens the same way, so the passport keeps a usable
-     size instead of shrinking to a thumbnail. */
-  .signin-split .signin-aside { padding-block: 24px; }
-  .signin-split .signin-aside-body { padding-block: 0; }
-  .signin-split .signin-welcome { font-size: 46px; }
-  .signin-split .signin-welcome-sub { margin-top: 8px; font-size: 16px; }
-  .signin-split .signin-aside-foot { margin-top: 16px; }
-  .signin-split .signin-passport-illus {
-    width: clamp(120px, calc((100vh / var(--desk-zoom, 1) - 300px) / 1.22), 300px);
-    margin-top: 12px;
-  }
 }
 
 .signin-aside-foot {
