@@ -11,10 +11,8 @@
       </div>
 
       <div class="signin-aside-body">
-        <div class="signin-hero-copy">
-          <h1 class="signin-welcome">{{ heroTitle }}</h1>
-          <p class="signin-welcome-sub">Good to see you again. Your Property Passport is right where you left it.</p>
-        </div>
+        <h1 class="signin-welcome">{{ heroTitle }}</h1>
+        <p class="signin-welcome-sub">Good to see you again. Your Property Passport is right where you left it.</p>
 
         <img src="/op-icons/passport-covers/seller_tilted_right_on_tile.png" alt="Property Passport" class="signin-passport-illus" />
       </div>
@@ -619,21 +617,26 @@ const onPrimary = () => {
   object-fit: contain;
 }
 
-/* Side by side (the stacked layout below 881px stays centred). The column
-   reads left-aligned on the logo's line, as on sign-up. The book render is
-   ~5:6 portrait, so at its full 260px it made the column taller than a laptop
-   window: the column overflowed its centring box and "Welcome back." was
-   shoved up against the logo. Its width is now tied to the window height so
-   the column always fits and keeps real space above and below it. */
+/* Side by side: one centred column across the whole brand panel - the
+   heading on one line, the subline under it, the passport centred below.
+   The render is ~1:1.22 portrait, so at a fixed size it made the column
+   taller than a laptop window and shoved the heading up against the logo.
+   Its width is what the window height leaves after the logo row, heading,
+   subline, footnote and breathing room (~340px plus the panel padding), capped at 300px. Inside
+   the zoomed body every length is multiplied by --desk-zoom, so vh is
+   divided back out. */
 @media (min-width: 881px) {
   .signin-aside-body {
-    align-items: flex-start;
-    text-align: left;
+    align-items: center;
+    text-align: center;
+    max-width: none;
+    padding-block: clamp(8px, 3vh, 32px);
   }
-  .signin-welcome-sub { margin-inline: 0; }
+  .signin-welcome-sub { margin-inline: auto; max-width: 34ch; }
   .signin-passport-illus {
-    width: clamp(150px, 30vh, 260px);
-    margin: clamp(18px, 4vh, 36px) auto 0;
+    max-width: none;
+    width: clamp(120px, calc(((100vh - 80px) / var(--desk-zoom, 1) - 342px) / 1.22), 300px);
+    margin: clamp(14px, 3.5vh, 32px) auto 0;
   }
 }
 
@@ -663,7 +666,8 @@ const onPrimary = () => {
    still fits in one screen - nothing is hidden, only the gaps shrink. */
 @media (min-width: 881px) and (max-height: 620px) {
   .signin-split .signin-main {
-    padding-top: calc(14px + 20px * var(--desk-zoom, 1));
+    /* +32px, not +20px: the footnote row is 12px shorter here (see below). */
+    padding-top: calc(14px + 32px * var(--desk-zoom, 1));
     padding-bottom: 14px;
   }
   .signin-split .signin-form-head { margin-bottom: 14px; }
@@ -676,44 +680,16 @@ const onPrimary = () => {
   .signin-split .signin-panel .btn-text { padding-block: 6px; margin-top: 4px; }
   .signin-split .signin-divider { margin: 12px 0 2px; }
   .signin-split .logged-out-toast { margin-bottom: 14px; }
-}
-
-/* Wide screens - the same composition as sign-up: the copy on the left, the
-   passport beside it. Stacked, a laptop window only had room for a small book
-   and the heading crowded the logo; side by side the book can be sized to
-   most of the panel's height and the pair sits centred with real space above.
-   Its width is the smallest of: its design cap, a share of the panel width
-   (so the copy keeps its column), and what the window height allows (the
-   render is ~1:1.22). Lengths inside the zoomed body are multiplied by
-   --desk-zoom, so vw/vh are divided back out. */
-@media (min-width: 1200px) {
-  .signin-aside-body {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    column-gap: clamp(16px, 2vw, 32px);
-    align-content: center;
-    align-items: center;
-    max-width: none;
-    padding-block: clamp(16px, 4vh, 48px);
-  }
-  .signin-hero-copy { grid-column: 1; min-width: 0; }
-  /* Two balanced lines ("Welcome / back.") to leave the book its room. */
-  .signin-welcome { max-width: 5.4em; text-wrap: balance; }
-  .signin-welcome-sub {
-    max-width: 24ch;
-    font-weight: 500;
-    color: #4f4a6b;
-  }
-  .signin-passport-illus {
-    grid-column: 2;
-    justify-self: center;
-    max-width: none;
-    width: min(
-      320px,
-      calc(24vw / var(--desk-zoom, 1)),
-      calc((100vh / var(--desk-zoom, 1) - 280px) / 1.22)
-    );
-    margin: 0;
+  /* The brand column tightens the same way, so the passport keeps a usable
+     size instead of shrinking to a thumbnail. */
+  .signin-split .signin-aside { padding-block: 24px; }
+  .signin-split .signin-aside-body { padding-block: 0; }
+  .signin-split .signin-welcome { font-size: 46px; }
+  .signin-split .signin-welcome-sub { margin-top: 8px; font-size: 16px; }
+  .signin-split .signin-aside-foot { margin-top: 16px; }
+  .signin-split .signin-passport-illus {
+    width: clamp(120px, calc((100vh / var(--desk-zoom, 1) - 300px) / 1.22), 300px);
+    margin-top: 12px;
   }
 }
 
