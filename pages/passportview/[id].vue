@@ -2764,8 +2764,8 @@ function formatStamp(iso) {
 }
 .pp-hero-addr-row {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  align-items: flex-start;
+  gap: 10px;
 }
 .pp-hero-addr-text {
   flex: 0 1 auto;
@@ -3397,27 +3397,37 @@ function formatStamp(iso) {
   margin-top: 5px;
 }
 .pp-hero-switch {
+  /* Sits on the address line (27px × 1.1 line-height ≈ 30px), not centred
+     on the two-line block, so it reads as part of the heading. */
+  position: relative;
   display: grid;
   place-items: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  color: #d7d3ee;
+  width: 24px;
+  height: 24px;
+  margin-top: 3px;
+  padding: 0;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #b6b1d6;
   cursor: pointer;
   flex-shrink: 0;
-  transition: background 0.16s, border-color 0.16s, color 0.16s, transform 0.16s;
+  transition: background 0.16s, border-color 0.16s, color 0.16s;
+}
+/* Keeps a comfortable tap target without the button looking big. */
+.pp-hero-switch::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
 }
 .pp-hero-switch svg {
-  width: 16px;
-  height: 16px;
+  width: 13px;
+  height: 13px;
 }
 .pp-hero-switch:hover {
-  background: rgba(47, 208, 198, 0.16);
-  border-color: rgba(47, 208, 198, 0.5);
+  background: rgba(47, 208, 198, 0.14);
+  border-color: rgba(47, 208, 198, 0.45);
   color: #2fd0c6;
-  transform: translateY(-1px);
 }
 .pp-hero-stats {
   margin-top: 20px;
@@ -3904,11 +3914,6 @@ function formatStamp(iso) {
   .pp-sec-complete {
     padding: 6px 12px;
     font-size: 12px;
-  }
-  /* Was 34px — the only control in the hero's corner. */
-  .pp-hero-switch {
-    width: 40px;
-    height: 40px;
   }
 }
 
