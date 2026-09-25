@@ -451,7 +451,9 @@ const handleSubmit = async () => {
     grid-template-columns: minmax(0, 1fr) auto;
     align-content: start;
     max-width: none;
-    padding: clamp(12px, 6vh, 64px) 0 0;
+    /* Enough air under the logo row that the house's chimneys don't crowd
+       the tagline, without drifting back towards the middle. */
+    padding: clamp(40px, 10vh, 104px) 0 0;
   }
   .signup-eyebrow,
   .signup-welcome,
