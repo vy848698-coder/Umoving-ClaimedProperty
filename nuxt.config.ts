@@ -214,6 +214,25 @@ export default defineNuxtConfig({
         { rel: 'apple-touch-icon', href: '/logo.png' },
         { rel: 'manifest', href: '/manifest.webmanifest' },
       ],
+      script: [
+        {
+          // Desktop scale (--desk-zoom, see assets/css/main.css). The pages are
+          // designed against a ~1440x730 browser window - a 1366x768 laptop
+          // once the tabs and taskbar are gone. On anything bigger the content
+          // is scaled so the window holds the same layout: by width, but never
+          // more than the height allows, so a short or ultra-wide window
+          // doesn't push the page off the bottom. Works for any monitor and for
+          // browser zoom, since both show up as a resize.
+          //   1920x1080 -> ~1.31   2560x1440 -> ~1.78   4K at 100% -> 2.2 (cap)
+          // The cap keeps the raster artwork from being blown up past its
+          // resolution. Inline in <head> so it lands before the first paint;
+          // the stepped values in main.css are the fallback without JS.
+          key: 'desk-zoom',
+          tagPosition: 'head',
+          innerHTML:
+            "(function(){var r=document.documentElement;function s(){var w=innerWidth,h=innerHeight,z=w<1536?1:Math.min(w/1440,h/730);z=Math.max(1,Math.min(z,2.2));r.style.setProperty('--desk-zoom',z.toFixed(3))}s();addEventListener('resize',s)})()",
+        },
+      ],
     },
   },
   runtimeConfig: {
