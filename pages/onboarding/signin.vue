@@ -1204,6 +1204,19 @@ const onPrimary = () => {
 }
 
 
+/* ── Big screens ──
+   Scale each content block by the shared desktop factor rather than the
+   full-height columns, and let the brand column's side padding grow with the
+   screen so the scaled hero sits in the panel instead of hugging its edge. */
+@media (min-width: 1536px) {
+  .signin-aside-top,
+  .signin-aside-body,
+  .signin-aside-foot,
+  .signin-main-inner { zoom: var(--desk-zoom); }
+  .signin-aside { padding: 40px clamp(48px, 5.5vw, 150px); }
+  .signin-main { padding-inline: clamp(40px, 5vw, 140px); }
+}
+
 /* ── Responsive: stack to single column ──
    Stacked, the brand panel is a header band above the form, not a second
    half-screen. Its content is trimmed step by step so the form's heading and
