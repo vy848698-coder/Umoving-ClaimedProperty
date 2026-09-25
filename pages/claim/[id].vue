@@ -26,6 +26,7 @@
 
     <main class="hsw-shell claim-main" :class="{ 'claim-main--search': step === 'search' }">
       <!-- ── Page header: back, step title and the journey tracker ── -->
+      <div class="claim-top">
       <div class="claim-head">
         <button class="cl-back" type="button" aria-label="Back" @click="onBack">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
@@ -38,6 +39,7 @@
         </div>
       </div>
       <ClaimStepTracker :current="claimStage" class="claim-tracker" />
+      </div>
 
       <div class="claim-layout">
         <section class="claim-panel">
@@ -339,10 +341,16 @@
     <!-- ════════════════════════════ LR FAILED ════════════════════════════ -->
     <div v-else-if="step === 'lr-failed'" class="cl-screen cl-center-col">
       <div class="cl-lr-pulse-wrap">
-        <div class="cl-lr-inner" style="background: #fef2f2; color: #b91c1c">⚠️</div>
+        <div class="cl-lr-inner cl-lr-inner--fail">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" />
+            <line x1="12" y1="9" x2="12" y2="13" />
+            <line x1="12" y1="17" x2="12.01" y2="17" />
+          </svg>
+        </div>
       </div>
       <h1 class="cl-h1" style="text-align: center">Ownership not confirmed</h1>
-      <p class="cl-body" style="text-align: center; max-width: 320px">
+      <p class="cl-body" style="text-align: center; max-width: 420px">
         {{
           lrErrorMessage ||
           'HM Land Registry could not confirm you own this property.'
@@ -355,7 +363,7 @@
           lrResult?.matchResult === 'NO_MATCHES'
         "
         class="cl-card cl-mb-sm cl-w-full"
-        style="max-width: 360px"
+        style="max-width: 420px"
       >
         <div class="cl-eyebrow cl-mb-sm">What HM Land Registry returned</div>
         <div class="cl-lrf-rows">
@@ -374,11 +382,11 @@
         </div>
       </div>
 
-      <div class="cl-w-full" style="max-width: 360px; display: flex; gap: 8px">
-        <button class="cl-btn-ghost" style="flex: 1" @click="step = 'search'">
+      <div class="cl-w-full cl-fail-actions">
+        <button class="cl-btn-ghost" @click="step = 'search'">
           Try another property
         </button>
-        <button class="cl-btn-brand" style="flex: 1" @click="runLrSearch()">
+        <button class="cl-btn-brand" @click="runLrSearch()">
           Retry
         </button>
       </div>
@@ -767,7 +775,9 @@ function onBack() {
       step.value = 'confirm'
       return
     case 'lr-found':
-      step.value = 'kyc-verified'
+      // An already-verified user never saw the identity screens, so back
+      // returns to the property they confirmed.
+      step.value = kycAlreadyApproved.value ? 'confirm' : 'kyc-verified'
       return
     default:
       navigateTo(FLOW_HOME)
@@ -1010,14 +1020,15 @@ async function payClaimFee() {
 
     // Payment's confirmed — the passport stays PENDING_PAYMENT until
     // activatePassport() (called from issuePassport, once HM Land Registry
-    // comes back VERIFIED below) also sees KYC approved. Skip straight to
-    // the HMLR check if this user already had approved KYC before this
-    // claim, otherwise walk them through the Persona explainer.
+    // comes back VERIFIED below) also sees KYC approved. A user whose KYC
+    // was already approved before this claim skips both identity screens
+    // and goes straight to the HMLR check; everyone else gets the Persona
+    // explainer.
     try {
       const { getKycStatus } = useKyc()
       const r = await getKycStatus()
       if (r.status === 'approved') {
-        step.value = 'kyc-verified'
+        skipToLandRegistry()
         return
       }
     } catch {
@@ -1041,6 +1052,15 @@ const personaInquiryId = ref<string | null>(null)
 const personaCheckingNow = ref(false)
 let personaAbort: AbortController | null = null
 
+// True when the user's identity was approved before this claim started. The
+// "Identity verified!" screen only celebrates a check done just now, so an
+// already-verified user goes straight to the Land Registry search instead.
+const kycAlreadyApproved = ref(false)
+function skipToLandRegistry() {
+  kycAlreadyApproved.value = true
+  step.value = 'lr-searching'
+}
+
 async function startPersonaKyc() {
   personaError.value = ''
   personaPolling.value = true
@@ -1048,7 +1068,8 @@ async function startPersonaKyc() {
   try {
     const start = await startKyc()
     if (start.alreadyVerified || start.status === 'approved') {
-      step.value = 'kyc-verified'
+      personaPolling.value = false
+      skipToLandRegistry()
       return
     }
     if (!start.hostedUrl) {
@@ -2406,6 +2427,30 @@ async function issuePassport() {
   place-items: center;
   overflow: hidden;
 }
+.cl-lr-inner--fail {
+  background: #fef2f2;
+  border-color: #f3b4b4;
+  color: #c2410c;
+}
+.cl-lr-inner--fail svg {
+  width: 40px;
+  height: 40px;
+}
+.cl-fail-actions {
+  max-width: 420px;
+  display: flex;
+  gap: 10px;
+}
+.cl-fail-actions > button {
+  flex: 1;
+  white-space: nowrap;
+}
+/* Two nowrap labels no longer fit side by side on a narrow phone. */
+@media (max-width: 440px) {
+  .cl-fail-actions {
+    flex-direction: column-reverse;
+  }
+}
 .cl-lr-steps {
   display: flex;
   flex-direction: column;
@@ -2728,6 +2773,82 @@ async function issuePassport() {
    factor, as on the claim start page. */
 @media (min-width: 1536px) {
   .hsw-shell { zoom: var(--desk-zoom); }
+}
+
+/* Desktop. At its phone-first spacing a step ran ~1150px tall, so on a
+   monitor - where the column above is also scaled up - the primary button
+   sat a screen or more below the fold. Here the title and the tracker share
+   one row, the columns line up with the navbar edges, the hero is tighter,
+   and the button sticks to the bottom of the window whenever the panel runs
+   past it. */
+@media (min-width: 981px) {
+  .claim-main {
+    padding-top: 28px;
+    padding-bottom: 40px;
+  }
+  .claim-top {
+    display: flex;
+    align-items: center;
+    gap: 48px;
+    margin-bottom: 24px;
+  }
+  .claim-head {
+    width: auto;
+    flex-shrink: 0;
+    margin: 0;
+  }
+  .claim-head-text {
+    min-width: 190px;
+  }
+  .claim-tracker {
+    flex: 1;
+    width: auto;
+    max-width: 660px;
+    margin: 0 0 0 auto;
+  }
+  .claim-layout {
+    width: 100%;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: 32px;
+  }
+  .claim-panel {
+    padding: 30px 34px 0;
+  }
+  .claim-aside {
+    top: 86px;
+  }
+  .cl-hero {
+    margin-bottom: 20px;
+  }
+  .cl-hero-ic {
+    width: 76px;
+    height: 76px;
+    border-radius: 23px;
+    margin-bottom: 14px;
+  }
+  .cl-hero-ic img {
+    width: 54px;
+    height: 54px;
+  }
+  .cl-hero-img {
+    width: 120px;
+    height: 120px;
+    margin-bottom: 12px;
+  }
+  .cl-cta-inline {
+    position: sticky;
+    bottom: 0;
+    z-index: 3;
+    margin: 22px -34px 0;
+    padding: 16px 34px 26px;
+    background: #fff;
+    border-radius: 0 0 22px 22px;
+    box-shadow: 0 -12px 22px -18px rgba(17, 52, 88, 0.35);
+  }
+  /* Steps without the button still need the panel's bottom padding. */
+  .claim-panel > .cl-screen:last-child {
+    padding-bottom: 28px;
+  }
 }
 
 @media (max-width: 980px) {

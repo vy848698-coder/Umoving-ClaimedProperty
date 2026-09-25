@@ -2376,6 +2376,22 @@ onMounted(() => {
   .pf-body { zoom: var(--desk-zoom); }
 }
 
+/* Side by side, step 2's seven questions run a few hundred px past the
+   window at every desktop size, which left "Build my Passport" off screen.
+   The action row sticks to the bottom of the window instead; its top rule
+   sits exactly on the divider, so at rest it looks unchanged. */
+@media (min-width: 981px) {
+  .pf-divider { margin-bottom: 0; }
+  .pf-actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    padding: 18px 0 22px;
+    background: #faf9f5;
+    box-shadow: 0 -1px 0 #ece7dc;
+  }
+}
+
 /* ── Short side-by-side windows ──
    The sidebar is sized to fit the 730px design height that the desktop zoom
    scales from. A 1366x768 laptop leaves ~600px once the browser chrome is
@@ -2397,7 +2413,8 @@ onMounted(() => {
   .pf-main { padding-top: clamp(20px, 5vh, 40px); padding-bottom: clamp(16px, 2.6vh, 64px); }
   .pf-top { margin-bottom: clamp(20px, 5vh, 40px); }
   .pf-sub { margin-bottom: clamp(18px, 4.2vh, 32px); }
-  .pf-divider { margin: clamp(18px, 4.2vh, 34px) 0 clamp(14px, 2.8vh, 22px); }
+  .pf-divider { margin: clamp(18px, 4.2vh, 34px) 0 0; }
+  .pf-actions { padding: clamp(12px, 2.6vh, 18px) 0 clamp(12px, 2.6vh, 22px); }
 }
 
 @media (max-width: 980px) {

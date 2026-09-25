@@ -18,12 +18,14 @@
     <main class="hsw-shell clw-main">
       <!-- Page head -->
       <div class="clw-head">
-        <p class="clw-kicker"><span class="clw-kicker-dot" />Claim your Passport</p>
-        <h1>Claim your Property Passport</h1>
-        <p class="clw-lede">
-          Find your property and we'll verify ownership via HM Land Registry.
-          Then your Property Passport is yours to build and share.
-        </p>
+        <div class="clw-head-text">
+          <p class="clw-kicker"><span class="clw-kicker-dot" />Claim your Passport</p>
+          <h1>Claim your Property Passport</h1>
+          <p class="clw-lede">
+            Find your property and we'll verify ownership via HM Land Registry.
+            Then your Property Passport is yours to build and share.
+          </p>
+        </div>
         <ClaimStepTracker :current="1" class="clw-tracker" />
       </div>
 
@@ -702,6 +704,53 @@ function continueToClaim() {
    desktop monitor shows the laptop proportions instead of a 1180px island. */
 @media (min-width: 1536px) {
   .hsw-shell { zoom: var(--desk-zoom); }
+}
+
+/* Desktop. Stacked, the heading, lede and tracker pushed the search card -
+   the one thing to do on this page - below the fold once the column above
+   is scaled up for a monitor. Side by side they take one band, and the
+   postcode field lands on the first screen. */
+@media (min-width: 981px) {
+  .clw-main {
+    padding-top: 36px;
+  }
+  .clw-head {
+    max-width: none;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 48px;
+  }
+  .clw-head-text {
+    min-width: 0;
+  }
+  .clw-head h1 {
+    white-space: nowrap;
+  }
+  .clw-lede {
+    max-width: 560px;
+  }
+  .clw-lede {
+    margin-top: 14px;
+  }
+  .clw-tracker {
+    flex: 0 1 480px;
+    margin: 0 0 4px;
+  }
+  .clw-layout {
+    margin-top: 28px;
+  }
+  .clw-card {
+    padding-top: 26px;
+  }
+  .cl-icon-square,
+  .cl-icon-square img {
+    width: 76px;
+    height: 76px;
+  }
+  .cl-icon-square {
+    margin-bottom: 12px;
+  }
 }
 
 /* ── Responsive ───────────────────────────────────────────────────── */
