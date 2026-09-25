@@ -26,7 +26,6 @@
 
     <main class="hsw-shell claim-main" :class="{ 'claim-main--search': step === 'search' }">
       <!-- ── Page header: back, step title and the journey tracker ── -->
-      <div class="claim-top">
       <div class="claim-head">
         <button class="cl-back" type="button" aria-label="Back" @click="onBack">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
@@ -39,7 +38,6 @@
         </div>
       </div>
       <ClaimStepTracker :current="claimStage" class="claim-tracker" />
-      </div>
 
       <div class="claim-layout">
         <section class="claim-panel">
@@ -151,20 +149,18 @@
         <p class="cl-body" style="margin: 0" v-html="claimPriceExplainer" />
       </div>
 
-      <div class="cl-pay-row">
-        <div class="cl-card cl-mb-sm">
-          <div class="cl-lrf-rows">
-            <div class="cl-lrf-row cl-lrf-row-last">
-              <span class="cl-lrf-l">Verification fee</span>
-              <span class="cl-lrf-v">{{ claimPriceDisplay }}</span>
-            </div>
+      <div class="cl-card cl-mb-sm">
+        <div class="cl-lrf-rows">
+          <div class="cl-lrf-row">
+            <span class="cl-lrf-l">Verification fee</span>
+            <span class="cl-lrf-v">{{ claimPriceDisplay }}</span>
           </div>
         </div>
+      </div>
 
-        <div class="cl-card cl-mb-sm">
-          <div class="cl-eyebrow cl-mb-sm">Card details</div>
-          <div id="claim-stripe-card-element" class="cl-stripe-box" />
-        </div>
+      <div class="cl-card cl-mb-sm">
+        <div class="cl-eyebrow cl-mb-sm">Card details</div>
+        <div id="claim-stripe-card-element" class="cl-stripe-box" />
       </div>
 
       <div v-if="paymentError" class="cl-err-banner" role="alert">
@@ -343,16 +339,10 @@
     <!-- ════════════════════════════ LR FAILED ════════════════════════════ -->
     <div v-else-if="step === 'lr-failed'" class="cl-screen cl-center-col">
       <div class="cl-lr-pulse-wrap">
-        <div class="cl-lr-inner cl-lr-inner--fail">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" />
-            <line x1="12" y1="9" x2="12" y2="13" />
-            <line x1="12" y1="17" x2="12.01" y2="17" />
-          </svg>
-        </div>
+        <div class="cl-lr-inner" style="background: #fef2f2; color: #b91c1c">⚠️</div>
       </div>
       <h1 class="cl-h1" style="text-align: center">Ownership not confirmed</h1>
-      <p class="cl-body" style="text-align: center; max-width: 420px">
+      <p class="cl-body" style="text-align: center; max-width: 320px">
         {{
           lrErrorMessage ||
           'HM Land Registry could not confirm you own this property.'
@@ -365,7 +355,7 @@
           lrResult?.matchResult === 'NO_MATCHES'
         "
         class="cl-card cl-mb-sm cl-w-full"
-        style="max-width: 420px"
+        style="max-width: 360px"
       >
         <div class="cl-eyebrow cl-mb-sm">What HM Land Registry returned</div>
         <div class="cl-lrf-rows">
@@ -384,11 +374,11 @@
         </div>
       </div>
 
-      <div class="cl-w-full cl-fail-actions">
-        <button class="cl-btn-ghost" @click="step = 'search'">
+      <div class="cl-w-full" style="max-width: 360px; display: flex; gap: 8px">
+        <button class="cl-btn-ghost" style="flex: 1" @click="step = 'search'">
           Try another property
         </button>
-        <button class="cl-btn-brand" @click="runLrSearch()">
+        <button class="cl-btn-brand" style="flex: 1" @click="runLrSearch()">
           Retry
         </button>
       </div>
@@ -2429,30 +2419,6 @@ async function issuePassport() {
   place-items: center;
   overflow: hidden;
 }
-.cl-lr-inner--fail {
-  background: #fef2f2;
-  border-color: #f3b4b4;
-  color: #c2410c;
-}
-.cl-lr-inner--fail svg {
-  width: 40px;
-  height: 40px;
-}
-.cl-fail-actions {
-  max-width: 420px;
-  display: flex;
-  gap: 10px;
-}
-.cl-fail-actions > button {
-  flex: 1;
-  white-space: nowrap;
-}
-/* Two nowrap labels no longer fit side by side on a narrow phone. */
-@media (max-width: 440px) {
-  .cl-fail-actions {
-    flex-direction: column-reverse;
-  }
-}
 .cl-lr-steps {
   display: flex;
   flex-direction: column;
@@ -2771,222 +2737,12 @@ async function issuePassport() {
   }
 }
 
-/* Big screens - scale the nav row and main column by the shared desktop
-   factor, as on the claim start page. */
-@media (min-width: 1536px) {
-  .hsw-shell { zoom: var(--desk-zoom); }
-}
-
-/* Desktop: every step fits one window, no scrolling.
-   The whole column is scaled by --desk-zoom (above), which is at most
-   window height / 730, so a step that fits 730px here fills any monitor
-   edge to edge. At phone spacing the steps ran 750-960px tall, so the
-   layout tightens: title and tracker share a row, the step icon sits beside
-   its heading, and the step content spreads across instead of stacking. */
-@media (min-width: 981px) {
-  .claim-main,
-  .claim-main--search {
-    padding-top: 18px;
-    padding-bottom: 20px;
-  }
-  .claim-top {
-    display: flex;
-    align-items: center;
-    gap: 48px;
-    margin-bottom: 16px;
-  }
-  .claim-head {
-    width: auto;
-    flex-shrink: 0;
-    margin: 0;
-  }
-  .claim-head-text {
-    min-width: 190px;
-  }
-  .claim-tracker {
-    flex: 1;
-    width: auto;
-    max-width: 660px;
-    margin: 0 0 0 auto;
-  }
-  .claim-layout {
-    width: 100%;
-    grid-template-columns: minmax(0, 1fr) 340px;
-    gap: 32px;
-  }
-  .claim-panel {
-    padding: 24px 30px;
-  }
-  .claim-aside {
-    position: static;
-  }
-
-  /* Step heading: icon beside the title and lede. */
-  .cl-hero:has(> .cl-hero-ic) {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
-    column-gap: 18px;
-    align-items: center;
-    align-self: stretch;
-    text-align: left;
-    margin-bottom: 18px;
-  }
-  .cl-hero > .cl-hero-ic {
-    grid-row: 1 / span 2;
-    width: 64px;
-    height: 64px;
-    border-radius: 20px;
-    margin: 0;
-    box-shadow:
-      0 0 0 6px rgba(0, 161, 154, 0.06),
-      0 10px 22px rgba(0, 161, 154, 0.14);
-  }
-  .cl-hero > .cl-hero-ic img {
-    width: 46px;
-    height: 46px;
-  }
-  .cl-hero:has(> .cl-hero-ic) .cl-h1 {
-    align-self: end;
-    margin-bottom: 4px;
-  }
-  .cl-hero:has(> .cl-hero-ic) .cl-body {
-    align-self: start;
-    max-width: none;
-  }
-  .cl-hero .cl-hero-img {
-    width: 96px;
-    height: 96px;
-    margin-bottom: 8px;
-  }
-  .cl-pill-row {
-    margin-bottom: 18px;
-  }
-
-  /* Confirm: the four title facts on one row. */
-  .cl-navy-card {
-    padding: 18px 20px;
-    margin-bottom: 12px;
-  }
-  .cl-navy-img {
-    width: 72px;
-    height: 72px;
-  }
-  .cl-navy-addr2 {
-    margin-bottom: 14px;
-  }
-  .cl-tile-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-  .cl-link-center {
-    padding: 6px;
-  }
-
-  /* Identity explainer: the three checks side by side. */
-  .cl-center-col > .cl-card-pale {
-    align-self: stretch;
-  }
-  .cl-row-list {
-    flex-direction: row;
-    gap: 16px;
-  }
-  .cl-step-row {
-    flex: 1;
-    min-width: 0;
-    gap: 10px;
-  }
-  .cl-step-ic {
-    width: 44px;
-    height: 44px;
-  }
-
-  /* Payment: fee and card details side by side. */
-  .cl-owned {
-    margin-bottom: 18px;
-  }
-  .cl-owned-illus {
-    width: 64px;
-    height: 64px;
-  }
-  .cl-pay-row {
-    display: grid;
-    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
-    gap: 14px;
-    margin-bottom: 14px;
-  }
-  .cl-pay-row > .cl-card {
-    margin-bottom: 0;
-  }
-  .cl-pay-row > .cl-card:first-child {
-    display: flex;
-    align-items: center;
-  }
-  .cl-pay-row > .cl-card:first-child > .cl-lrf-rows {
-    flex: 1;
-  }
-  .cl-screen > .cl-btn-brand {
-    width: 100%;
-  }
-
-  /* Ownership confirmed: title data in two columns. */
-  .cl-lrf-head {
-    margin-bottom: 10px;
-  }
-  .cl-lrf-head + .cl-lrf-rows {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    column-gap: 28px;
-    row-gap: 8px;
-  }
-  .cl-lrf-head + .cl-lrf-rows > .cl-lrf-row {
-    padding-bottom: 8px;
-  }
-  .cl-lrf-head + .cl-lrf-rows > .cl-lrf-row:nth-last-child(2) {
-    border-bottom: none;
-  }
-  .cl-ready {
-    padding: 12px 18px;
-  }
-  .cl-ready-img {
-    width: 40px;
-    height: 56px;
-  }
-
-  .cl-cta-inline {
-    margin-top: 18px;
-    padding-top: 18px;
-  }
-}
-
-/* Short side-by-side windows (a 1366x768 laptop leaves ~607px): the
-   column scales down to the window by --desk-fit (never below 0.86, see
-   nuxt.config.ts) and the spacing tightens, so the step still fits. */
-@media (min-width: 981px) and (max-height: 729px) {
-  .hsw-shell { zoom: var(--desk-fit, 1); }
-  .claim-main,
-  .claim-main--search {
-    padding-top: 12px;
-    padding-bottom: 12px;
-  }
-  .claim-panel {
-    padding: 20px 30px;
-  }
-  .cl-cta-inline {
-    margin-top: 14px;
-    padding-top: 14px;
-  }
-  .claim-aside-prop {
-    margin-bottom: 12px;
-  }
-  .claim-aside-card {
-    padding: 18px 22px;
-  }
-  .claim-aside-list {
-    gap: 12px;
-    margin-bottom: 14px;
-  }
-  .cl-hero:has(> .cl-hero-ic) {
-    margin-bottom: 14px;
-  }
+/* Big screens - the nav row and main column scale with the window width
+   (--wide-zoom = width / 1366, nuxt.config.ts), so a desktop monitor shows
+   this page exactly as a 1366px laptop does, only bigger: same side
+   margins, same layout. */
+@media (min-width: 1367px) {
+  .hsw-shell { zoom: var(--wide-zoom, 1); }
 }
 
 @media (max-width: 980px) {

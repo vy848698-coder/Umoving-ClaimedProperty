@@ -230,16 +230,18 @@ export default defineNuxtConfig({
           // covers less than one screen pixel, so the cap rises by the same
           // factor. A fixed 2.2 stopped the page growing once zoomed out past
           // ~45% and left it as a small island in the window.
-          // --desk-fit is the other direction, for pages that must fit one
-          // window (the claim flow): a side-by-side window shorter than the
-          // 730px design height - a 1366x768 laptop is ~607px - scales them
-          // down to the window, but never below 0.86 so text stays readable.
+          // --wide-zoom is the width-only variant, used by the claim pages:
+          // window width / 1366, so any monitor shows the page exactly as a
+          // 1366px laptop does, only bigger - same margins, same layout - and
+          // scrolls the same way when the page is taller than the window.
+          // Its cap (3, also per screen pixel) is higher because the claim
+          // artwork is drawn at 2.5-10x its display size.
           // Inline in <head> so it lands before the first paint; the stepped
           // values in main.css are the fallback without JS.
           key: 'desk-zoom',
           tagPosition: 'head',
           innerHTML:
-            "(function(){var r=document.documentElement;function s(){var w=innerWidth,h=innerHeight,z=w<1536?1:Math.min(w/1440,h/730);z=Math.max(1,Math.min(z,2.2/Math.min(devicePixelRatio||1,1)));r.style.setProperty('--desk-zoom',z.toFixed(3));r.style.setProperty('--desk-fit',(w<981||h>=730?1:Math.max(.86,h/730)).toFixed(3))}s();addEventListener('resize',s)})()",
+            "(function(){var r=document.documentElement;function s(){var w=innerWidth,h=innerHeight,z=w<1536?1:Math.min(w/1440,h/730);z=Math.max(1,Math.min(z,2.2/Math.min(devicePixelRatio||1,1)));r.style.setProperty('--desk-zoom',z.toFixed(3));var d=Math.min(devicePixelRatio||1,1);r.style.setProperty('--wide-zoom',(w<=1366?1:Math.min(w/1366,3/d)).toFixed(3))}s();addEventListener('resize',s)})()",
         },
       ],
     },

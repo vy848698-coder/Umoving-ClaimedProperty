@@ -2339,8 +2339,6 @@ onMounted(() => {
    is always 1, so vh is safe here: the vertical rhythm of both columns
    shrinks with the window and everything fits on one screen. */
 @media (min-width: 981px) and (max-height: 729px) {
-  /* Scale to the window, never below 0.86 (--desk-fit, nuxt.config.ts). */
-  .pf-body { zoom: var(--desk-fit, 1); }
   .pf-side { padding-top: clamp(18px, 4vh, 36px); padding-bottom: clamp(18px, 4vh, 36px); }
   .pf-side-title { font-size: clamp(23px, 4vh, 29px); margin: clamp(14px, 3.4vh, 30px) 0 clamp(12px, 2.8vh, 26px); }
   .pf-eyebrow { margin-top: clamp(14px, 3.4vh, 30px); }
