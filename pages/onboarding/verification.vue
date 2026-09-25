@@ -201,6 +201,14 @@ if (typeof definePageMeta === 'function') {
   .otp-illus-img { animation: none; }
 }
 
+/* ── Big screens ── the header and the split are the page's two centred
+   columns; scaling them (not the full-height page) keeps the laptop
+   proportions on a desktop monitor. */
+@media (min-width: 1536px) {
+  .otp-header,
+  .otp-split { zoom: var(--desk-zoom); }
+}
+
 /* ── Short desktop / laptop windows ──
    With browser chrome a 1366x768 laptop leaves ~600px, and the page needed
    ~660 - the resend line fell below the fold. On side-by-side layouts the

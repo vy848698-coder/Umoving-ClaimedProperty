@@ -364,6 +364,11 @@ function runConfetti() {
 .wl-fleck-b { width: 10px; height: 10px; background: #e0a43a; bottom: 4%; left: 12%; }
 .wl-fleck-c { width: 12px; height: 12px; background: #17b3a6; top: 44%; right: -2%; }
 
+/* ── Big screens ── scale the centred hero, not the full-height page. */
+@media (min-width: 1536px) {
+  .wl-hero { zoom: var(--desk-zoom); }
+}
+
 /* ── Responsive ── */
 @media (max-width: 900px) {
   .wl-hero {
