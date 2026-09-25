@@ -436,6 +436,40 @@ const handleSubmit = async () => {
   filter: drop-shadow(0 22px 30px rgba(35, 29, 69, 0.16));
 }
 
+/* Side-by-side hero on wide screens. With the house stacked on top, the text
+   column stopped well short of the middle and left a wide empty strip between
+   it and the form. Here the house sits beside the headline and runs into the
+   panel's edge, so the art fills that strip; the artwork's right side is
+   cropped, and meeting the panel edge (the aside clips) makes that cut read as
+   deliberate. The column also starts just under the logo instead of centring
+   in a panel as tall as the whole form, which had left a large gap above it.
+   Below 1100px the headline has no room beside the house, so the stacked
+   layout stays. */
+@media (min-width: 1100px) {
+  .signup-aside-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-content: start;
+    max-width: none;
+    padding: clamp(12px, 6vh, 64px) 0 0;
+  }
+  .signup-eyebrow,
+  .signup-welcome,
+  .signup-welcome-sub { grid-column: 1; }
+  .signup-house-illus {
+    grid-column: 2;
+    grid-row: 1 / span 3;
+    align-self: center;
+    width: clamp(200px, 20vw, 270px);
+    /* Out through the aside's 48px side padding to its edge. The global
+       img max-width:100% would clamp it to its track (which the negative
+       margin narrows) and pull it back off the edge. */
+    max-width: none;
+    margin: 0 -48px 0 0;
+  }
+  .signup-points { grid-column: 1 / -1; }
+}
+
 /* What the account gets them, on hairlines so the list reads as one block
    with no gaps between the rows to fall through. */
 .signup-points {
@@ -812,6 +846,10 @@ const handleSubmit = async () => {
   .signup-main-inner { zoom: var(--desk-zoom); }
   .signup-aside { padding: 40px clamp(48px, 5.5vw, 150px); }
   .signup-main { padding-inline: clamp(40px, 5vw, 140px); }
+  /* The house still has to reach the panel edge through the wider padding
+     above. It sits inside the zoomed body, where every length (vw included)
+     is multiplied by the zoom, so dividing by it lands on the real padding. */
+  .signup-house-illus { margin-right: calc(-1 * clamp(48px, 5.5vw, 150px) / var(--desk-zoom)); }
 }
 
 /* ── Responsive: stack to single column ──
