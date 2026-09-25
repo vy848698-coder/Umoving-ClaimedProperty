@@ -67,30 +67,22 @@
 
           <!-- ── Detail phase: on-this-page nav + answered count ── -->
           <template v-else>
-            <div v-if="pageSections.length" class="pf-onpage">
-              <span class="pf-onpage-label">On this page</span>
+            <div class="pf-onpage">
+              <span class="pf-onpage-label">In this step</span>
               <button
-                v-for="sec in pageSections"
-                :key="sec.anchor"
+                v-for="(pg, i) in detailPages"
+                :key="pg.key"
                 type="button"
                 class="pf-onpage-item"
-                :class="`tint-${sec.tint}`"
-                @click="scrollToSection(sec.anchor)"
+                :class="[`tint-${pg.tint}`, { current: i === detailPage }]"
+                :aria-current="i === detailPage ? 'step' : undefined"
+                @click="goToPage(i)"
               >
-                <span class="pf-onpage-ic">
-                  <img v-if="sec.isImage" :src="sec.icon" alt="" />
-                  <span v-else v-html="sec.icon" />
-                </span>
-                {{ sec.title }}
+                <span class="pf-onpage-ic"><img :src="pg.icon" alt="" /></span>
+                {{ pg.title }}
               </button>
             </div>
 
-            <div class="pf-answered">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="9" /><path d="M12 16v-4" /><path d="M12 8h.01" />
-              </svg>
-              <span><strong>{{ answeredCount }} of {{ totalQuestions }}</strong> answered · all optional</span>
-            </div>
           </template>
         </div>
       </aside>
@@ -106,7 +98,7 @@
               class="pf-back"
               aria-label="Back"
               :style="{ visibility: phase === 'detail' ? 'visible' : 'hidden' }"
-              @click="phase = 'role'"
+              @click="goBack"
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="15 18 9 12 15 6" />
@@ -114,7 +106,7 @@
             </button>
             <span class="pf-top-step">{{ phase === 'role' ? 'STEP 1 OF 2' : 'STEP 2 OF 2 · YOUR MOVE' }}</span>
             <div class="pf-top-progress">
-              <div class="pf-top-progress-bar" :style="{ width: phase === 'detail' ? '100%' : '50%' }" />
+              <div class="pf-top-progress-bar" :style="{ width: progressWidth }" />
             </div>
             <button class="pf-skip" @click="navigateTo('/onboarding/welcome')">Skip</button>
           </div>
@@ -147,23 +139,10 @@
 
           <!-- ── DETAIL SCREEN ── -->
           <template v-else>
-            <div class="pf-detail" ref="scrollRef">
-              <section
-                v-for="sec in sections"
-                :key="sec.anchor"
-                :id="sec.anchor"
-                class="pf-card"
-              >
-                <div v-if="sec.title" class="pf-card-head">
-                  <span class="pf-card-ic" :class="`tint-${sec.tint}`">
-                    <img v-if="sec.isImage" :src="sec.icon" alt="" />
-                    <span v-else v-html="sec.icon" />
-                  </span>
-                  <h3>{{ sec.title }}</h3>
-                </div>
-
+            <div class="pf-detail">
+              <section :key="currentPage.key" class="pf-card">
                 <div class="pf-card-body">
-                  <template v-for="q in sec.questions" :key="q.id">
+                  <template v-for="q in currentPage.questions" :key="q.id">
                     <!-- Text input -->
                     <div v-if="q.type === 'text'" class="pref-section">
                       <div class="pref-label">{{ q.label }}</div>
@@ -303,7 +282,7 @@
               </span>
             </div>
             <div class="pf-actions-right">
-              <span class="pf-actions-step">{{ phase === 'role' ? 'Step 1 / 2' : 'Step 2 / 2' }}</span>
+              <span class="pf-actions-step">{{ actionsStepLabel }}</span>
               <button
                 v-if="phase === 'role'"
                 class="pf-cta"
@@ -321,10 +300,10 @@
                 v-else
                 class="pf-cta"
                 :disabled="isLoading"
-                @click="save"
+                @click="isLastPage ? save() : goToPage(detailPage + 1)"
               >
                 <span v-if="isLoading" class="spinner" />
-                {{ detailCtaLabel }}
+                {{ isLastPage ? detailCtaLabel : 'Continue' }}
                 <svg v-if="!isLoading" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                   <line x1="5" y1="12" x2="19" y2="12" />
                   <polyline points="12 5 19 12 12 19" />
@@ -345,7 +324,6 @@ definePageMeta({ title: 'Preferences | UmovingU', middleware: 'auth' })
 
 const config = useRuntimeConfig()
 const route = useRoute()
-const scrollRef = ref<HTMLElement | null>(null)
 const isLoading = ref(false)
 const phase = ref<'role' | 'detail'>('role')
 const selectedRole = ref('')
@@ -548,12 +526,6 @@ interface Question {
   expandOpts?: Opt[]
   placeholder?: string
 }
-
-const H = (label: string): Question => ({
-  id: `_h_${label}`,
-  type: 'heading',
-  label,
-})
 
 const buyQuestions: Question[] = [
   {
@@ -783,48 +755,96 @@ const sellQuestions: Question[] = [
   },
 ]
 
-// ── Active question list ──────────────────────────────────────────────────
+// ── Step 2 pages ──────────────────────────────────────────────────────────
+// Step 2 is split into short pages so each one fits a single window: asked
+// all at once it ran to 7-16 questions and scrolled on every screen. The
+// answers still go into the one `a` object and are saved together at the
+// end, exactly as before.
+const questionById: Record<string, Question> = Object.fromEntries(
+  [...sellQuestions, ...buyQuestions, passportQuestion].map((q) => [q.id, q]),
+)
 
-const activeQuestions = computed((): Question[] => {
+interface DetailPage {
+  key: string
+  title: string
+  icon: string
+  tint: string
+  questions: Question[]
+}
+
+function detailPageOf(key: string, title: string, icon: string, tint: string, ids: string[]): DetailPage {
+  return {
+    key,
+    title,
+    icon,
+    tint,
+    questions: ids.map((id) => questionById[id]).filter((q): q is Question => !!q),
+  }
+}
+
+const HOUSE_IC = '/op-icons/homescore/house.png'
+const SEARCH_IC = '/op-icons/homescore/magnifier.png'
+const LIST_IC = '/op-icons/homescore/clipboard.png'
+const SELL_PROPERTY_IDS = ['sellLocation', 'sellPropertyType', 'sellBedrooms', 'sellTenure']
+const SELL_SALE_IDS = ['sellChain', 'sellValue', 'sellTimeline']
+const BUY_SEARCH_IDS = ['buyLocation', 'buyBudget', 'buyBedrooms', 'buyPropertyType', 'buyTenure']
+const BUY_MATTERS_IDS = ['buyMustHaves', 'buyerType', 'energyImportance', 'passportRequired']
+
+const detailPages = computed((): DetailPage[] => {
   const r = selectedRole.value
-  if (r === 'buy') return [...buyQuestions, passportQuestion]
-  if (r === 'sell') return sellQuestions
+  if (r === 'sell') {
+    return [
+      detailPageOf('sell-property', 'About your property', HOUSE_IC, 'amber', SELL_PROPERTY_IDS),
+      detailPageOf('sell-sale', 'Your sale', LIST_IC, 'purple', SELL_SALE_IDS),
+    ]
+  }
+  if (r === 'buy') {
+    return [
+      detailPageOf('buy-search', 'Tell us about your search', SEARCH_IC, 'teal', BUY_SEARCH_IDS),
+      detailPageOf('buy-matters', 'What matters to you', LIST_IC, 'purple', BUY_MATTERS_IDS),
+    ]
+  }
   if (r === 'both') {
     return [
-      H("🏠 The property you're selling"),
-      ...sellQuestions,
-      H("🔍 What you're buying next"),
-      ...buyQuestions,
-      H('📋 A couple more things'),
-      passportQuestion,
+      detailPageOf('sell-property', "The property you're selling", HOUSE_IC, 'amber', SELL_PROPERTY_IDS),
+      detailPageOf('sell-sale', 'Your sale', HOUSE_IC, 'amber', SELL_SALE_IDS),
+      detailPageOf('buy-search', "What you're buying next", SEARCH_IC, 'teal', BUY_SEARCH_IDS),
+      detailPageOf('buy-matters', 'What matters to you', LIST_IC, 'purple', BUY_MATTERS_IDS),
     ]
   }
   return []
 })
 
+const detailPage = ref(0)
+const currentPage = computed(
+  (): DetailPage =>
+    detailPages.value[detailPage.value] ?? { key: 'none', title: '', icon: '', tint: '', questions: [] },
+)
+const isLastPage = computed(() => detailPage.value >= detailPages.value.length - 1)
+
+function goToPage(i: number) {
+  detailPage.value = Math.max(0, Math.min(i, detailPages.value.length - 1))
+  if (typeof window !== 'undefined') window.scrollTo({ top: 0 })
+}
+
+function goBack() {
+  if (detailPage.value > 0) goToPage(detailPage.value - 1)
+  else phase.value = 'role'
+}
+
+// Step 1 is the first half of the bar; step 2's pages fill the rest.
+const progressWidth = computed(() => {
+  if (phase.value === 'role') return '50%'
+  const n = detailPages.value.length || 1
+  return `${50 + (50 * (detailPage.value + 1)) / n}%`
+})
+
+const actionsStepLabel = computed(() => {
+  if (phase.value === 'role') return 'Step 1 / 2'
+  return `Page ${detailPage.value + 1} of ${detailPages.value.length}`
+})
+
 // ── Header ────────────────────────────────────────────────────────────────
-
-const headerLabel = computed(() => {
-  if (phase.value === 'role') return 'One quick question'
-  const map: Record<string, string> = {
-    buy: 'Step 2 of 2 · Your preferences',
-    sell: 'Step 2 of 2 · Your property',
-    both: 'Step 2 of 2 · Your move',
-  }
-  return map[selectedRole.value] ?? ''
-})
-
-// Compact "Step X of Y · subtitle" used in the new light header.
-const stepIndicator = computed(() => {
-  if (phase.value === 'role') return 'Step 1 of 2'
-  const subtitleMap: Record<string, string> = {
-    buy: '',
-    sell: '· Your property',
-    both: '· Your move',
-  }
-  const sub = subtitleMap[selectedRole.value] ?? ''
-  return `Step 2 of 2${sub ? ' ' + sub : ''}`
-})
 
 // Eyebrow pill text in the intro block.
 const eyebrowLabel = computed(() => {
@@ -847,90 +867,15 @@ const detailCtaLabel = computed(() => {
   return map[selectedRole.value] ?? "I'm ready to explore"
 })
 
-// "N of M answered" — counts only real question rows, not section headings.
-const totalQuestions = computed(
-  () => activeQuestions.value.filter((q) => q.type !== 'heading').length,
+// "N of M answered" across every page of step 2.
+const totalQuestions = computed(() =>
+  detailPages.value.reduce((n, pg) => n + pg.questions.length, 0),
 )
-
-// Section-group headings in the question data are stored as
-// "🏠 The property you're selling" — the prototype splits emoji + text into
-// two spans for layout. These helpers do the same split.
-function headingEmoji(label: string): string {
-  // Take everything up to the first space (works for single emoji headers).
-  const idx = label.indexOf(' ')
-  return idx === -1 ? label : label.slice(0, idx)
-}
-function headingText(label: string): string {
-  const idx = label.indexOf(' ')
-  return idx === -1 ? '' : label.slice(idx + 1)
-}
 
 function advanceToDetail() {
   if (!selectedRole.value) return
   phase.value = 'detail'
-  scrollRef.value?.scrollTo({ top: 0 })
-}
-
-// ── Detail-phase section cards ────────────────────────────────────────────
-// Group the flat question list into cards, one per section heading. Icons +
-// tints are keyed off the heading emoji so the cards match the design.
-// 3D-style PNGs (op-icons/homescore), matching the mobile app's icon set.
-// Inline SVG kept only for the rare unmapped-heading fallback below.
-const sectionMeta: Record<string, { icon: string; tint: string; isImage: boolean }> = {
-  '🏠': { tint: 'amber', icon: '/op-icons/homescore/house.png', isImage: true },
-  '🔍': { tint: 'teal', icon: '/op-icons/homescore/magnifier.png', isImage: true },
-  '📋': { tint: 'purple', icon: '/op-icons/homescore/clipboard.png', isImage: true },
-}
-const defaultSectionIcon =
-  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg>'
-
-function slugify(s: string): string {
-  return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
-}
-
-interface Section {
-  title: string
-  icon: string
-  isImage: boolean
-  tint: string
-  anchor: string
-  questions: Question[]
-}
-
-const sections = computed<Section[]>(() => {
-  const secs: Section[] = []
-  let cur: Section | null = null
-  for (const q of activeQuestions.value) {
-    if (q.type === 'heading') {
-      const emoji = headingEmoji(q.label || '')
-      const title = headingText(q.label || '')
-      const meta = sectionMeta[emoji] ?? { icon: defaultSectionIcon, tint: 'teal', isImage: false }
-      cur = {
-        title,
-        icon: meta.icon,
-        isImage: meta.isImage,
-        tint: meta.tint,
-        anchor: 'sec-' + slugify(title || String(secs.length)),
-        questions: [],
-      }
-      secs.push(cur)
-    } else {
-      if (!cur) {
-        cur = { title: '', icon: '', tint: '', anchor: 'sec-top', questions: [] }
-        secs.push(cur)
-      }
-      cur.questions.push(q)
-    }
-  }
-  return secs
-})
-
-// Only titled sections appear in the sidebar "On this page" nav.
-const pageSections = computed(() => sections.value.filter((s) => s.title))
-
-function scrollToSection(anchor: string) {
-  if (typeof document === 'undefined') return
-  document.getElementById(anchor)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  goToPage(0)
 }
 
 // Sidebar step-tracker sub-labels for the detail phase.
@@ -945,15 +890,9 @@ const moveSubLabel = computed(() => {
   }
   return map[selectedRole.value] ?? 'Tell us about both sides'
 })
-const headerTitle = computed(() => {
-  if (phase.value === 'role') return 'What do you want to do?'
-  const map: Record<string, string> = {
-    buy: 'Tell us about your search',
-    sell: 'About your property',
-    both: 'Your move: buying & selling',
-  }
-  return map[selectedRole.value] ?? ''
-})
+const headerTitle = computed(() =>
+  phase.value === 'role' ? 'What do you want to do?' : currentPage.value.title,
+)
 const headerSub = computed(() => {
   if (phase.value === 'role')
     return "We'll set up the right journey for you. It takes 30 seconds."
@@ -1666,8 +1605,7 @@ onMounted(() => {
 .pf-onpage {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-bottom: 22px;
+  gap: 8px;
 }
 .pf-onpage-label {
   font-size: 10.5px;
@@ -1689,13 +1627,20 @@ onMounted(() => {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 13px;
-  padding: 13px 15px;
+  padding: 9px 13px;
   cursor: pointer;
   transition: all 0.15s;
 }
 .pf-onpage-item:hover {
   background: rgba(255, 255, 255, 0.09);
   border-color: rgba(255, 255, 255, 0.16);
+}
+.pf-onpage-item:not(.current) {
+  color: rgba(255, 255, 255, 0.62);
+}
+.pf-onpage-item.current {
+  background: rgba(0, 161, 154, 0.16);
+  border-color: rgba(47, 191, 182, 0.55);
 }
 .pf-onpage-ic {
   width: 34px;
@@ -1714,29 +1659,6 @@ onMounted(() => {
   width: 26px;
   height: 26px;
   object-fit: contain;
-}
-
-/* Answered count card */
-.pf-answered {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.62);
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 13px;
-  padding: 14px 16px;
-}
-.pf-answered svg {
-  width: 18px;
-  height: 18px;
-  flex-shrink: 0;
-  color: #6fe6dc;
-}
-.pf-answered strong {
-  color: #fff;
-  font-weight: 800;
 }
 
 /* Divider + actions */
@@ -2399,6 +2321,17 @@ onMounted(() => {
   .is-detail .pf-divider { margin: 18px 0 14px; }
 }
 
+/* Narrow side-by-side windows (small laptops, tablets in landscape): the
+   question column is what wraps the answer chips onto extra lines, so it
+   gets the room the sidebar and gutters can spare. */
+@media (min-width: 981px) and (max-width: 1279px) {
+  .pf-side { flex-basis: 320px; padding-left: 28px; padding-right: 28px; }
+  .pf-side-title { font-size: 25px; }
+  .pf-main { padding-left: 32px; padding-right: 32px; }
+  .is-detail .pf-card { padding-left: 22px; padding-right: 22px; }
+  .is-detail .pf-card-body { column-gap: 24px; }
+}
+
 /* ── Short side-by-side windows ──
    The sidebar is sized to fit the 730px design height that the desktop zoom
    scales from. A 1366x768 laptop leaves ~600px once the browser chrome is
@@ -2406,6 +2339,8 @@ onMounted(() => {
    is always 1, so vh is safe here: the vertical rhythm of both columns
    shrinks with the window and everything fits on one screen. */
 @media (min-width: 981px) and (max-height: 729px) {
+  /* Scale to the window, never below 0.86 (--desk-fit, nuxt.config.ts). */
+  .pf-body { zoom: var(--desk-fit, 1); }
   .pf-side { padding-top: clamp(18px, 4vh, 36px); padding-bottom: clamp(18px, 4vh, 36px); }
   .pf-side-title { font-size: clamp(23px, 4vh, 29px); margin: clamp(14px, 3.4vh, 30px) 0 clamp(12px, 2.8vh, 26px); }
   .pf-eyebrow { margin-top: clamp(14px, 3.4vh, 30px); }
@@ -2455,7 +2390,8 @@ onMounted(() => {
   .pf-side-title,
   .pf-steps,
   .pf-info,
-  .pf-stats { display: none; }
+  .pf-stats,
+  .pf-onpage { display: none; }
   .pf-eyebrow { display: none; }
   .pf-logo img { width: 36px; }
   .pf-logo strong { font-size: 20px; }
