@@ -6,7 +6,7 @@
         <span class="otp-logo-mark"><img src="/op-icons/logo.png" alt="umu" /></span>
         <strong>umovingu</strong>
       </div>
-      <p class="otp-tagline">A simpler way to own your home.</p>
+      <p class="otp-tagline">You own the home. Own its story.</p>
     </header>
 
     <div class="otp-split">
