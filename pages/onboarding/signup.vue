@@ -11,7 +11,8 @@
       </div>
 
       <div class="signup-aside-body">
-        <!-- Artwork leads, then the copy reads down from it in one column. -->
+        <!-- Stacked above the copy on narrow screens; from 1100px it sits beside
+             the headline (see the min-width: 1100px block). -->
         <img
           src="/dashboard-art/searchHouse.png"
           alt=""
@@ -199,7 +200,6 @@ import { toTitleCase } from '~/utils/form-helpres'
 import PhoneInput from '~/components/form/PhoneInput.vue'
 import PropertySearchInput from '~/components/property/PropertySearchInput.vue'
 import TermsModal from '~/components/modals/TermsModal.vue'
-import OPIcon from '~/components/ui/OPIcon.vue'
 
 definePageMeta({
   title: 'Create Account | UmovingU',

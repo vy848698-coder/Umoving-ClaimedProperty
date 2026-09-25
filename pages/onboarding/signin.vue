@@ -290,7 +290,6 @@ import { ref, computed } from 'vue'
 import { useAuth } from '~/composables/useAuth'
 import { setSessionFlag } from '~/composables/useSessionFlag'
 import { resolvePostAuthPath } from '~/utils/appFlow'
-import OPIcon from '~/components/ui/OPIcon.vue'
 
 definePageMeta({
   title: 'Sign In | UmovingU',
@@ -305,25 +304,11 @@ const route = useRoute()
 type ResetStep = 'idle' | 'email' | 'sent' | 'otp' | 'newPassword' | 'success'
 const resetStep = ref<ResetStep>('idle')
 
-const heroEyebrow = computed(() => {
-  if (resetStep.value === 'idle') return 'Sign in'
-  if (resetStep.value === 'email') return 'Reset your password'
-  if (resetStep.value === 'otp') return 'Verify the code'
-  if (resetStep.value === 'newPassword') return 'Set a new password'
-  return ''
-})
 const heroTitle = computed(() => {
   if (resetStep.value === 'idle') return 'Welcome back.'
   if (resetStep.value === 'email') return 'No worries.'
   if (resetStep.value === 'otp') return 'Check your email.'
   if (resetStep.value === 'newPassword') return 'Choose a strong one.'
-  return ''
-})
-const heroSub = computed(() => {
-  if (resetStep.value === 'idle') return 'Good to see you again.'
-  if (resetStep.value === 'email') return "Enter your email and we'll send you a code to set a new password."
-  if (resetStep.value === 'otp') return 'Enter the 6-digit code we just sent you.'
-  if (resetStep.value === 'newPassword') return 'At least 8 characters. Mix in a number for extra strength.'
   return ''
 })
 
@@ -388,16 +373,6 @@ const resetEmail = ref('')
 const resetToken = ref('')
 const resetError = ref('')
 const resetLoading = ref(false)
-
-const handleBack = () => {
-  resetError.value = ''
-  if (resetStep.value === 'idle') return
-  if (resetStep.value === 'email') resetStep.value = 'idle'
-  else if (resetStep.value === 'sent') resetStep.value = 'email'
-  else if (resetStep.value === 'otp') resetStep.value = 'sent'
-  else if (resetStep.value === 'newPassword') resetStep.value = 'otp'
-  else resetStep.value = 'idle'
-}
 
 const startForgotPassword = () => {
   resetEmail.value = emailInput.value
@@ -613,10 +588,8 @@ const onPrimary = () => {
   justify-content: center;
   max-width: 500px;
   text-align: center;
-  /* Truly centred here, unlike sign-up. That page's column is tall enough to
-     need lifting off the floor; this one is three short blocks, and the form
-     beside it is centred too - biasing one and not the other would give the
-     page two different vertical anchors. */
+  /* Centred between the logo row and the footnote. From 1200px it becomes a
+     two-column grid (copy + passport); see the min-width: 1200px block. */
 }
 
 .signin-welcome {
@@ -915,62 +888,6 @@ const onPrimary = () => {
 .confirm-state--futuristic .confirm-sub { color: #6b6783; }
 
 
-/* Topbar */
-.auth-topbar {
-  display: flex;
-  align-items: center;
-  padding: 16px 22px 4px;
-  gap: 10px;
-}
-.auth-back-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: #fafafa;
-  color: #231d45;
-  border: 1px solid #ececef;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-.auth-back-btn svg { width: 14px; height: 14px; }
-.auth-spacer { flex: 1; }
-.auth-brand-mini {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Hero */
-.auth-hero { padding: 18px 24px 4px; }
-.auth-hero-eyebrow {
-  font-size: 10px;
-  font-weight: 800;
-  color: #007e78;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  margin-bottom: 10px;
-}
-.auth-hero-title {
-  font-size: 30px;
-  font-weight: 800;
-  color: #231d45;
-  letter-spacing: -1px;
-  line-height: 1.05;
-  margin-bottom: 10px;
-}
-.auth-hero-sub {
-  font-size: 13.5px;
-  font-weight: 500;
-  color: #6b6783;
-  line-height: 1.55;
-  letter-spacing: -0.05px;
-}
-
 /* Logged-out / session toast */
 .logged-out-toast {
   margin: 6px 24px 18px 3px;
@@ -1234,17 +1151,6 @@ const onPrimary = () => {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-@keyframes drift {
-  0%,
-  100% { transform: translate3d(0, 0, 0) scale(1); }
-  50% { transform: translate3d(18px, -20px, 0) scale(1.08); }
-}
-
-@keyframes float {
-  0%,
-  100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
-}
 
 
 /* ── Big screens ──
