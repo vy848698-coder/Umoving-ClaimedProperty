@@ -11,7 +11,7 @@
       </div>
 
       <div class="signin-aside-body">
-        <h1 class="signin-welcome">{{ heroTitle }}</h1>
+        <h1 class="signin-welcome" :class="{ 'signin-welcome--long': heroTitle.length > 14 }">{{ heroTitle }}</h1>
         <p class="signin-welcome-sub">Good to see you again. Your Property Passport is right where you left it.</p>
 
         <img src="/op-icons/passport-covers/seller_tilted_right_on_tile.png" alt="Property Passport" class="signin-passport-illus" />
@@ -1135,6 +1135,20 @@ const onPrimary = () => {
 
 
 
+/* The reset steps' headings ("Check your email.", "Choose a strong one.") are
+   half as long again as "Welcome back."; at the same size they wrapped to two
+   lines and pushed the column past the bottom of the window. They take a
+   smaller size so they stay on one line. */
+@media (min-width: 881px) {
+  .signin-split .signin-welcome.signin-welcome--long { font-size: clamp(36px, 3.4vw, 48px); }
+}
+
+/* Split layout on a narrow window (tablet landscape): each panel is ~450-550px
+   wide and the tagline had no room beside the logo, so it ran into it. */
+@media (min-width: 881px) and (max-width: 1099px) {
+  .signin-tagline { display: none; }
+}
+
 /* ── Big screens ──
    Scale each content block by the shared desktop factor rather than the
    full-height columns, and let the brand column's side padding grow with the
@@ -1154,6 +1168,12 @@ const onPrimary = () => {
    first field stay on the fold — on a 640px-tall phone the full-size panel
    pushed them clean off the screen. */
 @media (max-width: 880px) {
+  /* Touch screens: 16px is the floor that stops iOS Safari zooming the page
+     in when a field is tapped (tablets included, not just phones). */
+  .signin-panel-wrap .form-input { font-size: 16px; }
+  /* The account link is the page's only way to sign-up - give it a
+     thumb-sized hit area without changing how it looks. */
+  .signin-footer a { display: inline-block; padding: 12px 4px; margin: -12px -4px; }
   .signin-split {
     grid-template-columns: 1fr;
     /* Brand band sized to its content, form panel takes the rest of the

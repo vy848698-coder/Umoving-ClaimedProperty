@@ -400,7 +400,9 @@ const handleSubmit = async () => {
   text-align: center;
   /* Centres inside a slightly shorter box, so the whole column sits above the
      true middle - level with the form's own weight rather than below it. */
-  padding-bottom: 4.5vh;
+  /* Divided by the desktop zoom: inside the zoomed body a vh is multiplied
+     by it, which lifted the column far off-centre on big monitors. */
+  padding-bottom: calc(4.5vh / var(--desk-zoom, 1));
 }
 
 .signup-eyebrow {
@@ -806,6 +808,12 @@ const handleSubmit = async () => {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* Split layout on a narrow window (tablet landscape): no room for the
+   tagline beside the logo. */
+@media (min-width: 881px) and (max-width: 1099px) {
+  .signup-tagline { display: none; }
+}
+
 /* ── Big screens ── same as sign-in: scale each content block by the shared
    desktop factor (not the full-height columns) and let the brand column's side
    padding grow with the screen. */
@@ -824,6 +832,14 @@ const handleSubmit = async () => {
    first field almost two screens down. Its content is trimmed in steps, and
    the hero and form share one centred column so they line up. */
 @media (max-width: 880px) {
+  /* Touch screens: 16px is the floor that stops iOS Safari zooming the page
+     in when a field is tapped - including the phone and postcode fields,
+     which live in child components. */
+  .form-input,
+  :deep(.number-input),
+  :deep(.psi-input) { font-size: 16px; }
+  /* Thumb-sized hit area for the sign-in link, same look. */
+  .signup-footer a { display: inline-block; padding: 12px 4px; margin: -12px -4px; }
   .signup-split {
     grid-template-columns: 1fr;
     /* Band sized to content, form panel fills the rest of the viewport. */
