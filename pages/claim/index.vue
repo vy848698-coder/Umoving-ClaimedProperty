@@ -16,16 +16,16 @@
     </header>
 
     <main class="hsw-shell clw-main">
-      <!-- Page head -->
-      <div class="clw-head">
-        <p class="clw-kicker"><span class="clw-kicker-dot" />Claim your Passport</p>
-        <h1>Claim your Property Passport</h1>
-        <p class="clw-lede">
-          Find your property and we'll verify ownership via HM Land Registry.
-          Then your Property Passport is yours to build and share.
-        </p>
-        <ClaimStepTracker :current="1" class="clw-tracker" />
-      </div>
+      <!-- Founding Homeowners hero — carries the page's headline messaging
+           (client prototype, 2026-09-26): the old "Claim your Property
+           Passport" kicker/h1/lede is gone, this replaces it. -->
+      <FounderPromo
+        variant="hero"
+        title="Join the million and change the face of home buying and selling."
+        body="Claim your home, build its Property Passport and join the first million homeowners shaping a better property network for everyone."
+      />
+
+      <ClaimStepTracker :current="1" class="clw-tracker clw-tracker--centered" />
 
       <div class="clw-layout">
         <!-- Search card -->
@@ -68,31 +68,22 @@
           </div>
         </section>
 
-        <!-- What happens next -->
+        <!-- What your Founder status gives you (client prototype,
+             2026-09-26) — replaces the old "What happens next" steps list;
+             the HM Land Registry / encrypted trust note stays in its own
+             spot next to the search field below (.cl-lock-note). -->
         <aside class="clw-aside">
           <div class="clw-aside-card">
-            <h3 class="clw-aside-title">What happens next</h3>
-            <div class="clw-aside-time">
-              <img src="/buyer-profile-icon/stopwatch.png" alt="" />
-              Usually takes under 5 minutes
-            </div>
-            <ol class="clw-steps">
-              <li v-for="(s, i) in CLAIM_STEPS" :key="s.title" :class="{ current: i === 0 }">
-                <span class="clw-step-ic">
-                  <img :src="s.image" alt="" />
-                  <span class="clw-step-num">{{ i + 1 }}</span>
-                </span>
+            <h3 class="clw-aside-title">What your Founder status gives you</h3>
+            <ul class="clw-benefits">
+              <li v-for="b in FOUNDER_BENEFITS" :key="b.title">
+                <span class="clw-benefit-ic"><img :src="b.image" alt="" /></span>
                 <div>
-                  <div class="clw-step-h">{{ s.title }}</div>
-                  <p>{{ s.text }}</p>
+                  <div class="clw-step-h">{{ b.title }}</div>
+                  <p>{{ b.text }}</p>
                 </div>
               </li>
-            </ol>
-            <div class="clw-trust">
-              <span class="clw-trust-item"><img src="/build/padlock.png" alt="" />Encrypted</span>
-              <span class="clw-trust-item"><img src="/build/lrTitleBank.png" alt="" />HM Land Registry</span>
-              <span class="clw-trust-item"><img src="/build/shield.png" alt="" />Never sold</span>
-            </div>
+            </ul>
           </div>
         </aside>
       </div>
@@ -104,13 +95,13 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import PropertySearchInput from '~/components/property/PropertySearchInput.vue'
+import FounderPromo from '~/components/core/FounderPromo.vue'
 import ProfileMenu from '~/components/core/ProfileMenu.vue'
 import PassportNavButton from '~/components/core/PassportNavButton.vue'
 import ClaimStepTracker from '~/components/claim/ClaimStepTracker.vue'
 import SelectedAddressCard from '~/components/claim/SelectedAddressCard.vue'
 import AddressHelp from '~/components/claim/AddressHelp.vue'
 import { FLOW_HOME } from '~/utils/appFlow'
-import { CLAIM_STEPS } from '~/utils/claimSteps'
 
 definePageMeta({
   middleware: 'auth',
@@ -120,6 +111,34 @@ definePageMeta({
 const router = useRouter()
 const resolving = ref(false)
 const selectedProperty = ref<any>(null)
+
+// "What your Founder status gives you" (client prototype, 2026-09-26) —
+// same benefits FounderPromo's hero used to list before that moved here to
+// match the prototype's two-column layout. Same 3D-render icon style the
+// step tracker above already uses (utils/claimSteps.ts), not flat line
+// icons, to match the rest of this page.
+const FOUNDER_BENEFITS = [
+  {
+    image: '/dashboard-art/passportBadge.png',
+    title: 'Your Property Passport, free for life',
+    text: "Build, store and share your home's record. External services may carry third-party costs.",
+  },
+  {
+    image: '/homescore-icon/wrench.png',
+    title: 'New UMU tools, free for life',
+    text: 'First access to core tools we build together. External costs are separate.',
+  },
+  {
+    image: '/build/people.png',
+    title: 'A real voice',
+    text: 'Vote on priorities and help shape a better way to buy and sell.',
+  },
+  {
+    image: '/op-icons/rewards/stampTool.png',
+    title: 'A permanent Founder Number',
+    text: 'Your certificate marks your place among the first million. More to come.',
+  },
+]
 
 // Picking an address shows it back to the user first; the claim itself only
 // starts once they confirm with "Continue".
@@ -332,51 +351,17 @@ function continueToClaim() {
   padding: 48px 0 200px;
 }
 
-.clw-head {
-  max-width: 720px;
-}
-
-.clw-kicker {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0 0 16px;
-  color: #00857f;
-  font-size: 12px;
-  font-weight: 900;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-}
-
-.clw-kicker-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 999px;
-  background: #00a19a;
-  box-shadow: 0 0 0 4px rgba(0, 161, 154, 0.16);
-}
-
-.clw-head h1 {
-  margin: 0;
-  color: #231d45;
-  font-size: clamp(32px, 4vw, 46px);
-  font-weight: 900;
-  line-height: 1.08;
-  letter-spacing: -0.02em;
-}
-
-.clw-lede {
-  margin: 18px 0 0;
-  max-width: 560px;
-  color: #5b6d89;
-  font-size: 17px;
-  font-weight: 500;
-  line-height: 1.6;
-}
-
 .clw-tracker {
   margin-top: 28px;
   max-width: 560px;
+}
+
+/* Below the borderless FounderPromo hero (client prototype, 2026-09-26) -
+   centered across the page instead of left-aligned under a heading, since
+   there's no longer a left-aligned heading block above it. */
+.clw-tracker--centered {
+  max-width: 640px;
+  margin: 36px auto 0;
 }
 
 .cl-continue {
@@ -557,22 +542,6 @@ function continueToClaim() {
   box-shadow: 0 14px 34px rgba(17, 52, 88, 0.06);
 }
 
-.clw-aside-time {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin: -8px 0 20px;
-  font-size: 12.5px;
-  font-weight: 700;
-  color: #4a5570;
-}
-
-.clw-aside-time img {
-  width: 20px;
-  height: 20px;
-  object-fit: contain;
-}
-
 .clw-aside-title {
   margin: 0 0 18px;
   font-size: 17px;
@@ -581,75 +550,35 @@ function continueToClaim() {
   letter-spacing: -0.01em;
 }
 
-.clw-steps {
+/* "What your Founder status gives you" (client prototype, 2026-09-26) -
+   replaces the old numbered "What happens next" steps list. */
+.clw-benefits {
   list-style: none;
-  margin: 0 0 22px;
+  margin: 0;
   padding: 0;
   display: grid;
-  gap: 18px;
+  gap: 20px;
 }
 
-.clw-steps li {
-  position: relative;
+.clw-benefits li {
   display: flex;
   gap: 14px;
   align-items: flex-start;
 }
 
-/* Connector from each step's icon down to the next one. */
-.clw-steps li:not(:last-child)::after {
-  content: '';
-  position: absolute;
-  left: 23px;
-  top: 54px;
-  bottom: -14px;
-  width: 2px;
-  border-radius: 2px;
-  background: linear-gradient(180deg, rgba(0, 161, 154, 0.28), rgba(0, 161, 154, 0.06));
-}
-
-.clw-step-ic {
-  position: relative;
+.clw-benefit-ic {
   flex-shrink: 0;
-  width: 64px;
-  height: 64px;
-  border-radius: 18px;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
   display: grid;
   place-items: center;
-  background: #fff;
-  border: 1px solid #e7ecf2;
-  box-shadow: 0 6px 16px rgba(17, 52, 88, 0.08);
+  background: #f0fdfa;
 }
-
-.clw-step-ic img {
-  width: 50px;
-  height: 50px;
+.clw-benefit-ic img {
+  width: 34px;
+  height: 34px;
   object-fit: contain;
-}
-
-.clw-steps li.current .clw-step-ic {
-  border-color: rgba(0, 161, 154, 0.5);
-  box-shadow: 0 0 0 4px rgba(0, 161, 154, 0.12);
-}
-
-.clw-step-num {
-  position: absolute;
-  top: -6px;
-  right: -6px;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  background: #c9d6e2;
-  color: #fff;
-  font-size: 11px;
-  font-weight: 900;
-  border: 2px solid #fff;
-}
-
-.clw-steps li.current .clw-step-num {
-  background: #00a19a;
 }
 
 .clw-step-h {
@@ -659,38 +588,11 @@ function continueToClaim() {
   margin-bottom: 3px;
 }
 
-.clw-steps p {
+.clw-benefits p {
   margin: 0;
   font-size: 13px;
   color: #6b6783;
   line-height: 1.5;
-}
-
-.clw-trust {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding-top: 18px;
-  border-top: 1px solid #eef2f6;
-}
-
-.clw-trust-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11.5px;
-  font-weight: 700;
-  color: #4a5570;
-  background: #f6fafd;
-  border: 1px solid #e7ecf2;
-  padding: 6px 10px;
-  border-radius: 999px;
-}
-
-.clw-trust-item img {
-  width: 16px;
-  height: 16px;
-  object-fit: contain;
 }
 
 .cl-mobile-nav {

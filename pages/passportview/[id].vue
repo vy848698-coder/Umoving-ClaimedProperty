@@ -105,10 +105,12 @@
                hero (client History handoff, 2026-09-25) — replaces the
                separate collaborators strip that used to sit below the hero
                and the old bare "Share Passport" button. This app has no
-               whole-passport publish concept (removed intentionally,
-               2026-09-25) — "Manage visibility" here opens the existing
-               share-link review flow, the closest equivalent this app
-               offers. ── -->
+               buyer-marketplace publish concept (removed intentionally,
+               2026-09-25) — "Manage visibility" opens a real standalone
+               Private/Public toggle (visibilityOpen / PassportVisibilityDrawer,
+               2026-09-26) instead, per the handoff's literal spec. Per-
+               recipient sharing stays a separate flow (shareReviewOpen /
+               ShareReviewDrawer, "Manage sharing" in the sidebar below). ── -->
           <div class="pp-hero-actions">
             <button
               class="pp-hero-btn pp-hero-btn--ghost"
@@ -119,10 +121,11 @@
             </button>
             <button
               class="pp-hero-btn pp-hero-btn--primary"
-              @click="shareReviewOpen = true"
+              @click="visibilityOpen = true"
             >
               <OPIcon name="publishPassport" class="pp-hero-btn-ic" />
               Manage visibility
+              <span class="pp-hero-btn-badge">{{ isPublicVisibility ? 'Public' : 'Private' }}</span>
             </button>
           </div>
         </div>
@@ -526,8 +529,11 @@
             <div class="hist-panel hist-panel--privacy">
               <div class="hist-lock">◈</div>
               <h3>You control access</h3>
-              <p>Your passport is private by default. You decide who can see it and what they can see. Changes to access appear in this history.</p>
-              <button class="hist-link" type="button" @click="shareReviewOpen = true">Manage sharing →</button>
+              <p>Your passport is private by default. You decide when to publish it or invite someone to see specific information. Changes to access appear in this history.</p>
+              <div class="hist-link-row">
+                <button class="hist-link" type="button" @click="visibilityOpen = true">Manage visibility →</button>
+                <button class="hist-link" type="button" @click="shareReviewOpen = true">Manage sharing →</button>
+              </div>
             </div>
           </aside>
         </div>
@@ -616,6 +622,13 @@
       v-model:show="shareReviewOpen"
       :passport-id="route.params.id"
       @confirm="onShareReviewConfirm"
+    />
+
+    <!-- Manage visibility — real standalone Private/Public toggle -->
+    <PassportVisibilityDrawer
+      v-model:show="visibilityOpen"
+      :passport-id="route.params.id"
+      @saved="isPublicVisibility = $event"
     />
 
     <!-- Your Properties Modal -->
@@ -731,6 +744,7 @@ import AddCollaboratorModal from '@/components/modals/AddCollaboratorModal.vue'
 import YourPropertiesModal from '@/components/modals/YourPropertiesModal.vue'
 import DocumentAccessDrawer from '~/components/passport/DocumentAccessDrawer.vue'
 import ShareReviewDrawer from '~/components/passport/ShareReviewDrawer.vue'
+import PassportVisibilityDrawer from '~/components/passport/PassportVisibilityDrawer.vue'
 import { useVaultDocuments } from '~/composables/useVaultDocuments'
 import OnboardingTour from '~/components/ui/OnboardingTour.vue'
 import BuyerDetailDrawer from '~/components/passport/BuyerDetailDrawer.vue'
@@ -896,6 +910,7 @@ onMounted(async () => {
     }
     passportTown.value = passport.town ?? passport.city ?? ''
     isPublished.value = passport.status === 'PUBLISHED'
+    isPublicVisibility.value = !!passport.publicVisibility
     passportType.value = passport.type || 'SELLER'
     propertyId.value = passport.propertyId ?? null
     // Pre-fetch street + buyer data in background
@@ -1065,6 +1080,13 @@ const shareError = ref('')
 const shareCopied = ref(false)
 const shareLoading = ref(false)
 const shareReviewOpen = ref(false)
+
+// ── Manage visibility (real Private/Public toggle) ───────────────────────
+// Initial state comes off the same GET /passport/:id fetch as `isPublished`
+// (below, in onMounted) — the drawer itself re-fetches on open via
+// usePassportVisibility, so this is just the hero badge's starting value.
+const visibilityOpen = ref(false)
+const isPublicVisibility = ref(false)
 
 function openShare() {
   shareOpen.value = true
@@ -3339,6 +3361,9 @@ const groupedHistory = computed(() => {
 .hist-todo b { font-size: 11px; line-height: 1.4; color: #231d45; display: block; }
 .hist-todo small { display: block; color: #6b7089; margin-top: 2px; font-size: 10px; }
 .hist-link { border: 0; background: none; color: #007f79; font-size: 11px; font-weight: 800; padding: 0; margin-top: 16px; cursor: pointer; }
+.hist-link-row { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.hist-link-row .hist-link { margin-top: 0; }
+.hist-panel--privacy .hist-link-row { margin-top: 16px; }
 .hist-overlay { position: fixed; inset: 0; background: rgba(24, 19, 43, 0.66); z-index: 60; display: flex; justify-content: flex-end; }
 .hist-drawer { background: #fff; width: min(100%, 460px); height: 100%; overflow: auto; box-shadow: -12px 0 40px rgba(23, 19, 38, 0.23); padding: 26px 28px 40px; }
 .hist-drawer-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; border-bottom: 1px solid #e4e5ed; padding-bottom: 16px; }

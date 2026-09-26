@@ -43,6 +43,12 @@
             <p><b>Yours to control.</b> Nothing is shared without your say-so.</p>
           </li>
         </ul>
+
+        <FounderPromo
+          title="Join the million and change the face of home buying and selling."
+          cta-text="Explore Founding Homeowners"
+          class="signup-founder-promo"
+        />
       </div>
 
       <p class="signup-aside-foot">
@@ -196,6 +202,7 @@ import { ref, reactive } from 'vue'
 import { useAuth } from '~/composables/useAuth'
 import { useSession } from '~/composables/useSession'
 import { toTitleCase } from '~/utils/form-helpres'
+import FounderPromo from '~/components/core/FounderPromo.vue'
 import PhoneInput from '~/components/form/PhoneInput.vue'
 import PropertySearchInput from '~/components/property/PropertySearchInput.vue'
 import TermsModal from '~/components/modals/TermsModal.vue'
@@ -475,6 +482,12 @@ const handleSubmit = async () => {
   color: #4a4560;
 }
 .signup-points b { color: #231d45; font-weight: 800; }
+
+.signup-founder-promo {
+  align-self: stretch;
+  margin: 20px 0 0;
+  text-align: left;
+}
 
 .signup-aside-foot {
   display: inline-flex;
