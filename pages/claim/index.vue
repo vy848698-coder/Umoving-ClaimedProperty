@@ -1,6 +1,5 @@
 <template>
   <div class="cl-root">
-
     <!-- ── Web nav ──────────────────────────────────────────────────── -->
     <header class="hsw-nav">
       <div class="hsw-shell hsw-nav-inner">
@@ -25,12 +24,17 @@
         body="Claim your home, build its Property Passport and join the first million homeowners shaping a better property network for everyone."
       />
 
-      <ClaimStepTracker :current="1" class="clw-tracker clw-tracker--centered" />
+      <ClaimStepTracker
+        :current="1"
+        class="clw-tracker clw-tracker--centered"
+      />
 
       <div class="clw-layout">
         <!-- Search card -->
         <section class="clw-card">
-          <div class="cl-icon-square"><img src="/dashboard-art/searchHouse.png" alt="" /></div>
+          <div class="cl-icon-square">
+            <img src="/dashboard-art/searchHouse.png" alt="" />
+          </div>
           <h2 class="cl-h2">Which property are you claiming?</h2>
           <p class="cl-body">
             Enter your postcode and select your address. We'll verify ownership
@@ -38,14 +42,37 @@
           </p>
 
           <div class="cl-field-wrap">
-            <div class="cl-field-label">{{ selectedProperty ? 'Your property' : 'Postcode or address' }}</div>
+            <div class="cl-field-label">
+              {{ selectedProperty ? "Your property" : "Postcode or address" }}
+            </div>
             <template v-if="selectedProperty">
-              <SelectedAddressCard :property="selectedProperty" @change="clearSelection" />
-              <button class="cl-continue" type="button" :disabled="resolving" @click="continueToClaim">
+              <SelectedAddressCard
+                :property="selectedProperty"
+                @change="clearSelection"
+              />
+              <button
+                class="cl-continue"
+                type="button"
+                :disabled="resolving"
+                @click="continueToClaim"
+              >
                 <span v-if="resolving" class="cl-resolving-spinner" />
-                {{ resolving ? 'Opening your property…' : 'Continue with this address' }}
-                <svg v-if="!resolving" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
+                {{
+                  resolving
+                    ? "Opening your property…"
+                    : "Continue with this address"
+                }}
+                <svg
+                  v-if="!resolving"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.6"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                  <polyline points="12 5 19 12 12 19" />
                 </svg>
               </button>
             </template>
@@ -60,10 +87,13 @@
           </div>
 
           <div class="cl-lock-note">
-            <div class="cl-lock-ic"><img src="/build/padlock.png" alt="" /></div>
+            <div class="cl-lock-ic">
+              <img src="/build/padlock.png" alt="" />
+            </div>
             <div class="cl-lock-body">
               We verify ownership via
-              <strong>HM Land Registry</strong>. Your details are encrypted and never sold.
+              <strong>HM Land Registry</strong>. Your details are encrypted and
+              never sold.
             </div>
           </div>
         </section>
@@ -77,7 +107,9 @@
             <h3 class="clw-aside-title">What your Founder status gives you</h3>
             <ul class="clw-benefits">
               <li v-for="b in FOUNDER_BENEFITS" :key="b.title">
-                <span class="clw-benefit-ic"><img :src="b.image" alt="" /></span>
+                <span class="clw-benefit-ic"
+                  ><img :src="b.image" alt=""
+                /></span>
                 <div>
                   <div class="clw-step-h">{{ b.title }}</div>
                   <p>{{ b.text }}</p>
@@ -88,29 +120,28 @@
         </aside>
       </div>
     </main>
-
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import PropertySearchInput from '~/components/property/PropertySearchInput.vue'
-import FounderPromo from '~/components/core/FounderPromo.vue'
-import ProfileMenu from '~/components/core/ProfileMenu.vue'
-import PassportNavButton from '~/components/core/PassportNavButton.vue'
-import ClaimStepTracker from '~/components/claim/ClaimStepTracker.vue'
-import SelectedAddressCard from '~/components/claim/SelectedAddressCard.vue'
-import AddressHelp from '~/components/claim/AddressHelp.vue'
-import { FLOW_HOME } from '~/utils/appFlow'
+import { ref } from "vue";
+import PropertySearchInput from "~/components/property/PropertySearchInput.vue";
+import FounderPromo from "~/components/core/FounderPromo.vue";
+import ProfileMenu from "~/components/core/ProfileMenu.vue";
+import PassportNavButton from "~/components/core/PassportNavButton.vue";
+import ClaimStepTracker from "~/components/claim/ClaimStepTracker.vue";
+import SelectedAddressCard from "~/components/claim/SelectedAddressCard.vue";
+import AddressHelp from "~/components/claim/AddressHelp.vue";
+import { FLOW_HOME } from "~/utils/appFlow";
 
 definePageMeta({
-  middleware: 'auth',
-  title: 'Claim your Property Passport',
-})
+  middleware: "auth",
+  title: "Claim your Property Passport",
+});
 
-const router = useRouter()
-const resolving = ref(false)
-const selectedProperty = ref<any>(null)
+const router = useRouter();
+const resolving = ref(false);
+const selectedProperty = ref<any>(null);
 
 // "What your Founder status gives you" (client prototype, 2026-09-26) —
 // same benefits FounderPromo's hero used to list before that moved here to
@@ -119,42 +150,42 @@ const selectedProperty = ref<any>(null)
 // icons, to match the rest of this page.
 const FOUNDER_BENEFITS = [
   {
-    image: '/dashboard-art/passportBadge.png',
-    title: 'Your Property Passport, free for life',
+    image: "/dashboard-art/passportBadge.png",
+    title: "Your Property Passport, free for life",
     text: "Build, store and share your home's record. We only pass on third-party costs where they apply.",
   },
   {
-    image: '/homescore-icon/wrench.png',
-    title: 'New UMU tools, free for life',
-    text: 'First access to core tools we build together. External costs are separate.',
+    image: "/homescore-icon/wrench.png",
+    title: "New UMU tools, free for life",
+    text: "First access to core tools we build together. External costs are separate.",
   },
   {
-    image: '/build/people.png',
-    title: 'A real voice',
-    text: 'Vote on priorities and help shape a better way to buy and sell.',
+    image: "/build/people.png",
+    title: "A real voice",
+    text: "Vote on priorities and help shape a better way to buy and sell.",
   },
   {
-    image: '/op-icons/rewards/stampTool.png',
-    title: 'A permanent Founder Number',
-    text: 'Your certificate marks your place among the first million. More to come.',
+    image: "/op-icons/rewards/stampTool.png",
+    title: "A permanent Founder Number",
+    text: "Your certificate marks your place among the first million. More to come.",
   },
-]
+];
 
 // Picking an address shows it back to the user first; the claim itself only
 // starts once they confirm with "Continue".
 function onPropertySelect(property: any) {
-  if (!property?.id) return
-  selectedProperty.value = property
+  if (!property?.id) return;
+  selectedProperty.value = property;
 }
 
 function clearSelection() {
-  selectedProperty.value = null
+  selectedProperty.value = null;
 }
 
 function continueToClaim() {
-  if (!selectedProperty.value?.id || resolving.value) return
-  resolving.value = true
-  router.push(`/claim/${selectedProperty.value.id}`)
+  if (!selectedProperty.value?.id || resolving.value) return;
+  resolving.value = true;
+  router.push(`/claim/${selectedProperty.value.id}`);
 }
 </script>
 
@@ -174,8 +205,14 @@ function continueToClaim() {
   min-height: 100dvh;
   color: var(--navy);
   background: #f3f2ef;
-  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont,
-    'Segoe UI', Inter, system-ui, sans-serif;
+  font-family:
+    "Plus Jakarta Sans",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Inter,
+    system-ui,
+    sans-serif;
   -webkit-font-smoothing: antialiased;
   /* Clip sideways only (the ambient blobs overhang) — clipping vertically
      cut the address-search dropdown off at the bottom of the page. `clip`
@@ -296,7 +333,9 @@ function continueToClaim() {
   border-radius: 10px;
   white-space: nowrap;
   font-family: inherit;
-  transition: background 0.18s, color 0.18s;
+  transition:
+    background 0.18s,
+    color 0.18s;
 }
 
 .hsw-links button:hover {
@@ -331,7 +370,9 @@ function continueToClaim() {
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
-  transition: border-color 0.18s, background 0.18s;
+  transition:
+    border-color 0.18s,
+    background 0.18s;
 }
 
 .hsw-back:hover {
@@ -361,7 +402,7 @@ function continueToClaim() {
    there's no longer a left-aligned heading block above it. */
 .clw-tracker--centered {
   max-width: 640px;
-  margin: 36px auto 0;
+  margin: 75px auto 0;
 }
 
 .cl-continue {
@@ -381,7 +422,10 @@ function continueToClaim() {
   font-weight: 800;
   cursor: pointer;
   box-shadow: 0 12px 26px rgba(0, 161, 154, 0.28);
-  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    opacity 0.15s ease;
 }
 
 .cl-continue:hover:not(:disabled) {
@@ -416,7 +460,12 @@ function continueToClaim() {
 /* ── Search card ──────────────────────────────────────────────────── */
 .clw-card {
   padding: 32px 30px 34px;
-  background: linear-gradient(160deg, rgba(255, 255, 255, 0.96) 0%, rgba(246, 252, 255, 0.94) 52%, rgba(239, 255, 251, 0.95) 100%);
+  background: linear-gradient(
+    160deg,
+    rgba(255, 255, 255, 0.96) 0%,
+    rgba(246, 252, 255, 0.94) 52%,
+    rgba(239, 255, 251, 0.95) 100%
+  );
   border: 1px solid rgba(174, 201, 231, 0.48);
   border-radius: 22px;
   box-shadow:
@@ -605,7 +654,9 @@ function continueToClaim() {
    this page exactly as a 1366px laptop does, only bigger: same side
    margins, same layout. */
 @media (min-width: 1367px) {
-  .hsw-shell { zoom: var(--wide-zoom, 1); }
+  .hsw-shell {
+    zoom: var(--wide-zoom, 1);
+  }
 }
 
 /* ── Responsive ───────────────────────────────────────────────────── */
@@ -701,10 +752,22 @@ function continueToClaim() {
    action button. The app shell clips overflow-x, so the right-hand button
    was sliced off the screen rather than producing a scrollbar. */
 @media (max-width: 700px) {
-  .hsw-nav-inner { gap: 12px; }
-  .hsw-brand { font-size: 17px; gap: 8px; min-width: 0; }
-  .hsw-brand-logo { width: 26px; height: 26px; }
-  .hsw-actions { gap: 8px; min-width: 0; }
+  .hsw-nav-inner {
+    gap: 12px;
+  }
+  .hsw-brand {
+    font-size: 17px;
+    gap: 8px;
+    min-width: 0;
+  }
+  .hsw-brand-logo {
+    width: 26px;
+    height: 26px;
+  }
+  .hsw-actions {
+    gap: 8px;
+    min-width: 0;
+  }
 }
 
 /* The "Exit"/"Back" button drops to its chevron. font-size:0 hides the bare
@@ -718,7 +781,11 @@ function continueToClaim() {
     justify-content: center;
     flex-shrink: 0;
   }
-  .hsw-back svg { width: 17px; height: 17px; flex-shrink: 0; }
+  .hsw-back svg {
+    width: 17px;
+    height: 17px;
+    flex-shrink: 0;
+  }
 }
 
 /* Below this the wordmark cannot sit beside the buttons, so the mark carries
@@ -743,6 +810,10 @@ function continueToClaim() {
 }
 
 @media (max-width: 400px) {
-  .hsw-tour { width: 40px; height: 40px; font-size: 15px; }
+  .hsw-tour {
+    width: 40px;
+    height: 40px;
+    font-size: 15px;
+  }
 }
 </style>
