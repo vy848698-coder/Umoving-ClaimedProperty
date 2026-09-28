@@ -11,6 +11,12 @@
 
 export const FLOW_HOME = '/claim'
 export const SIGNIN_PATH = '/onboarding/signin'
+// Public entry point for a signed-out visitor landing on any route outside
+// the flow (including "/" itself - see flow.global.ts) — client request,
+// 2026-09-28. Kept distinct from SIGNIN_PATH: a protected app route still
+// bounces straight to sign-in (middleware/auth.ts), only the generic
+// "you're not in the flow at all" fallback changed.
+export const LANDING_PATH = '/founding-homeowners'
 
 // Signed-in screens — also the only valid "return here after sign-in" targets.
 const APP_ROUTES: RegExp[] = [
@@ -29,6 +35,10 @@ const APP_ROUTES: RegExp[] = [
 
 const PUBLIC_ROUTES: RegExp[] = [
   /^\/onboarding\/(signin|signup|verification|preferences|welcome)$/,
+  // Pre-signup Founding Homeowners landing page (client request, 2026-09-28) -
+  // same claim-page layout, minus the tracker/search, offering Create
+  // account / Sign in instead.
+  /^\/founding-homeowners$/,
   /^\/auth\/(google|apple)\/callback$/,
   // Linked from the sign-up form's terms line and from Settings.
   /^\/legal\/(terms|privacy|cookies)$/,

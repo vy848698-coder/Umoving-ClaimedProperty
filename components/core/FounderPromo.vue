@@ -1,10 +1,14 @@
 <template>
   <!-- "Own a home?" Founding Homeowner promo (client prototype,
-       signin/signup/claim, 2026-09-26). founder-certificate.png is the
-       client-cropped certificate artwork (from server/assets/certificate/
-       certimage.png); founder-seal.png is the gold seal cropped from the
-       same certificate template. Text stays real HTML (not baked into the
-       art) for accessibility, so a translation or copy tweak never needs a
+       signin/signup/claim, 2026-09-26). Compact variant (signin/signup,
+       untouched since 2026-09-27 per client sign-off) uses
+       founder-certificate.png (client-cropped from server/assets/
+       certificate/certimage.png) + founder-seal.png as separate layered
+       images. Hero variant (claim page, founding-homeowners landing) uses
+       founder-certificate-sample.png instead - the client's sample render,
+       which already bakes in the seal, background wash and paper tilt as
+       one image. Text stays real HTML (not baked into the art) for
+       accessibility, so a translation or copy tweak never needs a
        re-crop. -->
   <div v-if="variant === 'compact'" class="fp-compact">
     <div class="fp-compact-art">
@@ -35,11 +39,14 @@
     </div>
   </div>
 
-  <!-- Borderless, full-bleed hero (client prototype, 2026-09-26) - no
-       card/box behind the copy or the art; the "What your Founder status
-       gives you" benefits list moved out to the claim page's own aside,
-       since the prototype places it beside the search card, not attached
-       to this hero band. -->
+  <!-- Borderless, full-bleed hero (client prototype, 2026-09-26; enlarged
+       + switched to the client's sample certificate render, 2026-09-28) -
+       no card/box behind the copy or the art; the "What your Founder
+       status gives you" benefits list moved out to the claim page's own
+       aside, since the prototype places it beside the search card, not
+       attached to this hero band. founder-certificate-sample.png already
+       has the seal, the background wash and the paper's own tilt baked
+       in, so it's a single image here - no separate seal overlay. -->
   <section v-else class="fp-hero">
     <div class="fp-hero-copy">
       <p class="fp-hero-kicker">Founding Homeowners</p>
@@ -48,11 +55,10 @@
     </div>
     <div class="fp-hero-art">
       <img
-        src="/founder/founder-certificate.png"
+        src="/founder/founder-certificate-sample.png"
         alt="Founding Homeowner Certificate"
         class="fp-hero-cert"
       />
-      <img src="/founder/founder-seal.png" alt="" class="fp-hero-seal" />
     </div>
   </section>
 </template>
@@ -162,19 +168,19 @@ withDefaults(
   display: grid;
   grid-template-columns: 1fr auto;
   align-items: center;
-  gap: 32px;
-  padding: 20px 0 0;
+  gap: 40px;
+  padding: 24px 0 0;
   margin-bottom: -46px;
 }
 
 .fp-hero-copy {
   position: relative;
   z-index: 1;
-  max-width: 620px;
+  max-width: 640px;
 }
 .fp-hero-kicker {
-  margin: 0 0 10px;
-  font-size: 12px;
+  margin: 0 0 12px;
+  font-size: 13px;
   font-weight: 800;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -182,76 +188,52 @@ withDefaults(
 }
 .fp-hero-title {
   margin: 0;
-  font-size: clamp(30px, 4vw, 44px);
+  font-size: clamp(34px, 4.4vw, 50px);
   font-weight: 900;
   letter-spacing: -0.02em;
   color: #231d45;
-  line-height: 1.1;
+  line-height: 1.08;
 }
 .fp-hero-lede {
-  margin: 18px 0 0;
-  max-width: 52ch;
-  font-size: 16px;
+  margin: 20px 0 0;
+  max-width: 54ch;
+  font-size: 17px;
   font-weight: 500;
   line-height: 1.6;
   color: #5b6d89;
 }
 
+/* Enlarged (client feedback, 2026-09-28) - the sample certificate render
+   already has the seal, background wash and paper tilt baked in, so this
+   is just one image, sized generously to anchor the hero. */
 .fp-hero-art {
   position: relative;
   z-index: 1;
-  width: 480px;
-  height: 400px;
+  width: 560px;
   flex-shrink: 0;
 }
-/* Soft square wash behind the art, fading out to the page background
-   (client prototype, 2026-09-26) — sits behind the cert/seal images
-   (painted first, so the real ::before/z-index-less stacking order puts
-   it under them), extends a little past the art's own box. */
-.fp-hero-art::before {
-  content: "";
-  position: absolute;
-  inset: -30px -10px -10px -70px;
-  border-radius: 28px;
-  background: radial-gradient(
-    120% 120% at 62% 32%,
-    rgba(0, 161, 154, 0.16) 0%,
-    rgba(212, 168, 64, 0.08) 45%,
-    rgba(243, 242, 239, 0) 75%
-  );
-  pointer-events: none;
-  z-index: 0;
-}
-/* Flat (no tilt), bleeding down past this component's own bottom edge so
-   the step tracker after it overlaps the art's lower portion, and right
-   toward the shell's edge - the seal sits ON the paper near its right
-   edge, not hanging off outside it (client feedback, 2026-09-26). */
+/* No shadow/border/radius (client feedback, 2026-09-28) - the sample
+   render's own soft-edged background wash already fades into the page,
+   so a card frame around it just drew a second, competing edge. */
 .fp-hero-cert {
-  position: absolute;
-  right: 0;
-  top: 64px;
-  width: 500px;
+  display: block;
+  width: 100%;
   height: auto;
-  border-radius: 12px;
-  transform: rotate(8deg);
-  box-shadow: 0 18px 40px rgba(20, 30, 60, 0.2);
-}
-.fp-hero-seal {
-  position: absolute;
-  right: -38px;
-  bottom: 39px;
-  width: 130px;
-  height: 130px;
-  object-fit: contain;
-  filter: drop-shadow(0 5px 12px rgba(138, 95, 10, 0.4));
 }
 
+@media (max-width: 1100px) {
+  .fp-hero-art {
+    width: 440px;
+  }
+}
 @media (max-width: 900px) {
   .fp-hero {
     grid-template-columns: 1fr;
     padding-bottom: 0;
   }
   .fp-hero-art {
+    width: 100%;
+    max-width: 480px;
     justify-self: center;
   }
 }
