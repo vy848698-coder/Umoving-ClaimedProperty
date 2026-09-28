@@ -7,14 +7,14 @@
           <img src="/op-icons/logo.png" alt="" class="hsw-brand-logo" />
           <span>umovingu</span>
         </button>
-        <div class="hsw-actions">
+        <!-- <div class="hsw-actions">
           <NuxtLink to="/onboarding/signin" class="fh-nav-signin"
             >Sign in</NuxtLink
           >
           <NuxtLink to="/onboarding/signup" class="fh-nav-signup"
             >Create account</NuxtLink
           >
-        </div>
+        </div> -->
       </div>
     </header>
 
@@ -58,13 +58,23 @@
             </NuxtLink>
           </div>
 
-          <div class="cl-lock-note">
+          <div class="fh-fee-note">
             <div class="cl-lock-ic">
               <img src="/build/padlock.png" alt="" />
             </div>
-            <div class="cl-lock-body">
-              Free to create. We only verify ownership via
-              <strong>HM Land Registry</strong> when you claim a property.
+            <div class="fh-fee-body">
+              <p class="fh-fee-title">No hidden fees. Ever.</p>
+              <p>
+                Your UMU account and Property Passport are free for life. We
+                only pass on costs where a third party charges us for a
+                service.
+              </p>
+              <p>
+                Claiming your property requires a one-off
+                <strong>£19.99 ownership verification fee</strong>, covering
+                the checks needed to confirm that the property is yours. UMU
+                does not add a markup.
+              </p>
             </div>
           </div>
         </section>
@@ -110,7 +120,7 @@ const FOUNDER_BENEFITS = [
   {
     image: "/dashboard-art/passportBadge.png",
     title: "Your Property Passport, free for life",
-    text: "Build, store and share your home's record. External services may carry third-party costs.",
+    text: "Build, store and share your home's record. We only pass on third-party costs where they apply.",
   },
   {
     image: "/homescore-icon/wrench.png",
@@ -254,7 +264,9 @@ const FOUNDER_BENEFITS = [
 }
 
 .cl-continue {
-  width: 100%;
+  width: fit-content;
+  padding: 10px 20px;
+  margin: auto;
   margin-top: 6px;
   height: 52px;
   display: inline-flex;
@@ -361,18 +373,6 @@ const FOUNDER_BENEFITS = [
   text-decoration: none;
 }
 
-.cl-lock-note {
-  width: 100%;
-  display: flex;
-  gap: 10px;
-  align-items: flex-start;
-  text-align: left;
-  padding: 12px 14px;
-  background: #f2faf8;
-  border: 1px solid #cceeea;
-  border-radius: 14px;
-}
-
 .cl-lock-ic {
   width: 22px;
   height: 22px;
@@ -384,13 +384,39 @@ const FOUNDER_BENEFITS = [
   object-fit: contain;
 }
 
-.cl-lock-body {
+/* "No hidden fees. Ever." (client + ChatGPT copy, 2026-09-28) - the fee
+   disclosure block, shown before account creation so the £19.99 claim fee
+   is never a surprise later. */
+.fh-fee-note {
+  width: 100%;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  text-align: left;
+  padding: 16px 18px;
+  background: #f2faf8;
+  border: 1px solid #cceeea;
+  border-radius: 14px;
+}
+
+.fh-fee-body p {
+  margin: 0 0 8px;
   font-size: 12.5px;
   color: var(--ink-soft);
-  line-height: 1.5;
+  line-height: 1.55;
 }
-.cl-lock-body strong {
+.fh-fee-body p:last-child {
+  margin-bottom: 0;
+}
+.fh-fee-body strong {
   color: var(--ink);
+}
+
+.fh-fee-body p.fh-fee-title {
+  font-size: 14.5px;
+  font-weight: 800;
+  color: var(--navy);
+  margin-bottom: 6px;
 }
 
 /* ── What your Founder status gives you ──────────────────────────────

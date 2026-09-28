@@ -151,11 +151,14 @@
 
       <div class="cl-card cl-mb-sm">
         <div class="cl-lrf-rows">
-          <div class="cl-lrf-row">
+          <div class="cl-lrf-row cl-lrf-row-last">
             <span class="cl-lrf-l">Verification fee</span>
             <span class="cl-lrf-v">{{ claimPriceDisplay }}</span>
           </div>
         </div>
+        <p class="cl-fee-reassurance">
+          One-off. There are no ongoing UMU fees for your Property Passport.
+        </p>
       </div>
 
       <div class="cl-card cl-mb-sm">
@@ -2532,6 +2535,13 @@ async function issuePassport() {
 .cl-lrf-l { color: #94a3b8; }
 .cl-lrf-v { font-weight: 700; color: #231d45; }
 .cl-lrf-v-good { color: #00857f; }
+/* "No hidden fees" reassurance (client + ChatGPT copy, 2026-09-28) - the
+   claim fee is one-off; makes clear no ongoing charges follow it. */
+.cl-fee-reassurance {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: #94a3b8;
+}
 
 /* "Your Passport is ready" — the payoff card above the Issue button */
 .cl-ready {

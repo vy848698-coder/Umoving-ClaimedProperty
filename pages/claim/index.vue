@@ -121,7 +121,7 @@ const FOUNDER_BENEFITS = [
   {
     image: '/dashboard-art/passportBadge.png',
     title: 'Your Property Passport, free for life',
-    text: "Build, store and share your home's record. External services may carry third-party costs.",
+    text: "Build, store and share your home's record. We only pass on third-party costs where they apply.",
   },
   {
     image: '/homescore-icon/wrench.png',
