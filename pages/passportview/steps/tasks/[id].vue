@@ -254,12 +254,32 @@
                     @update="updateAdditionalInfo"
                   />
                 </div>
+
+                <!-- Resolution pathway (client handoff, 2026-09-29): opened
+                     inline below the question when the just-saved answer
+                     matched a known trigger. Most questions aren't mapped to
+                     pathway content yet, so this stays empty for now. -->
+                <PathwayStepCard
+                  v-if="activePathway && activePathway.journey.status === 'IN_PROGRESS'"
+                  :passport-id="String(route.query.propertyId || '')"
+                  :pathway="activePathway.pathway"
+                  :current-step-id="activePathway.journey.currentStepId"
+                  :step-answers-count="activePathway.journey.stepAnswers.length"
+                  @answer="onPathwayAnswer"
+                  @defer="onPathwayDefer"
+                />
+                <PathwayOutcomeCard
+                  v-else-if="activePathway"
+                  :pathway="activePathway.pathway"
+                  :status="activePathway.journey.status"
+                  @continue="onPathwayContinue"
+                />
               </div>
             </div>
           </div>
 
           <button
-            v-if="!isAutoSaveType"
+            v-if="!isAutoSaveType && !activePathway"
             class="submit-btn"
             data-tour="q-save"
             @click="saveAnswer"
@@ -334,6 +354,9 @@ import OnboardingTour from '~/components/ui/OnboardingTour.vue'
 import { toSentenceCase } from '~/utils/titleCase'
 import { normalizeUploadUrl, normalizeUploadUrls } from '~/utils/normalizeUploadUrl'
 import PassportNavButton from '~/components/core/PassportNavButton.vue'
+import PathwayStepCard from '~/components/passport-view/PathwayStepCard.vue'
+import PathwayOutcomeCard from '~/components/passport-view/PathwayOutcomeCard.vue'
+import { usePathways } from '~/composables/usePathways'
 
 const route = useRoute()
 const router = useRouter()
@@ -362,6 +385,82 @@ const sectionBonusPoints = ref(0)
 const totalPointsBefore = ref(0)
 const totalPointsAfter = ref(0)
 const isSaving = ref(false)
+
+// Resolution pathway opened by the last-saved answer, if any (client
+// handoff, 2026-09-29). null for the overwhelming majority of questions,
+// which aren't mapped to pathway content yet — see usePathways.ts.
+const { getGuidanceAndPathway, advanceJourney, deferJourney } = usePathways()
+const activePathway = ref(null) // { pathway, journey } | null
+let pendingFinishAfterSaveQuestionId = null
+
+async function onPathwayAnswer(payload) {
+  if (!activePathway.value) return
+  const passportId = String(route.query.propertyId || '')
+  try {
+    const journey = await advanceJourney(
+      passportId,
+      activePathway.value.journey.id,
+      payload.stepId,
+      payload.answerLabel,
+      payload.evidenceFileUrls,
+    )
+    activePathway.value = { pathway: activePathway.value.pathway, journey }
+    if (journey.status !== 'IN_PROGRESS') {
+      // Reached an outcome — PathwayOutcomeCard now shows; the passport
+      // flow itself resumes when the homeowner taps "Continue" there.
+    }
+  } catch (err) {
+    console.error('Failed to advance pathway:', err)
+  }
+}
+
+async function onPathwayDefer() {
+  if (!activePathway.value) return
+  const passportId = String(route.query.propertyId || '')
+  try {
+    await deferJourney(passportId, activePathway.value.journey.id)
+  } catch (err) {
+    console.error('Failed to defer pathway:', err)
+  } finally {
+    // "I'll do this later" doesn't block the rest of the passport — the
+    // journey stays CHECK and resumable, but this question is done with.
+    await continueAfterPathway()
+  }
+}
+
+async function onPathwayContinue() {
+  await continueAfterPathway()
+}
+
+async function continueAfterPathway() {
+  activePathway.value = null
+  const questionId = pendingFinishAfterSaveQuestionId
+  pendingFinishAfterSaveQuestionId = null
+  if (questionId) await finishAfterSave(questionId)
+}
+
+// Shared by every save path (the explicit Save button and every auto-save
+// type below) so a resolution pathway can open from ANY question type, not
+// just the ones with an explicit Save click - RADIO in particular is the
+// type most pathway triggers map to. Replaces a bare `await
+// finishAfterSave(questionId)` right after a successful apiSaveAnswer.
+async function checkPathwayThenFinish(questionId, answerValueForGuidance) {
+  try {
+    const value =
+      typeof answerValueForGuidance === 'string'
+        ? answerValueForGuidance
+        : JSON.stringify(answerValueForGuidance)
+    const { journey, pathway } = await getGuidanceAndPathway(questionId, value)
+    if (journey && pathway) {
+      activePathway.value = { pathway, journey }
+      pendingFinishAfterSaveQuestionId = questionId
+      return
+    }
+  } catch (err) {
+    console.error('Pathway guidance lookup failed (non-blocking):', err)
+  }
+  await finishAfterSave(questionId)
+}
 
 // Running points balance shown on the per-question points card, plus the
 // transient "Answer Saved" state it flashes into after each save. Live
@@ -1201,7 +1300,7 @@ const updateAnswer = async (answer) => {
         answer,
       )
       recordPointsEarned(pointsAwarded)
-      await finishAfterSave(currentQuestion.value.id)
+      await checkPathwayThenFinish(currentQuestion.value.id, answer)
     } catch (error) {
       console.error('Error auto-saving RADIO answer:', error)
     } finally {
@@ -1244,7 +1343,7 @@ const updateAnswer = async (answer) => {
           answer,
         )
         recordPointsEarned(pointsAwarded)
-        await finishAfterSave(currentQuestion.value.id)
+        await checkPathwayThenFinish(currentQuestion.value.id, triggerPartAnswer)
       } catch (error) {
         console.error('Error auto-saving answer:', error)
       } finally {
@@ -1282,7 +1381,7 @@ const saveAnswer = async () => {
       answerValue,
     )
     recordPointsEarned(pointsAwarded)
-    await finishAfterSave(currentQuestion.value.id)
+    await checkPathwayThenFinish(currentQuestion.value.id, currentQuestion.value.answer)
   } catch (error) {
     console.error('Error saving answer:', error)
   } finally {

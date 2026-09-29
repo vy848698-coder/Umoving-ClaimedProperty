@@ -513,13 +513,13 @@
           <aside class="hist-side">
             <div class="hist-panel">
               <h3>Needs your attention</h3>
-              <p>These actions come from answers or missing information in your passport.</p>
-              <div v-if="openActions.length === 0" class="hist-panel-empty">Nothing outstanding right now.</div>
-              <div v-for="a in openActions" :key="a.id" class="hist-todo">
+              <p>These come from answers or missing information in your passport.</p>
+              <div v-if="allFlags.length === 0" class="hist-panel-empty">Nothing outstanding right now.</div>
+              <div v-for="f in allFlags" :key="f.id" class="hist-todo">
                 <span class="hist-todo-icon">!</span>
                 <div>
-                  <b>{{ a.title }}</b>
-                  <small>{{ a.status === 'REOPENED' ? 'Reopened' : 'To do' }}</small>
+                  <b>{{ f.title }}</b>
+                  <small>{{ f.statusLabel }}</small>
                 </div>
               </div>
               <button v-if="openActions.length" class="hist-link" type="button" @click="openAction(openActions[0])">
@@ -753,6 +753,7 @@ import Toast from '~/components/ui/Toast.vue'
 import FoundingMemberModal from '~/components/claim/FoundingMemberModal.vue'
 import { useAppToast } from '~/composables/useCustomToast'
 import { useFounderCelebration } from '~/composables/useFounderCelebration'
+import { usePathways } from '~/composables/usePathways'
 import { toSmartTitleCase, toSentenceCase } from '~/utils/titleCase'
 
 // Guided tour — auto-runs once per browser, replays from the "?" button.
@@ -1047,6 +1048,7 @@ function setTab(tab) {
   if (tab === 'history' && historyEvents.value.length === 0) {
     fetchHistory(true)
     fetchActions()
+    fetchPathwayFlags()
   }
 }
 
@@ -1429,6 +1431,41 @@ const actionsById = computed(() => {
   for (const a of passportActions.value) map[a.id] = a
   return map
 })
+
+// Resolution-pathway flags (client handoff, 2026-09-29) — merged into the
+// same "Needs your attention" panel as the legacy PassportAction rule
+// engine below, since both mean the same thing to the homeowner: something
+// their answers raised that isn't resolved yet.
+const { listFlags } = usePathways()
+const pathwayFlags = ref([])
+const PATHWAY_STATUS_LABEL = {
+  CHECK: 'Check before you sell',
+  FLAG: 'For a conveyancer',
+  ESCALATE: 'Needs a conveyancer',
+}
+async function fetchPathwayFlags() {
+  try {
+    pathwayFlags.value = await listFlags(route.params.id)
+  } catch (e) {
+    console.error('Failed to load pathway flags', e)
+  }
+}
+const allFlags = computed(() => [
+  ...openActions.value.map((a) => ({
+    id: `action:${a.id}`,
+    title: a.title,
+    statusLabel: a.status === 'REOPENED' ? 'Reopened' : 'To do',
+    kind: 'action',
+    source: a,
+  })),
+  ...pathwayFlags.value.map((f) => ({
+    id: `pathway:${f.journeyId}`,
+    title: f.issue,
+    statusLabel: PATHWAY_STATUS_LABEL[f.status] ?? f.status,
+    kind: 'pathway',
+    source: f,
+  })),
+])
 
 async function fetchActions() {
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
