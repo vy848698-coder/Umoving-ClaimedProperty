@@ -1,10 +1,8 @@
 // "What brings you to Umovingu?" answers (client request, 2026-09-29).
-// Stored client-side only for now — there's no backend field for this
-// interest-picker shape yet (it's a different, simpler question set from
-// the existing role + buy/sell preferences at POST /profile/preferences).
-// If this needs to survive a device switch or show up for admins, it needs
-// a real backend endpoint — flagged, not built here since this pass is
-// website-integration-only.
+// Persisted to the backend (POST/GET /profile/interests, 2026-09-30 —
+// also fires the "we've got your interest"/"interests updated"
+// confirmation email) with localStorage as a same-tab fallback/cache so
+// the picker can pre-fill instantly without waiting on the network.
 const STORAGE_KEY = 'umu-interests'
 
 export interface InterestsAnswer {
@@ -27,6 +25,23 @@ export const INTEREST_OPTIONS = [
   { id: 'exploring', label: 'Just exploring', image: '/onboarding-journey/exploring.png' },
 ]
 
+function getAuthHeaders() {
+  const token =
+    typeof window !== 'undefined' ? localStorage.getItem('token') : null
+  return token ? { Authorization: `Bearer ${token}` } : {}
+}
+
+function cacheLocally(answer: InterestsAnswer): void {
+  if (typeof localStorage === 'undefined') return
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(answer))
+  } catch {
+    // Best-effort — private mode / full storage shouldn't block the flow.
+  }
+}
+
+// Synchronous, localStorage-only — used for an instant pre-fill while
+// fetchInterests() resolves in the background.
 export function loadInterests(): InterestsAnswer | null {
   if (typeof localStorage === 'undefined') return null
   try {
@@ -37,11 +52,37 @@ export function loadInterests(): InterestsAnswer | null {
   }
 }
 
-export function saveInterests(answer: InterestsAnswer): void {
-  if (typeof localStorage === 'undefined') return
+// Source of truth — call this on page load once a token exists so a
+// user's saved interests follow them across devices.
+export async function fetchInterests(): Promise<InterestsAnswer | null> {
+  const config = useRuntimeConfig()
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(answer))
+    const data = await $fetch<{
+      interestIds: string[]
+      areas: string[]
+      emailOptIn: boolean
+    } | null>(`${config.public.apiBase}/profile/interests`, {
+      headers: getAuthHeaders(),
+    })
+    if (!data) return null
+    const answer: InterestsAnswer = {
+      interestIds: data.interestIds,
+      areas: data.areas,
+      emailOptIn: data.emailOptIn,
+    }
+    cacheLocally(answer)
+    return answer
   } catch {
-    // Best-effort — private mode / full storage shouldn't block the flow.
+    return loadInterests()
   }
+}
+
+export async function saveInterests(answer: InterestsAnswer): Promise<void> {
+  cacheLocally(answer)
+  const config = useRuntimeConfig()
+  await $fetch(`${config.public.apiBase}/profile/interests`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: answer,
+  })
 }

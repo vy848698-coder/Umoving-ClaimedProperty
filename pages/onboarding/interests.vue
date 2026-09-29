@@ -115,7 +115,8 @@
 import { ref } from 'vue'
 import ProfileMenu from '~/components/core/ProfileMenu.vue'
 import { FLOW_HOME } from '~/utils/appFlow'
-import { saveInterests, loadInterests, INTEREST_OPTIONS } from '~/composables/useInterests'
+import { saveInterests, loadInterests, fetchInterests, INTEREST_OPTIONS } from '~/composables/useInterests'
+import { useAppToast } from '~/composables/useCustomToast'
 
 definePageMeta({
   middleware: 'auth',
@@ -123,11 +124,23 @@ definePageMeta({
 })
 
 const router = useRouter()
+const { showToast } = useAppToast()
 const existing = loadInterests()
 const selected = ref<Set<string>>(new Set(existing?.interestIds ?? []))
 const areas = ref<string[]>(existing?.areas ?? [])
 const emailOptIn = ref(existing?.emailOptIn ?? false)
 const saving = ref(false)
+
+// Local cache pre-fills instantly; refresh from the backend in case the
+// user last saved on a different device.
+onMounted(async () => {
+  const remote = await fetchInterests()
+  if (remote) {
+    selected.value = new Set(remote.interestIds)
+    areas.value = remote.areas
+    emailOptIn.value = remote.emailOptIn
+  }
+})
 
 function toggle(id: string) {
   const next = new Set(selected.value)
@@ -231,12 +244,18 @@ function onAreaBackspace(e: KeyboardEvent) {
 async function save() {
   saving.value = true
   try {
-    saveInterests({
+    await saveInterests({
       interestIds: Array.from(selected.value),
       areas: areas.value,
       emailOptIn: emailOptIn.value,
     })
     await navigateTo('/onboarding/member')
+  } catch (err: any) {
+    showToast({
+      message:
+        err?.data?.message || err?.message || "Couldn't save your interests. Please try again.",
+      variant: 'error',
+    })
   } finally {
     saving.value = false
   }
