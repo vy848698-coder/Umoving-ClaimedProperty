@@ -104,15 +104,23 @@
 
 <script setup lang="ts">
 import FounderPromo from "~/components/core/FounderPromo.vue";
+import { stashOnboardingAction } from "~/utils/appFlow";
 
 definePageMeta({
   title: "Become a Founding Homeowner",
   // Now the site's landing page for signed-out visitors (client request,
   // 2026-09-28 — see utils/appFlow.ts LANDING_PATH). An already-signed-in
-  // visitor lands here too (deep link, bookmark, etc.) and should go
-  // straight into their claim flow instead, same as signin/signup.
-  middleware: "guest",
+  // visitor lands here too (deep link from the marketing site's "Claim my
+  // property" / "Join UMU" links) and goes to their account hub instead of
+  // straight into a form (2026-09-29 — see middleware/founding-guest.ts).
+  middleware: "founding-guest",
 });
+
+// The marketing site links here with ?action=claim-property or
+// ?action=join-umu (client request, 2026-09-29) — stashed now so it
+// survives the signup/verification page loads that follow.
+const route = useRoute();
+stashOnboardingAction(route.query.action as string | undefined);
 
 // Same list the claim page shows in its aside - same 3D-render icon style
 // used throughout the claim journey.
