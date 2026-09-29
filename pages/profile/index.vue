@@ -2,7 +2,6 @@
   <div class="pf-page">
     <WebTopNav>
       <template #actions>
-        <button class="pf-quick-btn" type="button" @click="navigateTo('/profile/settings')">Settings</button>
         <button class="pf-quick-btn solid" type="button" @click="navigateTo('/profile/support')">Support</button>
       </template>
     </WebTopNav>
@@ -181,7 +180,6 @@
         <div class="pf-footer-col">
           <h5>Account</h5>
           <button type="button" @click="navigateTo('/profile/personal-information')">Personal info</button>
-          <button type="button" @click="navigateTo('/profile/settings')">Settings</button>
           <button type="button" @click="navigateTo('/profile/support')">Support</button>
         </div>
 
@@ -444,13 +442,6 @@ const profileItems = [
   //   icon: 'billingPaymentHistory',
   //   route: '/profile/subscription-plan',
   // },
-  {
-    title: 'Settings',
-    description: 'Customize your experience, privacy, and account security.',
-    icon: 'settings',
-    image: '/profile%20new%20icon/settings.jpeg',
-    route: '/profile/settings',
-  },
   {
     title: 'Help & Support',
     description: 'Need help? Browse FAQs or speak to support.',
