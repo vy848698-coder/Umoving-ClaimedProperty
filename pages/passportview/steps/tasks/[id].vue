@@ -258,22 +258,35 @@
                 <!-- Resolution pathway (client handoff, 2026-09-29): opened
                      inline below the question when the just-saved answer
                      matched a known trigger. Most questions aren't mapped to
-                     pathway content yet, so this stays empty for now. -->
-                <PathwayStepCard
-                  v-if="activePathway && activePathway.journey.status === 'IN_PROGRESS'"
-                  :passport-id="String(route.query.propertyId || '')"
-                  :pathway="activePathway.pathway"
-                  :current-step-id="activePathway.journey.currentStepId"
-                  :step-answers-count="activePathway.journey.stepAnswers.length"
-                  @answer="onPathwayAnswer"
-                  @defer="onPathwayDefer"
-                />
-                <PathwayOutcomeCard
-                  v-else-if="activePathway"
-                  :pathway="activePathway.pathway"
-                  :status="activePathway.journey.status"
-                  @continue="onPathwayContinue"
-                />
+                     pathway content yet, so this stays empty for now.
+                     Matches the source prototype's own flow: every answered
+                     step stays on screen (not collapsed away) and stays
+                     editable - picking a different answer on an earlier one
+                     supersedes whatever came after it, exactly like the
+                     prototype's cascading resets. New steps append below,
+                     they don't replace what's already shown. -->
+                <TransitionGroup v-if="activePathway" name="pw-step" tag="div" class="pw-flow">
+                  <PathwayStepCard
+                    v-for="(visible, i) in pathwayVisibleSteps"
+                    :key="visible.stepId"
+                    :passport-id="String(route.query.propertyId || '')"
+                    :pathway="activePathway.pathway"
+                    :current-step-id="visible.stepId"
+                    :step-position="i"
+                    :total-steps="pathwayVisibleSteps.length"
+                    :selected-label="visible.answerLabel"
+                    :answered-evidence-file-urls="visible.evidenceFileUrls"
+                    @answer="onPathwayAnswer"
+                    @defer="onPathwayDefer"
+                  />
+                  <PathwayOutcomeCard
+                    v-if="activePathway.journey.status !== 'IN_PROGRESS'"
+                    key="outcome"
+                    :pathway="activePathway.pathway"
+                    :status="activePathway.journey.status"
+                    @continue="onPathwayContinue"
+                  />
+                </TransitionGroup>
               </div>
             </div>
           </div>
@@ -393,6 +406,26 @@ const { getGuidanceAndPathway, advanceJourney, deferJourney } = usePathways()
 const activePathway = ref(null) // { pathway, journey } | null
 let pendingFinishAfterSaveQuestionId = null
 
+// The full pathway flow rendered as one continuous, always-visible list —
+// every already-answered step, in order, plus the live unanswered one at
+// the end (only while the journey is still IN_PROGRESS). Matches the source
+// prototype: nothing collapses or disappears as you progress, and every
+// entry stays clickable (see PathwayStepCard) so an earlier answer can be
+// changed, which supersedes whatever was answered after it.
+const pathwayVisibleSteps = computed(() => {
+  if (!activePathway.value) return []
+  const { journey } = activePathway.value
+  const steps = journey.stepAnswers.map((a) => ({
+    stepId: a.stepId,
+    answerLabel: a.answerLabel,
+    evidenceFileUrls: a.evidenceFileUrls,
+  }))
+  if (journey.status === 'IN_PROGRESS') {
+    steps.push({ stepId: journey.currentStepId, answerLabel: '', evidenceFileUrls: [] })
+  }
+  return steps
+})
+
 async function onPathwayAnswer(payload) {
   if (!activePathway.value) return
   const passportId = String(route.query.propertyId || '')
@@ -431,6 +464,27 @@ async function onPathwayDefer() {
 async function onPathwayContinue() {
   await continueAfterPathway()
 }
+
+// Restore an already-open (or already-resolved) pathway when navigating
+// back to a question that has one, e.g. after a reload, Previous/Skip, or
+// simply revisiting the section later — checkPathwayThenFinish() only ever
+// runs right after a fresh save, so without this a journey that was opened
+// earlier becomes invisible the moment you leave the question, even though
+// it's still sitting IN_PROGRESS server-side.
+watch(
+  currentQuestion,
+  async (q) => {
+    activePathway.value = null
+    if (!q?.id || !q?.answer) return
+    try {
+      const { journey, pathway } = await getGuidanceAndPathway(q.id, '')
+      if (journey && pathway) activePathway.value = { pathway, journey }
+    } catch (err) {
+      console.error('Pathway restore failed (non-blocking):', err)
+    }
+  },
+  { immediate: true },
+)
 
 async function continueAfterPathway() {
   activePathway.value = null
@@ -1888,6 +1942,28 @@ const handleContinue = () => {
 }
 .question-card + .question-card {
   margin-top: 18px;
+}
+
+.pw-flow {
+  margin-top: 16px;
+  display: block;
+}
+
+.pw-step-enter-active,
+.pw-step-leave-active,
+.pw-step-move {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.pw-step-enter-from {
+  opacity: 0;
+  transform: translateY(10px);
+}
+.pw-step-leave-active {
+  position: absolute;
+}
+.pw-step-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
 }
 
 .submit-btn {
