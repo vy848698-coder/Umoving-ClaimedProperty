@@ -26,16 +26,16 @@
       <FounderPromo
         variant="hero"
         title="Join the million and change the face of home buying and selling."
-        body="Create your free account, claim your home, build its Property Passport and join the first million homeowners shaping a better property network for everyone."
+        body="Own your home's story with a Property Passport and join homeowners helping shape a better way to buy and sell."
       />
 
       <div class="clw-layout">
         <!-- Create account / sign in -->
         <section class="clw-card fh-cta-card">
-          <h2 class="cl-h2">Ready to become a Founding Homeowner?</h2>
+          <h2 class="cl-h2">Start your Property Passport journey</h2>
           <p class="cl-body">
-            Create your free account to claim your home, build its Property
-            Passport, and secure your place among the first million homeowners.
+            Create your free UMU account and take the first step towards
+            claiming your home and building its Property Passport.
           </p>
 
           <div class="fh-cta-actions">
@@ -58,24 +58,39 @@
             </NuxtLink>
           </div>
 
-          <div class="fh-fee-note">
-            <div class="cl-lock-ic">
-              <img src="/build/padlock.png" alt="" />
-            </div>
-            <div class="fh-fee-body">
-              <p class="fh-fee-title">No hidden fees. Ever.</p>
-              <p>
-                Your UMU account and Property Passport are free for life. We
-                only pass on costs where a third party charges us for a
-                service.
-              </p>
-              <p>
-                Claiming your property requires a one-off
-                <strong>£19.99 ownership verification fee</strong>, covering
-                the checks needed to confirm that the property is yours. UMU
-                does not add a markup.
-              </p>
-            </div>
+          <div class="fh-verify-note">
+            <h3 class="fh-verify-title">Before you claim your property</h3>
+            <p class="fh-verify-lede">Your Property Passport is free.</p>
+            <p class="fh-verify-lede">
+              To claim a property, we need to confirm two things:
+            </p>
+            <ul class="fh-verify-checklist">
+              <li>
+                <span class="fh-verify-check">&#10003;</span>
+                <span
+                  >You are who you say you are
+                  <em>(identity verification)</em></span
+                >
+              </li>
+              <li>
+                <span class="fh-verify-check">&#10003;</span>
+                <span
+                  >You have the right to claim the property
+                  <em>(ownership verification)</em></span
+                >
+              </li>
+            </ul>
+            <p class="fh-verify-body">
+              These checks help keep property information accurate and
+              secure.
+            </p>
+            <p class="fh-verify-body">
+              Claiming your property includes a one-off
+              <strong>£19.99 verification fee</strong>.
+            </p>
+            <p class="fh-verify-body">
+              You'll always see any costs clearly before you continue.
+            </p>
           </div>
         </section>
 
@@ -128,22 +143,22 @@ const FOUNDER_BENEFITS = [
   {
     image: "/dashboard-art/passportBadge.png",
     title: "Your Property Passport, free for life",
-    text: "Build, store and share your home's record. We only pass on third-party costs where they apply.",
+    text: "Build, store and share your home's record. Additional services may have separate charges where applicable.",
   },
   {
     image: "/homescore-icon/wrench.png",
-    title: "New UMU tools, free for life",
-    text: "First access to core tools we build together. External costs are separate.",
+    title: "Early access to new UMU tools",
+    text: "Be among the first to explore new features and services as we build the future of property together.",
   },
   {
     image: "/build/people.png",
-    title: "A real voice",
-    text: "Vote on priorities and help shape a better way to buy and sell.",
+    title: "A real voice in the future of home buying and selling",
+    text: "Help shape the priorities and improvements that matter to homeowners.",
   },
   {
     image: "/op-icons/rewards/stampTool.png",
     title: "A permanent Founder Number",
-    text: "Your certificate marks your place among the first million. More to come.",
+    text: "Your certificate recognises your place among the first million homeowners helping create a better property network.",
   },
 ];
 </script>
@@ -381,50 +396,70 @@ const FOUNDER_BENEFITS = [
   text-decoration: none;
 }
 
-.cl-lock-ic {
-  width: 22px;
-  height: 22px;
-  flex-shrink: 0;
-}
-.cl-lock-ic img {
+/* "Before you claim your property" (client copy, 2026-09-30) - identity +
+   ownership verification explained, then the £19.99 fee disclosed clearly
+   before account creation, so it's never a surprise later. */
+.fh-verify-note {
   width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-/* "No hidden fees. Ever." (client + ChatGPT copy, 2026-09-28) - the fee
-   disclosure block, shown before account creation so the £19.99 claim fee
-   is never a surprise later. */
-.fh-fee-note {
-  width: 100%;
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
   text-align: left;
-  padding: 16px 18px;
+  padding: 20px 22px;
   background: #f2faf8;
   border: 1px solid #cceeea;
   border-radius: 14px;
 }
 
-.fh-fee-body p {
+.fh-verify-title {
+  margin: 0 0 10px;
+  font-size: 15.5px;
+  font-weight: 800;
+  color: var(--navy);
+}
+
+.fh-verify-lede,
+.fh-verify-body {
   margin: 0 0 8px;
   font-size: 12.5px;
   color: var(--ink-soft);
   line-height: 1.55;
 }
-.fh-fee-body p:last-child {
+.fh-verify-body:last-child {
   margin-bottom: 0;
 }
-.fh-fee-body strong {
+.fh-verify-body strong {
   color: var(--ink);
 }
 
-.fh-fee-body p.fh-fee-title {
-  font-size: 14.5px;
-  font-weight: 800;
-  color: var(--navy);
-  margin-bottom: 6px;
+.fh-verify-checklist {
+  list-style: none;
+  margin: 0 0 10px;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.fh-verify-checklist li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 12.5px;
+  color: var(--ink);
+  line-height: 1.5;
+}
+.fh-verify-checklist em {
+  color: var(--ink-soft);
+  font-style: normal;
+}
+.fh-verify-check {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--brand);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
 }
 
 /* ── What your Founder status gives you ──────────────────────────────
