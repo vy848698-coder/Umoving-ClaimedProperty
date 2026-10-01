@@ -268,7 +268,7 @@
                 <TransitionGroup v-if="activePathway" name="pw-step" tag="div" class="pw-flow">
                   <PathwayStepCard
                     v-for="(visible, i) in pathwayVisibleSteps"
-                    :key="visible.stepId"
+                    :key="`${visible.stepId}:${pathwayAttempt}`"
                     :passport-id="String(route.query.propertyId || '')"
                     :pathway="activePathway.pathway"
                     :current-step-id="visible.stepId"
@@ -426,6 +426,14 @@ const pathwayVisibleSteps = computed(() => {
   return steps
 })
 
+// Bumped when advancing a pathway step fails, and folded into the step
+// card's :key below - on failure activePathway never changes (so neither
+// the key's stepId nor the card's selectedLabel prop would otherwise
+// change), and PathwayStepCard's busy flag was set the moment the option
+// was clicked, before the request failed - without this every button on
+// that step would stay disabled forever after one failed save.
+const pathwayAttempt = ref(0)
+
 async function onPathwayAnswer(payload) {
   if (!activePathway.value) return
   const passportId = String(route.query.propertyId || '')
@@ -444,6 +452,7 @@ async function onPathwayAnswer(payload) {
     }
   } catch (err) {
     console.error('Failed to advance pathway:', err)
+    pathwayAttempt.value++
   }
 }
 
