@@ -2155,6 +2155,7 @@ async function issuePassport() {
 .cl-row-list {
   display: flex;
   flex-direction: column;
+  gap: 10px;
 }
 .cl-gap-sm { gap: 11px; }
 
@@ -2162,11 +2163,10 @@ async function issuePassport() {
   display: flex;
   align-items: center;
   gap: 13px;
-  padding: 13px 0;
-  border-top: 1px solid rgba(35, 29, 69, 0.08);
+  padding: 11px 14px;
+  border: 1px solid rgba(35, 29, 69, 0.08);
+  border-radius: 14px;
 }
-.cl-step-row:first-child { border-top: none; padding-top: 0; }
-.cl-step-row:last-child { padding-bottom: 0; }
 .cl-step-ic {
   width: 52px;
   height: 52px;
