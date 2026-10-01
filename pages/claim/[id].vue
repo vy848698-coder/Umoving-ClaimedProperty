@@ -1057,6 +1057,16 @@ async function startPersonaKyc() {
   personaPolling.value = true
   const { startKyc } = useKyc()
   try {
+    // The user is about to leave for the Persona hosted tab, possibly for
+    // several minutes (photo ID + liveness + AML) - the background
+    // auth-refresh timer can get throttled while this tab isn't active, so
+    // top up the access token right before they go, rather than relying on
+    // that timer alone.
+    try {
+      await useAuth().refreshAccessToken()
+    } catch {
+      // Not fatal here - useKyc's own 401-retry below still covers it.
+    }
     const start = await startKyc()
     if (start.alreadyVerified || start.status === 'approved') {
       personaPolling.value = false
@@ -1626,9 +1636,6 @@ async function issuePassport() {
   flex-shrink: 0;
   width: 46px;
   height: 46px;
-  border-radius: 14px;
-  background: #f2faf8;
-  border: 1px solid #e5f4f2;
   display: grid;
   place-items: center;
   font-size: 17px;
@@ -2798,7 +2805,7 @@ async function issuePassport() {
 .cl-lr-inner img { width: 70%; height: 70%; object-fit: contain; }
 .claim-aside-trust span { display: inline-flex; align-items: center; gap: 6px; }
 .claim-aside-trust span img { width: 16px; height: 16px; object-fit: contain; }
-.claim-aside-ic img { width: 32px; height: 32px; object-fit: contain; }
+.claim-aside-ic img { width: 46px; height: 46px; object-fit: contain; }
 
 /* Identity-verified hero illustration (standalone, with its own sparkles) */
 .cl-hero-img {
