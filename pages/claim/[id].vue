@@ -1636,6 +1636,8 @@ async function issuePassport() {
   flex-shrink: 0;
   width: 46px;
   height: 46px;
+  border-radius: 50%;
+  background: #f2faf8;
   display: grid;
   place-items: center;
   font-size: 17px;
@@ -1862,7 +1864,7 @@ async function issuePassport() {
   width: 88px;
   height: 88px;
   margin-bottom: 18px;
-  border-radius: 26px;
+  border-radius: 50%;
   display: grid;
   place-items: center;
   background: linear-gradient(160deg, #ffffff 0%, #eefaf8 100%);
@@ -2153,7 +2155,6 @@ async function issuePassport() {
 .cl-row-list {
   display: flex;
   flex-direction: column;
-  gap: 13px;
 }
 .cl-gap-sm { gap: 11px; }
 
@@ -2161,10 +2162,16 @@ async function issuePassport() {
   display: flex;
   align-items: center;
   gap: 13px;
+  padding: 13px 0;
+  border-top: 1px solid rgba(35, 29, 69, 0.08);
 }
+.cl-step-row:first-child { border-top: none; padding-top: 0; }
+.cl-step-row:last-child { padding-bottom: 0; }
 .cl-step-ic {
-  width: 48px;
-  height: 48px;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #f2faf8;
   display: grid;
   place-items: center;
   flex-shrink: 0;
@@ -2185,7 +2192,15 @@ async function issuePassport() {
   align-items: center;
   gap: 12px;
 }
-.cl-pale-ic { font-size: 28px; flex-shrink: 0; }
+.cl-pale-ic {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.6);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
 .cl-pale-ic-sm { font-size: 18px; flex-shrink: 0; }
 .cl-pale-t {
   font-size: 13.5px;
@@ -2787,7 +2802,7 @@ async function issuePassport() {
 /* ── Build-folder illustrated icons (replace emoji placeholders) ──── */
 .cl-icon-square img { width: 40px; height: 40px; object-fit: contain; }
 .cl-icon-square.cl-icon-lg img { width: 46px; height: 46px; }
-.cl-step-ic img { width: 48px; height: 48px; object-fit: contain; }
+.cl-step-ic img { width: 36px; height: 36px; object-fit: contain; }
 .cl-slot-ic img { width: 44px; height: 44px; object-fit: contain; }
 .cl-slot-ic-muted img { opacity: 0.5; }
 .cl-pill img { width: 15px; height: 15px; object-fit: contain; }
@@ -2805,7 +2820,7 @@ async function issuePassport() {
 .cl-lr-inner img { width: 70%; height: 70%; object-fit: contain; }
 .claim-aside-trust span { display: inline-flex; align-items: center; gap: 6px; }
 .claim-aside-trust span img { width: 16px; height: 16px; object-fit: contain; }
-.claim-aside-ic img { width: 46px; height: 46px; object-fit: contain; }
+.claim-aside-ic img { width: 34px; height: 34px; object-fit: contain; }
 
 /* Identity-verified hero illustration (standalone, with its own sparkles) */
 .cl-hero-img {
