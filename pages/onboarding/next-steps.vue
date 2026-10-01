@@ -32,7 +32,7 @@
         </section>
 
         <section class="jn-card">
-          <img src="/onboarding-journey/understanding-passports.png" alt="" class="jn-card-ic" />
+          <img src="/op-icons/misc/exploreProperty.png" alt="" class="jn-card-ic" />
           <h2>Explore what's coming</h2>
           <p>Tell us what interests you and stay close to what we build next.</p>
           <NuxtLink to="/onboarding/interests" class="jn-btn jn-btn--outline">
@@ -238,6 +238,17 @@ definePageMeta({
   font-size: 14px;
   color: #6b6783;
   line-height: 1.5;
+}
+
+/* Bigger on desktop (client feedback, 2026-10-01 - was sized for mobile
+   even on a wide screen). */
+@media (min-width: 1200px) {
+  .jn-founder { margin-top: 72px; gap: 26px; }
+  .jn-founder-rule { max-width: 200px; }
+  .jn-founder-seal { width: 80px; height: 80px; }
+  .jn-founder-body { max-width: 440px; }
+  .jn-founder-kicker { font-size: 19px; }
+  .jn-founder-body p:last-child { font-size: 17px; }
 }
 
 @media (max-width: 760px) {

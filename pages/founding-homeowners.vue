@@ -501,14 +501,12 @@ const FOUNDER_BENEFITS = [
   flex-shrink: 0;
   width: 48px;
   height: 48px;
-  border-radius: 12px;
   display: grid;
   place-items: center;
-  background: #f0fdfa;
 }
 .clw-benefit-ic img {
-  width: 34px;
-  height: 34px;
+  width: 48px;
+  height: 48px;
   object-fit: contain;
 }
 

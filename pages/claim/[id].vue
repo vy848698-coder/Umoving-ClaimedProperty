@@ -25,17 +25,17 @@
     </header>
 
     <main class="hsw-shell claim-main" :class="{ 'claim-main--search': step === 'search' }">
-      <!-- ── Page header: back, step title and the journey tracker ── -->
-      <div class="claim-head">
+      <!-- ── Journey tracker (client feedback, 2026-10-01: the title/subtitle
+           row above it duplicated the step card's own heading, removed -
+           the back arrow stays, just without that header block around it,
+           since it's the only way to go back one step rather than exiting
+           the whole flow). ── -->
+      <div class="cl-back-row">
         <button class="cl-back" type="button" aria-label="Back" @click="onBack">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="15 18 9 12 15 6" />
           </svg>
         </button>
-        <div class="claim-head-text">
-          <div class="claim-head-title">{{ topbarTitle }}</div>
-          <div class="claim-head-sub">{{ topbarSub }}</div>
-        </div>
       </div>
       <ClaimStepTracker :current="claimStage" class="claim-tracker" />
 
@@ -143,7 +143,7 @@
         </div>
       </div>
 
-      <div class="cl-card cl-mb-sm">
+      <div class="cl-card-pale cl-mb-sm">
         <div class="cl-eyebrow cl-mb-sm">What this fee covers</div>
         <!-- eslint-disable-next-line vue/no-v-html -->
         <p class="cl-body" style="margin: 0" v-html="claimPriceExplainer" />
@@ -706,11 +706,7 @@ const stepMeta: Record<ClaimStep, { title: string; stage: number }> = {
   'lr-failed': { title: 'Ownership not confirmed', stage: 3 },
   'lr-found': { title: 'Ownership confirmed', stage: 3 },
 }
-const topbarTitle = computed(() => stepMeta[step.value].title)
 const claimStage = computed(() => stepMeta[step.value].stage)
-const topbarSub = computed(
-  () => `Step ${claimStage.value} of ${CLAIM_STEPS.length} · ${CLAIM_STEPS[claimStage.value - 1]?.short ?? ''}`,
-)
 
 // ── Display fields (from selectedProperty) ─────────────────────
 const tenureDisplay = computed(
@@ -1554,32 +1550,9 @@ async function issuePassport() {
   padding-bottom: 220px;
 }
 
-/* Page header — title + progress span the full canvas width */
-.claim-head {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  width: min(100%, 1040px);
-  margin: 0 auto 26px;
-}
-.claim-head-text {
-  min-width: 160px;
-}
-.claim-head-title {
-  font-size: 20px;
-  font-weight: 800;
-  color: #231d45;
-  letter-spacing: -0.01em;
-}
-.claim-head-sub {
-  font-size: 12.5px;
-  color: #6b6783;
-  font-weight: 700;
-  margin-top: 2px;
-}
 .claim-tracker {
   width: min(100%, 1040px);
-  margin: -8px auto 28px;
+  margin: 0 auto 28px;
 }
 
 /* Two-column layout: framed panel + reassurance rail */
@@ -1740,6 +1713,10 @@ async function issuePassport() {
 .cl-back svg {
   width: 18px;
   height: 18px;
+}
+.cl-back-row {
+  width: min(100%, 1040px);
+  margin: 0 auto 16px;
 }
 .cl-top-text { flex: 1; text-align: center; }
 .cl-top-title {
@@ -2181,13 +2158,9 @@ async function issuePassport() {
 .cl-step-ic {
   width: 48px;
   height: 48px;
-  background: #fff;
-  border: 1px solid #e7ecf2;
-  border-radius: 14px;
   display: grid;
   place-items: center;
   flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(17, 52, 88, 0.06);
 }
 .cl-step-t {
   font-size: 13.5px;
@@ -2786,14 +2759,6 @@ async function issuePassport() {
 }
 
 @media (max-width: 700px) {
-  .claim-head {
-    flex-wrap: wrap;
-  }
-
-  .claim-head-prog {
-    flex-basis: 100%;
-  }
-
   .claim-panel {
     padding: 22px 16px 20px;
     border-radius: 18px;
@@ -2815,7 +2780,7 @@ async function issuePassport() {
 /* ── Build-folder illustrated icons (replace emoji placeholders) ──── */
 .cl-icon-square img { width: 40px; height: 40px; object-fit: contain; }
 .cl-icon-square.cl-icon-lg img { width: 46px; height: 46px; }
-.cl-step-ic img { width: 34px; height: 34px; object-fit: contain; }
+.cl-step-ic img { width: 48px; height: 48px; object-fit: contain; }
 .cl-slot-ic img { width: 44px; height: 44px; object-fit: contain; }
 .cl-slot-ic-muted img { opacity: 0.5; }
 .cl-pill img { width: 15px; height: 15px; object-fit: contain; }

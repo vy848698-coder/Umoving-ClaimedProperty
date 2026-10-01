@@ -15,15 +15,10 @@
     </header>
 
     <main class="hsw-shell clw-main">
-      <!-- Founding Homeowners hero — carries the page's headline messaging
-           (client prototype, 2026-09-26): the old "Claim your Property
-           Passport" kicker/h1/lede is gone, this replaces it. -->
-      <FounderPromo
-        variant="hero"
-        title="Join the million and change the face of home buying and selling."
-        body="Claim your home, build its Property Passport and join the first million homeowners shaping a better property network for everyone."
-      />
-
+      <!-- The FounderPromo hero (headline + certificate art) that used to
+           sit above the tracker is removed (client feedback, 2026-10-01) -
+           nav straight into the stepper and the search card, like the
+           reference design. -->
       <ClaimStepTracker
         :current="1"
         class="clw-tracker clw-tracker--centered"
@@ -126,7 +121,6 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import PropertySearchInput from "~/components/property/PropertySearchInput.vue";
-import FounderPromo from "~/components/core/FounderPromo.vue";
 import ProfileMenu from "~/components/core/ProfileMenu.vue";
 import PassportNavButton from "~/components/core/PassportNavButton.vue";
 import ClaimStepTracker from "~/components/claim/ClaimStepTracker.vue";
@@ -402,7 +396,7 @@ function continueToClaim() {
    there's no longer a left-aligned heading block above it. */
 .clw-tracker--centered {
   max-width: 640px;
-  margin: 75px auto 0;
+  margin: 32px auto 0;
 }
 
 .cl-continue {
@@ -619,14 +613,12 @@ function continueToClaim() {
   flex-shrink: 0;
   width: 48px;
   height: 48px;
-  border-radius: 12px;
   display: grid;
   place-items: center;
-  background: #f0fdfa;
 }
 .clw-benefit-ic img {
-  width: 34px;
-  height: 34px;
+  width: 48px;
+  height: 48px;
   object-fit: contain;
 }
 

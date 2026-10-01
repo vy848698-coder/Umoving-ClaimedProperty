@@ -1388,8 +1388,13 @@ const updateAnswer = async (answer) => {
       }
     }
 
-    // If trigger part is answered with the auto-save value, save immediately
-    if (triggerPartAnswer === value) {
+    // If trigger part is answered with the auto-save value, save immediately.
+    // value: '*' means "any answer to this part auto-saves" - for a
+    // single-part MULTIPART question with nothing else left to fill in
+    // (e.g. the boundary question, once its old follow-up text field was
+    // removed), waiting for a separate Save click just looks like nothing
+    // happened when the other option already auto-saves.
+    if (value === '*' || triggerPartAnswer === value) {
       isSaving.value = true
       try {
         const { pointsAwarded } = await apiSaveAnswer(
