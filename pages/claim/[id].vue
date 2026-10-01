@@ -1800,7 +1800,14 @@ async function issuePassport() {
 .cl-center-col {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  /* stretch, not center: a centered flex column shrink-wraps every child
+     (cards, button) to its own content width instead of filling the
+     panel - on a narrow viewport that happens to look full-width by
+     coincidence, but on a wider one (especially with the desktop zoom
+     scaling the panel up) the gap becomes visible either side of "What's
+     involved" and the button (client feedback, 2026-10-01). text-align
+     still centers the actual text/icons within that full width. */
+  align-items: stretch;
   text-align: center;
 }
 .cl-center-full {
