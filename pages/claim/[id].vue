@@ -25,17 +25,17 @@
     </header>
 
     <main class="hsw-shell claim-main" :class="{ 'claim-main--search': step === 'search' }">
-      <!-- ── Page header: back, step title and the journey tracker ── -->
-      <div class="claim-head">
+      <!-- ── Journey tracker (client feedback, 2026-10-01: the title/subtitle
+           row above it duplicated the step card's own heading, removed -
+           the back arrow stays, just without that header block around it,
+           since it's the only way to go back one step rather than exiting
+           the whole flow). ── -->
+      <div class="cl-back-row">
         <button class="cl-back" type="button" aria-label="Back" @click="onBack">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="15 18 9 12 15 6" />
           </svg>
         </button>
-        <div class="claim-head-text">
-          <div class="claim-head-title">{{ topbarTitle }}</div>
-          <div class="claim-head-sub">{{ topbarSub }}</div>
-        </div>
       </div>
       <ClaimStepTracker :current="claimStage" class="claim-tracker" />
 
@@ -143,7 +143,7 @@
         </div>
       </div>
 
-      <div class="cl-card cl-mb-sm">
+      <div class="cl-card-pale cl-mb-sm">
         <div class="cl-eyebrow cl-mb-sm">What this fee covers</div>
         <!-- eslint-disable-next-line vue/no-v-html -->
         <p class="cl-body" style="margin: 0" v-html="claimPriceExplainer" />
@@ -151,11 +151,14 @@
 
       <div class="cl-card cl-mb-sm">
         <div class="cl-lrf-rows">
-          <div class="cl-lrf-row">
+          <div class="cl-lrf-row cl-lrf-row-last">
             <span class="cl-lrf-l">Verification fee</span>
             <span class="cl-lrf-v">{{ claimPriceDisplay }}</span>
           </div>
         </div>
+        <p class="cl-fee-reassurance">
+          One-off. There are no ongoing UMU fees for your Property Passport.
+        </p>
       </div>
 
       <div class="cl-card cl-mb-sm">
@@ -703,11 +706,7 @@ const stepMeta: Record<ClaimStep, { title: string; stage: number }> = {
   'lr-failed': { title: 'Ownership not confirmed', stage: 3 },
   'lr-found': { title: 'Ownership confirmed', stage: 3 },
 }
-const topbarTitle = computed(() => stepMeta[step.value].title)
 const claimStage = computed(() => stepMeta[step.value].stage)
-const topbarSub = computed(
-  () => `Step ${claimStage.value} of ${CLAIM_STEPS.length} · ${CLAIM_STEPS[claimStage.value - 1]?.short ?? ''}`,
-)
 
 // ── Display fields (from selectedProperty) ─────────────────────
 const tenureDisplay = computed(
@@ -1058,6 +1057,16 @@ async function startPersonaKyc() {
   personaPolling.value = true
   const { startKyc } = useKyc()
   try {
+    // The user is about to leave for the Persona hosted tab, possibly for
+    // several minutes (photo ID + liveness + AML) - the background
+    // auth-refresh timer can get throttled while this tab isn't active, so
+    // top up the access token right before they go, rather than relying on
+    // that timer alone.
+    try {
+      await useAuth().refreshAccessToken()
+    } catch {
+      // Not fatal here - useKyc's own 401-retry below still covers it.
+    }
     const start = await startKyc()
     if (start.alreadyVerified || start.status === 'approved') {
       personaPolling.value = false
@@ -1551,32 +1560,9 @@ async function issuePassport() {
   padding-bottom: 220px;
 }
 
-/* Page header — title + progress span the full canvas width */
-.claim-head {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  width: min(100%, 1040px);
-  margin: 0 auto 26px;
-}
-.claim-head-text {
-  min-width: 160px;
-}
-.claim-head-title {
-  font-size: 20px;
-  font-weight: 800;
-  color: #231d45;
-  letter-spacing: -0.01em;
-}
-.claim-head-sub {
-  font-size: 12.5px;
-  color: #6b6783;
-  font-weight: 700;
-  margin-top: 2px;
-}
 .claim-tracker {
   width: min(100%, 1040px);
-  margin: -8px auto 28px;
+  margin: 0 auto 28px;
 }
 
 /* Two-column layout: framed panel + reassurance rail */
@@ -1650,9 +1636,8 @@ async function issuePassport() {
   flex-shrink: 0;
   width: 46px;
   height: 46px;
-  border-radius: 14px;
+  border-radius: 50%;
   background: #f2faf8;
-  border: 1px solid #e5f4f2;
   display: grid;
   place-items: center;
   font-size: 17px;
@@ -1738,6 +1723,10 @@ async function issuePassport() {
   width: 18px;
   height: 18px;
 }
+.cl-back-row {
+  width: min(100%, 1040px);
+  margin: 0 auto 16px;
+}
 .cl-top-text { flex: 1; text-align: center; }
 .cl-top-title {
   font-size: 15px;
@@ -1811,7 +1800,14 @@ async function issuePassport() {
 .cl-center-col {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  /* stretch, not center: a centered flex column shrink-wraps every child
+     (cards, button) to its own content width instead of filling the
+     panel - on a narrow viewport that happens to look full-width by
+     coincidence, but on a wider one (especially with the desktop zoom
+     scaling the panel up) the gap becomes visible either side of "What's
+     involved" and the button (client feedback, 2026-10-01). text-align
+     still centers the actual text/icons within that full width. */
+  align-items: stretch;
   text-align: center;
 }
 .cl-center-full {
@@ -1875,7 +1871,7 @@ async function issuePassport() {
   width: 88px;
   height: 88px;
   margin-bottom: 18px;
-  border-radius: 26px;
+  border-radius: 50%;
   display: grid;
   place-items: center;
   background: linear-gradient(160deg, #ffffff 0%, #eefaf8 100%);
@@ -2166,7 +2162,7 @@ async function issuePassport() {
 .cl-row-list {
   display: flex;
   flex-direction: column;
-  gap: 13px;
+  gap: 10px;
 }
 .cl-gap-sm { gap: 11px; }
 
@@ -2174,17 +2170,18 @@ async function issuePassport() {
   display: flex;
   align-items: center;
   gap: 13px;
+  padding: 11px 14px;
+  border: 1px solid rgba(35, 29, 69, 0.08);
+  border-radius: 14px;
 }
 .cl-step-ic {
-  width: 48px;
-  height: 48px;
-  background: #fff;
-  border: 1px solid #e7ecf2;
-  border-radius: 14px;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #f2faf8;
   display: grid;
   place-items: center;
   flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(17, 52, 88, 0.06);
 }
 .cl-step-t {
   font-size: 13.5px;
@@ -2202,7 +2199,15 @@ async function issuePassport() {
   align-items: center;
   gap: 12px;
 }
-.cl-pale-ic { font-size: 28px; flex-shrink: 0; }
+.cl-pale-ic {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.6);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
 .cl-pale-ic-sm { font-size: 18px; flex-shrink: 0; }
 .cl-pale-t {
   font-size: 13.5px;
@@ -2532,6 +2537,13 @@ async function issuePassport() {
 .cl-lrf-l { color: #94a3b8; }
 .cl-lrf-v { font-weight: 700; color: #231d45; }
 .cl-lrf-v-good { color: #00857f; }
+/* "No hidden fees" reassurance (client + ChatGPT copy, 2026-09-28) - the
+   claim fee is one-off; makes clear no ongoing charges follow it. */
+.cl-fee-reassurance {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: #94a3b8;
+}
 
 /* "Your Passport is ready" — the payoff card above the Issue button */
 .cl-ready {
@@ -2776,14 +2788,6 @@ async function issuePassport() {
 }
 
 @media (max-width: 700px) {
-  .claim-head {
-    flex-wrap: wrap;
-  }
-
-  .claim-head-prog {
-    flex-basis: 100%;
-  }
-
   .claim-panel {
     padding: 22px 16px 20px;
     border-radius: 18px;
@@ -2805,7 +2809,7 @@ async function issuePassport() {
 /* ── Build-folder illustrated icons (replace emoji placeholders) ──── */
 .cl-icon-square img { width: 40px; height: 40px; object-fit: contain; }
 .cl-icon-square.cl-icon-lg img { width: 46px; height: 46px; }
-.cl-step-ic img { width: 34px; height: 34px; object-fit: contain; }
+.cl-step-ic img { width: 36px; height: 36px; object-fit: contain; }
 .cl-slot-ic img { width: 44px; height: 44px; object-fit: contain; }
 .cl-slot-ic-muted img { opacity: 0.5; }
 .cl-pill img { width: 15px; height: 15px; object-fit: contain; }
@@ -2823,7 +2827,7 @@ async function issuePassport() {
 .cl-lr-inner img { width: 70%; height: 70%; object-fit: contain; }
 .claim-aside-trust span { display: inline-flex; align-items: center; gap: 6px; }
 .claim-aside-trust span img { width: 16px; height: 16px; object-fit: contain; }
-.claim-aside-ic img { width: 32px; height: 32px; object-fit: contain; }
+.claim-aside-ic img { width: 34px; height: 34px; object-fit: contain; }
 
 /* Identity-verified hero illustration (standalone, with its own sparkles) */
 .cl-hero-img {

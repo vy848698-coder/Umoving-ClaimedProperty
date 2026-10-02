@@ -1,7 +1,8 @@
 ﻿import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useAuth } from '~/composables/useAuth'
+import { useAuth, storeTokens } from '~/composables/useAuth'
 import { useSession } from '~/composables/useSession'
 import { setSessionFlag } from '~/composables/useSessionFlag'
+import { consumeOnboardingAction, markJourney } from '~/utils/appFlow'
 
 export const useVerificationCode = () => {
   const { verifyOtp, requestOtp, register } = useAuth()
@@ -99,11 +100,26 @@ export const useVerificationCode = () => {
           ...(postcode ? { postcode } : {}),
           password,
         })
-        localStorage.setItem('token', regRes.token)
+        storeTokens(regRes)
         setSessionFlag()
         sessionStorage.removeItem('umu-pending-email')
         setPendingSignup(null)
-        await navigateTo('/onboarding/preferences?new=true')
+
+        // Which onboarding journey this signup came from - stashed by
+        // /founding-homeowners's ?action= query param (client request,
+        // 2026-09-29). 'claim-property' skips preferences/welcome entirely;
+        // 'join-umu' (also the default, e.g. a direct /signup bookmark)
+        // goes to the "what would you like to do now" fork instead.
+        const onboardingAction = consumeOnboardingAction()
+        // Remembered permanently (not just for this one redirect) so a
+        // later plain sign-in on this browser lands in the right place too
+        // (client feedback, 2026-09-30) - see resolvePostAuthPath.
+        markJourney(onboardingAction)
+        await navigateTo(
+          onboardingAction === 'claim-property'
+            ? '/claim'
+            : '/onboarding/next-steps',
+        )
       } else {
         // No pending signup on file (e.g. a stale/expired verification
         // session) — there's nothing left to register, so send them back

@@ -57,10 +57,10 @@
 <script setup lang="ts">
 import { useSignOut } from '~/composables/useSignOut'
 
-// Account menu for signed-in screens. Personal information and Settings are
-// the only profile pages this app exposes (see utils/appFlow.ts), so they are
-// the only destinations offered.
-// Same artwork and copy as the profile hub's cards (public/profile new icon).
+// Account menu for signed-in screens. Personal information is the only
+// profile page this app links to (Settings removed - client feedback,
+// 2026-09-30: it doesn't work. The route itself still exists in
+// utils/appFlow.ts in case it's revived later; this just stops linking to it).
 const items = [
   {
     label: 'Your Personal Information',
@@ -73,12 +73,6 @@ const items = [
     description: 'View and download your certificate.',
     path: '/certificate',
     image: '/build/umu-passport-sm.png',
-  },
-  {
-    label: 'Settings',
-    description: 'Customize your experience, privacy, and account security.',
-    path: '/profile/settings',
-    image: '/profile%20new%20icon/settings.jpeg',
   },
 ]
 const signOutIcon =

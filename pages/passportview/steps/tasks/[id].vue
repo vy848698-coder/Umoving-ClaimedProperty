@@ -254,12 +254,45 @@
                     @update="updateAdditionalInfo"
                   />
                 </div>
+
+                <!-- Resolution pathway (client handoff, 2026-09-29): opened
+                     inline below the question when the just-saved answer
+                     matched a known trigger. Most questions aren't mapped to
+                     pathway content yet, so this stays empty for now.
+                     Matches the source prototype's own flow: every answered
+                     step stays on screen (not collapsed away) and stays
+                     editable - picking a different answer on an earlier one
+                     supersedes whatever came after it, exactly like the
+                     prototype's cascading resets. New steps append below,
+                     they don't replace what's already shown. -->
+                <TransitionGroup v-if="activePathway" name="pw-step" tag="div" class="pw-flow">
+                  <PathwayStepCard
+                    v-for="(visible, i) in pathwayVisibleSteps"
+                    :key="`${visible.stepId}:${pathwayAttempt}`"
+                    :passport-id="String(route.query.propertyId || '')"
+                    :pathway="activePathway.pathway"
+                    :current-step-id="visible.stepId"
+                    :step-position="i"
+                    :total-steps="pathwayVisibleSteps.length"
+                    :selected-label="visible.answerLabel"
+                    :answered-evidence-file-urls="visible.evidenceFileUrls"
+                    @answer="onPathwayAnswer"
+                    @defer="onPathwayDefer"
+                  />
+                  <PathwayOutcomeCard
+                    v-if="activePathway.journey.status !== 'IN_PROGRESS'"
+                    key="outcome"
+                    :pathway="activePathway.pathway"
+                    :status="activePathway.journey.status"
+                    @continue="onPathwayContinue"
+                  />
+                </TransitionGroup>
               </div>
             </div>
           </div>
 
           <button
-            v-if="!isAutoSaveType"
+            v-if="!isAutoSaveType && !activePathway"
             class="submit-btn"
             data-tour="q-save"
             @click="saveAnswer"
@@ -334,6 +367,9 @@ import OnboardingTour from '~/components/ui/OnboardingTour.vue'
 import { toSentenceCase } from '~/utils/titleCase'
 import { normalizeUploadUrl, normalizeUploadUrls } from '~/utils/normalizeUploadUrl'
 import PassportNavButton from '~/components/core/PassportNavButton.vue'
+import PathwayStepCard from '~/components/passport-view/PathwayStepCard.vue'
+import PathwayOutcomeCard from '~/components/passport-view/PathwayOutcomeCard.vue'
+import { usePathways } from '~/composables/usePathways'
 
 const route = useRoute()
 const router = useRouter()
@@ -362,6 +398,132 @@ const sectionBonusPoints = ref(0)
 const totalPointsBefore = ref(0)
 const totalPointsAfter = ref(0)
 const isSaving = ref(false)
+
+// Resolution pathway opened by the last-saved answer, if any (client
+// handoff, 2026-09-29). null for the overwhelming majority of questions,
+// which aren't mapped to pathway content yet — see usePathways.ts.
+const { getGuidanceAndPathway, advanceJourney, deferJourney } = usePathways()
+const activePathway = ref(null) // { pathway, journey } | null
+let pendingFinishAfterSaveQuestionId = null
+
+// The full pathway flow rendered as one continuous, always-visible list —
+// every already-answered step, in order, plus the live unanswered one at
+// the end (only while the journey is still IN_PROGRESS). Matches the source
+// prototype: nothing collapses or disappears as you progress, and every
+// entry stays clickable (see PathwayStepCard) so an earlier answer can be
+// changed, which supersedes whatever was answered after it.
+const pathwayVisibleSteps = computed(() => {
+  if (!activePathway.value) return []
+  const { journey } = activePathway.value
+  const steps = journey.stepAnswers.map((a) => ({
+    stepId: a.stepId,
+    answerLabel: a.answerLabel,
+    evidenceFileUrls: a.evidenceFileUrls,
+  }))
+  if (journey.status === 'IN_PROGRESS') {
+    steps.push({ stepId: journey.currentStepId, answerLabel: '', evidenceFileUrls: [] })
+  }
+  return steps
+})
+
+// Bumped when advancing a pathway step fails, and folded into the step
+// card's :key below - on failure activePathway never changes (so neither
+// the key's stepId nor the card's selectedLabel prop would otherwise
+// change), and PathwayStepCard's busy flag was set the moment the option
+// was clicked, before the request failed - without this every button on
+// that step would stay disabled forever after one failed save.
+const pathwayAttempt = ref(0)
+
+async function onPathwayAnswer(payload) {
+  if (!activePathway.value) return
+  const passportId = String(route.query.propertyId || '')
+  try {
+    const journey = await advanceJourney(
+      passportId,
+      activePathway.value.journey.id,
+      payload.stepId,
+      payload.answerLabel,
+      payload.evidenceFileUrls,
+    )
+    activePathway.value = { pathway: activePathway.value.pathway, journey }
+    if (journey.status !== 'IN_PROGRESS') {
+      // Reached an outcome — PathwayOutcomeCard now shows; the passport
+      // flow itself resumes when the homeowner taps "Continue" there.
+    }
+  } catch (err) {
+    console.error('Failed to advance pathway:', err)
+    pathwayAttempt.value++
+  }
+}
+
+async function onPathwayDefer() {
+  if (!activePathway.value) return
+  const passportId = String(route.query.propertyId || '')
+  try {
+    await deferJourney(passportId, activePathway.value.journey.id)
+  } catch (err) {
+    console.error('Failed to defer pathway:', err)
+  } finally {
+    // "I'll do this later" doesn't block the rest of the passport — the
+    // journey stays CHECK and resumable, but this question is done with.
+    await continueAfterPathway()
+  }
+}
+
+async function onPathwayContinue() {
+  await continueAfterPathway()
+}
+
+// Restore an already-open (or already-resolved) pathway when navigating
+// back to a question that has one, e.g. after a reload, Previous/Skip, or
+// simply revisiting the section later — checkPathwayThenFinish() only ever
+// runs right after a fresh save, so without this a journey that was opened
+// earlier becomes invisible the moment you leave the question, even though
+// it's still sitting IN_PROGRESS server-side.
+watch(
+  currentQuestion,
+  async (q) => {
+    activePathway.value = null
+    if (!q?.id || !q?.answer) return
+    try {
+      const { journey, pathway } = await getGuidanceAndPathway(q.id, '')
+      if (journey && pathway) activePathway.value = { pathway, journey }
+    } catch (err) {
+      console.error('Pathway restore failed (non-blocking):', err)
+    }
+  },
+  { immediate: true },
+)
+
+async function continueAfterPathway() {
+  activePathway.value = null
+  const questionId = pendingFinishAfterSaveQuestionId
+  pendingFinishAfterSaveQuestionId = null
+  if (questionId) await finishAfterSave(questionId)
+}
+
+// Shared by every save path (the explicit Save button and every auto-save
+// type below) so a resolution pathway can open from ANY question type, not
+// just the ones with an explicit Save click - RADIO in particular is the
+// type most pathway triggers map to. Replaces a bare `await
+// finishAfterSave(questionId)` right after a successful apiSaveAnswer.
+async function checkPathwayThenFinish(questionId, answerValueForGuidance) {
+  try {
+    const value =
+      typeof answerValueForGuidance === 'string'
+        ? answerValueForGuidance
+        : JSON.stringify(answerValueForGuidance)
+    const { journey, pathway } = await getGuidanceAndPathway(questionId, value)
+    if (journey && pathway) {
+      activePathway.value = { pathway, journey }
+      pendingFinishAfterSaveQuestionId = questionId
+      return
+    }
+  } catch (err) {
+    console.error('Pathway guidance lookup failed (non-blocking):', err)
+  }
+  await finishAfterSave(questionId)
+}
 
 // Running points balance shown on the per-question points card, plus the
 // transient "Answer Saved" state it flashes into after each save. Live
@@ -1216,7 +1378,7 @@ const updateAnswer = async (answer) => {
         answer,
       )
       recordPointsEarned(pointsAwarded)
-      await finishAfterSave(currentQuestion.value.id)
+      await checkPathwayThenFinish(currentQuestion.value.id, answer)
     } catch (error) {
       console.error('Error auto-saving RADIO answer:', error)
     } finally {
@@ -1250,8 +1412,13 @@ const updateAnswer = async (answer) => {
       }
     }
 
-    // If trigger part is answered with the auto-save value, save immediately
-    if (triggerPartAnswer === value) {
+    // If trigger part is answered with the auto-save value, save immediately.
+    // value: '*' means "any answer to this part auto-saves" - for a
+    // single-part MULTIPART question with nothing else left to fill in
+    // (e.g. the boundary question, once its old follow-up text field was
+    // removed), waiting for a separate Save click just looks like nothing
+    // happened when the other option already auto-saves.
+    if (value === '*' || triggerPartAnswer === value) {
       isSaving.value = true
       try {
         const { pointsAwarded } = await apiSaveAnswer(
@@ -1259,7 +1426,7 @@ const updateAnswer = async (answer) => {
           answer,
         )
         recordPointsEarned(pointsAwarded)
-        await finishAfterSave(currentQuestion.value.id)
+        await checkPathwayThenFinish(currentQuestion.value.id, triggerPartAnswer)
       } catch (error) {
         console.error('Error auto-saving answer:', error)
       } finally {
@@ -1297,7 +1464,7 @@ const saveAnswer = async () => {
       answerValue,
     )
     recordPointsEarned(pointsAwarded)
-    await finishAfterSave(currentQuestion.value.id)
+    await checkPathwayThenFinish(currentQuestion.value.id, currentQuestion.value.answer)
   } catch (error) {
     console.error('Error saving answer:', error)
   } finally {
@@ -1804,6 +1971,28 @@ const handleContinue = () => {
 }
 .question-card + .question-card {
   margin-top: 18px;
+}
+
+.pw-flow {
+  margin-top: 16px;
+  display: block;
+}
+
+.pw-step-enter-active,
+.pw-step-leave-active,
+.pw-step-move {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.pw-step-enter-from {
+  opacity: 0;
+  transform: translateY(10px);
+}
+.pw-step-leave-active {
+  position: absolute;
+}
+.pw-step-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
 }
 
 .submit-btn {

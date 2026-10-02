@@ -238,7 +238,6 @@
               <!-- Empty state -->
               <div v-else-if="!hasAnyItems" class="coll-state-wrap">
                 <div class="coll-state-card">
-                  <div class="coll-state-ic">📘</div>
                   <div class="coll-state-title">No Passports yet</div>
                   <div class="coll-state-sub">
                     Claim a property you own, and its Passport will appear here.

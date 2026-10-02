@@ -13,14 +13,20 @@ export function useSignOut() {
     signingOut.value = true
     try {
       const token = localStorage.getItem('token')
+      const refreshToken = localStorage.getItem('refreshToken')
       if (token) {
+        // Passing refreshToken lets the backend actually revoke it — without
+        // this, a captured refresh token would still work after "signing
+        // out" (security review follow-up, 2026-09-25).
         await $fetch(`${config.public.apiBase}/auth/logout`, {
           method: 'POST',
           headers: { Authorization: `Bearer ${token}` },
+          body: { refreshToken },
         }).catch(() => {})
       }
     } finally {
       localStorage.removeItem('token')
+      localStorage.removeItem('refreshToken')
       localStorage.removeItem('redirectAfterLogin')
       localStorage.removeItem('umu_role')
       clearSessionFlag()

@@ -29,11 +29,32 @@ export const useKyc = () => {
     'Content-Type': 'application/json',
   })
 
+  // The access token is short-lived (1h - auth.module.ts) with a background
+  // plugin (auth-refresh.client.ts) that silently renews it every 45
+  // minutes - but that timer can be heavily throttled by the browser while
+  // this tab is backgrounded, which is exactly what happens for most of
+  // this flow (the user is away in the Persona hosted-verification tab).
+  // So a poll landing on an actually-expired token here is expected, not
+  // exceptional - refresh once and retry before giving up, rather than
+  // surfacing "Invalid or expired token" to someone mid-identity-check.
+  const withTokenRetry = async <T>(fn: () => Promise<T>): Promise<T> => {
+    try {
+      return await fn()
+    } catch (e: any) {
+      if (e?.status !== 401 && e?.response?.status !== 401) throw e
+      const { refreshAccessToken } = useAuth()
+      await refreshAccessToken()
+      return fn()
+    }
+  }
+
   const startKyc = async (): Promise<StartKycResult> => {
-    return $fetch<StartKycResult>(`${base}/kyc/start`, {
-      method: 'POST',
-      headers: headers(),
-    })
+    return withTokenRetry(() =>
+      $fetch<StartKycResult>(`${base}/kyc/start`, {
+        method: 'POST',
+        headers: headers(),
+      }),
+    )
   }
 
   const getKycStatus = async (): Promise<{
@@ -41,7 +62,7 @@ export const useKyc = () => {
     inquiryId: string | null
     completedAt?: string | null
   }> => {
-    return $fetch(`${base}/kyc/status`, { headers: headers() })
+    return withTokenRetry(() => $fetch(`${base}/kyc/status`, { headers: headers() }))
   }
 
   /**

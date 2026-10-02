@@ -15,6 +15,7 @@
       :icon="toastState.icon"
       :icon-emoji="toastState.iconEmoji"
       :duration="toastState.duration"
+      :variant="toastState.variant"
       @close="hideToast"
     />
   </div>

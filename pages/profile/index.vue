@@ -2,7 +2,6 @@
   <div class="pf-page">
     <WebTopNav>
       <template #actions>
-        <button class="pf-quick-btn" type="button" @click="navigateTo('/profile/settings')">Settings</button>
         <button class="pf-quick-btn solid" type="button" @click="navigateTo('/profile/support')">Support</button>
       </template>
     </WebTopNav>
@@ -181,7 +180,6 @@
         <div class="pf-footer-col">
           <h5>Account</h5>
           <button type="button" @click="navigateTo('/profile/personal-information')">Personal info</button>
-          <button type="button" @click="navigateTo('/profile/settings')">Settings</button>
           <button type="button" @click="navigateTo('/profile/support')">Support</button>
         </div>
 
@@ -445,13 +443,6 @@ const profileItems = [
   //   route: '/profile/subscription-plan',
   // },
   {
-    title: 'Settings',
-    description: 'Customize your experience, privacy, and account security.',
-    icon: 'settings',
-    image: '/profile%20new%20icon/settings.jpeg',
-    route: '/profile/settings',
-  },
-  {
     title: 'Help & Support',
     description: 'Need help? Browse FAQs or speak to support.',
     icon: 'helpSupport',
@@ -517,15 +508,22 @@ const logout = async () => {
   try {
     const token =
       typeof window !== 'undefined' ? localStorage.getItem('token') : null
+    const refreshToken =
+      typeof window !== 'undefined' ? localStorage.getItem('refreshToken') : null
     if (token) {
+      // Passing refreshToken lets the backend actually revoke it — without
+      // this, a captured refresh token would still work after "signing
+      // out" (security review follow-up, 2026-09-25).
       await $fetch(`${config.public.apiBase}/auth/logout`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
+        body: { refreshToken },
       }).catch(() => {}) // ignore network errors — still log out locally
     }
   } finally {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('token')
+      localStorage.removeItem('refreshToken')
       // Clear the routing-hint cookie too, or middleware/guest.ts keeps
       // bouncing this browser to /dashboard after sign-out.
       clearSessionFlag()
@@ -557,6 +555,9 @@ const deleteAccount = async () => {
   } finally {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('token')
+      // Account row is gone (cascade-deletes RefreshToken rows server-side
+      // too), but still clear the local copy.
+      localStorage.removeItem('refreshToken')
       // Clear the routing-hint cookie too, or middleware/guest.ts keeps
       // bouncing this browser to /dashboard after sign-out.
       clearSessionFlag()

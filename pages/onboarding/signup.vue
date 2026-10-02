@@ -43,6 +43,12 @@
             <p><b>Yours to control.</b> Nothing is shared without your say-so.</p>
           </li>
         </ul>
+
+        <FounderPromo
+          title="Join the million and change the face of home buying and selling."
+          cta-text="Explore Founding Homeowners"
+          class="signup-founder-promo"
+        />
       </div>
 
       <p class="signup-aside-foot">
@@ -62,6 +68,11 @@
         </div>
 
         <form class="auth-form signup-panel" @submit.prevent="handleSubmit">
+
+          <div v-if="isCollaboratorInvite" class="invite-banner">
+            You've been invited to collaborate on a Property Passport. Create
+            your account with this email to get access automatically.
+          </div>
 
           <div v-if="formError" class="error-banner">{{ formError }}</div>
 
@@ -196,6 +207,7 @@ import { ref, reactive } from 'vue'
 import { useAuth } from '~/composables/useAuth'
 import { useSession } from '~/composables/useSession'
 import { toTitleCase } from '~/utils/form-helpres'
+import FounderPromo from '~/components/core/FounderPromo.vue'
 import PhoneInput from '~/components/form/PhoneInput.vue'
 import PropertySearchInput from '~/components/property/PropertySearchInput.vue'
 import TermsModal from '~/components/modals/TermsModal.vue'
@@ -222,6 +234,15 @@ const showPassword = ref(false)
 const formError = ref('')
 const isLoading = ref(false)
 const showTermsModal = ref(false)
+
+// Collaborator-invite emails link here with ?email=&ref=collaborator-invite
+// (see umu-backend PassportService.sendJoinUmovinguInviteEmail) so the
+// invitee doesn't have to retype the address the owner invited.
+const route = useRoute()
+const isCollaboratorInvite = route.query.ref === 'collaborator-invite'
+if (typeof route.query.email === 'string') {
+  form.email = route.query.email
+}
 
 const selectedAddress = ref<{ id: number; line1: string; line2: string; postcode?: string } | null>(null)
 
@@ -391,13 +412,14 @@ const handleSubmit = async () => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   max-width: 500px;
-  /* Centred in the panel, like sign-in, not pinned to its left edge. */
+  /* Left-aligned in the panel (client feedback, 2026-10-01) - inherits the
+     aside's own padding as its left inset, matching the form column's own
+     padding on the other side, rather than floating as a centred block. */
   width: 100%;
-  margin-inline: auto;
-  text-align: center;
+  text-align: left;
   /* Centres inside a slightly shorter box, so the whole column sits above the
      true middle - level with the form's own weight rather than below it. */
   /* Divided by the desktop zoom: inside the zoomed body a vh is multiplied
@@ -423,19 +445,20 @@ const handleSubmit = async () => {
 }
 .signup-q { color: #00a19a; }
 .signup-welcome-sub {
-  margin: 15px auto 0;
+  margin: 15px 0 0;
   font-size: 18px;
   line-height: 1.52;
   color: #635f7b;
   max-width: 32ch;
 }
 
-/* Leads the panel, centred above the copy. */
+/* Leads the panel, left-aligned with the rest of the copy (client feedback,
+   2026-10-01 - was centred above it). */
 .signup-house-illus {
   width: 288px;
   height: auto;
   display: block;
-  margin: -18px auto 16px;
+  margin: -18px 0 16px;
   object-fit: contain;
   filter: drop-shadow(0 22px 30px rgba(35, 29, 69, 0.16));
 }
@@ -444,7 +467,7 @@ const handleSubmit = async () => {
    with no gaps between the rows to fall through. */
 .signup-points {
   list-style: none;
-  margin: 28px auto 0;
+  margin: 28px 0 0;
   padding: 0;
   display: grid;
   max-width: 320px;
@@ -475,6 +498,12 @@ const handleSubmit = async () => {
   color: #4a4560;
 }
 .signup-points b { color: #231d45; font-weight: 800; }
+
+.signup-founder-promo {
+  align-self: stretch;
+  margin: 20px 0 0;
+  text-align: left;
+}
 
 .signup-aside-foot {
   display: inline-flex;
@@ -793,6 +822,17 @@ const handleSubmit = async () => {
   border: 1px solid #fecdd3;
   border-radius: 12px;
   color: #be123c;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.invite-banner {
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  background: #f2fbfa;
+  border: 1px solid rgba(0, 161, 154, 0.3);
+  border-radius: 12px;
+  color: #00625d;
   font-size: 13px;
   line-height: 1.5;
 }

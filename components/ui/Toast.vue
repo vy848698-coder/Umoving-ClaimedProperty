@@ -2,14 +2,14 @@
   <Teleport to="body">
     <Transition name="slide-up">
       <div v-if="isVisible" class="toast-container">
-        <div class="toast">
-          <div class="toast-icon">
-            <img v-if="icon" :src="icon" alt="icon" class="icon-img" />
-            <span v-else class="default-icon">{{ iconEmoji || '✓' }}</span>
+        <div class="toast" :class="`toast--${variant}`">
+          <div v-if="icon || iconEmoji" class="toast-icon">
+            <img v-if="icon" :src="icon" alt="" class="icon-img" />
+            <span v-else class="default-icon">{{ iconEmoji }}</span>
           </div>
           <p class="toast-message">{{ message }}</p>
           <div class="toast-check">
-            <span class="check-icon">✓</span>
+            <span class="check-icon">{{ variant === 'error' ? '✕' : '✓' }}</span>
           </div>
         </div>
       </div>
@@ -38,6 +38,13 @@ const props = defineProps({
   isVisible: {
     type: Boolean,
     default: false,
+  },
+  // 'error' swaps the trailing ✓ for a ✕ and the background from teal to
+  // red - previously every toast showed a checkmark even when reporting a
+  // failure (client feedback, 2026-09-30).
+  variant: {
+    type: String,
+    default: 'success',
   },
 })
 
@@ -83,6 +90,13 @@ watch(
   min-width: 280px;
   max-width: 400px;
   pointer-events: all;
+}
+.toast--error {
+  background: linear-gradient(135deg, #d9534f 0%, #e8746f 100%);
+  box-shadow: 0 8px 24px rgba(217, 83, 79, 0.4);
+}
+.toast--error .check-icon {
+  color: #d9534f;
 }
 
 .toast-icon {
