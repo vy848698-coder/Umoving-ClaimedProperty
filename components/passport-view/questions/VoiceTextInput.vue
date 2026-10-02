@@ -189,6 +189,9 @@ onUnmounted(() => {
 
 .voice-input-field {
   flex: 1;
+  /* Without this the input keeps its default ~20ch width and pushed the
+     send button off narrow screens. */
+  min-width: 0;
   border: none;
   padding: 10px 12px;
   outline: none;

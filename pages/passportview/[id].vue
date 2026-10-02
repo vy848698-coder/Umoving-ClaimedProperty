@@ -1445,7 +1445,9 @@ const PATHWAY_STATUS_LABEL = {
 }
 async function fetchPathwayFlags() {
   try {
-    pathwayFlags.value = await listFlags(route.params.id)
+    const flags = await listFlags(route.params.id)
+    // A non-list response would break every computed built on it (History, actions).
+    pathwayFlags.value = Array.isArray(flags) ? flags : []
   } catch (e) {
     console.error('Failed to load pathway flags', e)
   }
@@ -4282,5 +4284,47 @@ const groupedHistory = computed(() => {
   .hsw-nav-inner { gap: 8px; }
   .hsw-actions { gap: 6px; }
   .hsw-tour { width: 38px; height: 38px; }
+}
+
+/* Narrowest phones (~280px): "Manage visibility · Private" was 6px wider
+   than the card. A touch less padding and type keeps it inside. */
+@media (max-width: 360px) {
+  .pp-hero-btn {
+    padding: 11px 12px;
+    gap: 6px;
+    font-size: 13.5px;
+  }
+  .pp-hero-btn-ic {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+/* Vault rows on phones: icon + name + a long access badge ("Shared with
+   selected") + chevron on one line crushed the name and date to a few px.
+   The badge moves to a second line, under the text. */
+@media (max-width: 420px) {
+  .vault-doc-row {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+  .vault-doc-info {
+    flex: 1 1 calc(100% - 90px);
+  }
+  .vault-doc-chevron {
+    order: 2;
+  }
+  .vault-doc-badge {
+    order: 3;
+    margin-left: 50px;
+  }
+}
+
+/* Narrowest phones: two stat tiles a row left "Avg. estimated value" three
+   lines in a ~78px column. One tile a row there. */
+@media (max-width: 340px) {
+  .pp-stats-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

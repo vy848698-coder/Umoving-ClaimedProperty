@@ -1437,6 +1437,21 @@ const goToNextSection = () => {
   }
 }
 
+/* Narrow phones: beside the ring the "Last updated" pill got ~70px and
+   broke into four lines. Stack them, as on desktop: ring, then the pill on
+   one line below it. */
+@media (max-width: 420px) {
+  .hero-ring-wrap {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+  .hero-updated {
+    white-space: nowrap;
+    border-radius: 999px;
+  }
+}
+
 /* Narrow phones: even shrunk, the art and arrow left the text ~120px, so
    the icon and arrow share a top row and the text takes the full width
    below them. */
