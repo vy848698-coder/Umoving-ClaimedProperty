@@ -65,10 +65,12 @@ export async function fetchInterests(): Promise<InterestsAnswer | null> {
       headers: getAuthHeaders(),
     })
     if (!data) return null
+    // Default the lists: a partial response left `areas` undefined and the
+    // interests page crashed on areas.length.
     const answer: InterestsAnswer = {
-      interestIds: data.interestIds,
-      areas: data.areas,
-      emailOptIn: data.emailOptIn,
+      interestIds: data.interestIds ?? [],
+      areas: data.areas ?? [],
+      emailOptIn: data.emailOptIn ?? false,
     }
     cacheLocally(answer)
     return answer

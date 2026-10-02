@@ -1155,17 +1155,24 @@ const isAnswerValid = computed(() => {
       return (
         answer.length > 0 &&
         answer.every((form) => {
-          return Object.values(form).some((val) => val && val.trim().length > 0)
+          return Object.values(form || {}).some(
+            (val) => val && ('' + val).trim().length > 0,
+          )
         })
       )
     }
-    // For non-repeatable: answer is single object
+    // For non-repeatable: answer is single object. (typeof null is also
+    // 'object' - an unanswered form threw here, and the throw during render
+    // left the form with no fields to type into.)
     if (
       !currentQuestion.value.repeatable &&
+      answer &&
       typeof answer === 'object' &&
       !Array.isArray(answer)
     ) {
-      return Object.values(answer).some((val) => val && val.trim().length > 0)
+      return Object.values(answer).some(
+        (val) => val && ('' + val).trim().length > 0,
+      )
     }
     return false
   }
@@ -1248,6 +1255,7 @@ const isAnswerValid = computed(() => {
         // For non-repeatable: partAnswer is single object
         if (
           !part.repeatable &&
+          partAnswer &&
           typeof partAnswer === 'object' &&
           !Array.isArray(partAnswer)
         ) {
