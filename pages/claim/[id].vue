@@ -2928,4 +2928,20 @@ async function issuePassport() {
 @media (max-width: 400px) {
   .hsw-tour { width: 40px; height: 40px; font-size: 15px; }
 }
+
+/* Narrowest screens: brand + Exit + Passport + Profile ran a few px past the
+   right edge. Tighter nav margins and gaps, a smaller Exit. */
+@media (max-width: 340px) {
+  .hsw-nav-inner {
+    width: calc(100% - 24px);
+    gap: 8px;
+  }
+  .hsw-actions {
+    gap: 6px;
+  }
+  .hsw-back {
+    width: 38px;
+    height: 38px;
+  }
+}
 </style>

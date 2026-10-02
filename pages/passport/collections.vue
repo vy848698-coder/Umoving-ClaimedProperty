@@ -2372,4 +2372,20 @@ const executeDelete = async () => {
 @media (max-width: 400px) {
   .ppn-tour { width: 40px; height: 40px; font-size: 15px; }
 }
+
+/* Narrowest screens: brand + ? + Passport + Profile ran a few px past the
+   right edge. Tighter nav margins and gaps, a smaller tour button. */
+@media (max-width: 340px) {
+  .ppn-nav-inner {
+    width: calc(100% - 24px);
+    gap: 8px;
+  }
+  .ppn-actions {
+    gap: 6px;
+  }
+  .ppn-tour {
+    width: 36px;
+    height: 36px;
+  }
+}
 </style>

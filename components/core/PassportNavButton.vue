@@ -102,4 +102,13 @@ onMounted(() => {
     padding: 0 9px;
   }
 }
+/* Smallest screens (~260-300px, or a narrowed desktop window with its
+   scrollbar): every navbar with this button fits only with a touch less. */
+@media (max-width: 300px) {
+  .pn-btn {
+    height: 36px;
+    font-size: 12.5px;
+    padding: 0 8px;
+  }
+}
 </style>
