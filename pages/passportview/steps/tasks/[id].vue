@@ -2284,4 +2284,12 @@ const handleContinue = () => {
 @media (max-width: 400px) {
   .hsw-tour { width: 40px; height: 40px; font-size: 15px; }
 }
+
+/* Narrowest phones (~280-340px): the row of logo + Back + Passport + Profile
+   ran a few px off the right edge. Tighter gaps and a smaller Back. */
+@media (max-width: 340px) {
+  .hsw-nav-inner { gap: 8px; }
+  .hsw-actions { gap: 6px; }
+  .hsw-back { width: 38px; height: 38px; }
+}
 </style>

@@ -3833,6 +3833,19 @@ const groupedHistory = computed(() => {
   padding: 1px 7px;
   border-radius: 999px;
 }
+/* Phones: the two buttons share a row when they fit and wrap to their own
+   rows when they don't (they overflowed the card below ~390px), filling the
+   width either way; their labels never break onto two lines. */
+@media (max-width: 640px) {
+  .pp-hero-actions {
+    flex-wrap: wrap;
+  }
+  .pp-hero-btn {
+    flex: 1 1 auto;
+    justify-content: center;
+    white-space: nowrap;
+  }
+}
 
 .pp-empty-ic {
   font-size: 30px;
@@ -4261,5 +4274,13 @@ const groupedHistory = computed(() => {
 
 @media (max-width: 400px) {
   .hsw-tour { width: 40px; height: 40px; font-size: 15px; }
+}
+
+/* Narrowest phones (~280-340px): the row of logo + "?" + Passport + Profile
+   ran a few px off the right edge. Tighter gaps and a smaller "?". */
+@media (max-width: 340px) {
+  .hsw-nav-inner { gap: 8px; }
+  .hsw-actions { gap: 6px; }
+  .hsw-tour { width: 38px; height: 38px; }
 }
 </style>

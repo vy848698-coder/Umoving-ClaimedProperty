@@ -226,6 +226,17 @@ watch(
   }
 }
 
+/* Narrowest phones - see PassportNavButton. */
+@media (max-width: 340px) {
+  .pm-trigger,
+  .pm-trigger:has(.pm-chev) {
+    height: 38px;
+    font-size: 13px;
+    padding: 0 7px 0 9px;
+    gap: 4px;
+  }
+}
+
 .pm-menu {
   position: absolute;
   top: calc(100% + 8px);

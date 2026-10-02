@@ -93,4 +93,13 @@ onMounted(() => {
     padding: 0 12px;
   }
 }
+/* Narrowest phones (~280-340px): logo + Back/? + Passport + Profile only
+   fit with a touch less height and padding. */
+@media (max-width: 340px) {
+  .pn-btn {
+    height: 38px;
+    font-size: 13px;
+    padding: 0 9px;
+  }
+}
 </style>
