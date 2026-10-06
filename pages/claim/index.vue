@@ -86,9 +86,8 @@
               <img src="/build/padlock.png" alt="" />
             </div>
             <div class="cl-lock-body">
-              We verify ownership via
-              <strong>HM Land Registry</strong>. Your details are encrypted and
-              never sold.
+              <strong>Private by design.</strong> Your personal details are
+              encrypted and never sold.
             </div>
           </div>
         </section>
@@ -160,7 +159,7 @@ const FOUNDER_BENEFITS = [
   },
   {
     image: "/op-icons/rewards/stampTool.png",
-    title: "A permanent Founder Number",
+    title: "A permanent Founder Homeowner Number",
     text: "Your certificate marks your place among the first million. More to come.",
   },
 ];
@@ -573,8 +572,10 @@ function continueToClaim() {
 
 /* ── What happens next ────────────────────────────────────────────── */
 .clw-aside {
-  position: sticky;
-  top: 90px;
+  /* Not sticky (client feedback, 2026-10-05) - scrolls with the page like
+     the search card beside it, instead of staying pinned while that card
+     moves. */
+  position: static;
 }
 
 .clw-aside-card {

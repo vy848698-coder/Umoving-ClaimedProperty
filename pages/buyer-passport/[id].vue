@@ -126,6 +126,13 @@
           </div>
         </section>
 
+        <!-- ── Using this Property Passport (client guidance, 2026-10-05):
+             UMU's own guidance for anyone viewing shared property
+             information, replacing the idea of reproducing TA6's buyer
+             notes here - belongs in the buyer-facing VIEW of the Property
+             Passport (this page), not inside the Buyer Passport itself. ── -->
+        <UsingThisPassportPanel />
+
         <!-- ── Resume ────────────────────────────────────────────────── -->
         <button
           v-if="resumeSection"
@@ -668,6 +675,7 @@ import ProfileMenu from '~/components/core/ProfileMenu.vue'
 import PassportNavButton from '~/components/core/PassportNavButton.vue'
 import OnboardingTour from '~/components/ui/OnboardingTour.vue'
 import PassportCard from '~/components/passport-view/PassportCard.vue'
+import UsingThisPassportPanel from '~/components/passport-view/UsingThisPassportPanel.vue'
 
 // Guided tour for buyers — surfaces the things they care about most.
 const buyerTourRef = ref<any>(null)

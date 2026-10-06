@@ -116,14 +116,14 @@
               class="pp-hero-btn pp-hero-btn--ghost"
               @click="openCollaboratorModal"
             >
-              <OPIcon name="publishPassport" class="pp-hero-btn-ic" />
+              <OPIcon name="collaboratorsGroup" class="pp-hero-btn-ic pp-hero-btn-ic--invert" />
               {{ collaborators.length }} {{ collaborators.length === 1 ? 'collaborator' : 'collaborators' }}
             </button>
             <button
               class="pp-hero-btn pp-hero-btn--primary"
               @click="visibilityOpen = true"
             >
-              <OPIcon name="publishPassport" class="pp-hero-btn-ic" />
+              <OPIcon name="visibilityLock" class="pp-hero-btn-ic" />
               Manage visibility
               <span class="pp-hero-btn-badge">{{ isPublicVisibility ? 'Public' : 'Private' }}</span>
             </button>
@@ -604,6 +604,7 @@
     <AddCollaboratorModal
       v-model:show="showCollaboratorModal"
       :passport-id="route.params.id"
+      :is-owner="isOwner"
       @added="handleCollaboratorAdded"
       @removed="handleCollaboratorRemoved"
     />
@@ -794,7 +795,7 @@ definePageMeta({
   middleware: 'auth',
 })
 
-const { steps, loadPassport } = usePassportRuntime()
+const { steps, loadPassport, loadAccess, isOwner } = usePassportRuntime()
 const { activatePassport } = usePassportClaim()
 
 // Sections are seeded by /activate, which the claim flow calls on a
@@ -803,13 +804,39 @@ const { activatePassport } = usePassportClaim()
 // idempotent, so retry it once and reload.
 async function loadSections() {
   const id = route.params.id
+  loadAccess(id)
   try {
     await loadPassport(id)
     if (steps.value.length > 1) return
     await activatePassport(id)
     await loadPassport(id)
+    if (steps.value.length > 1) return
   } catch (err) {
     console.error('[passport] could not load or seed sections for', id, err)
+  }
+
+  // Still no sections after that retry - this isn't a transient failure,
+  // it means the claim itself was never actually finished (no type chosen
+  // yet, or HM Land Registry hasn't verified ownership), so re-activating
+  // will keep 400ing forever. The old behaviour just logged the error and
+  // left the page sitting on a permanently blank section list with no
+  // explanation (client bug report, 2026-10-06) - send them back to the
+  // claim flow to resume instead, which knows how to show the right next
+  // step (payment / KYC / Land Registry).
+  if (steps.value.length <= 1) {
+    try {
+      const passportToken =
+        typeof window !== 'undefined' ? localStorage.getItem('token') : null
+      const passport = await $fetch(
+        `${config.public.apiBase}/passport/${id}`,
+        { headers: { Authorization: `Bearer ${passportToken}` } },
+      )
+      if (passport?.propertyId) {
+        await navigateTo(`/claim/${passport.propertyId}`, { replace: true })
+      }
+    } catch {
+      // Nothing more we can do here - leave the empty state on screen.
+    }
   }
 }
 const { getCollaborators } = usePassportCollaborators()
@@ -3814,6 +3841,14 @@ const groupedHistory = computed(() => {
   height: 20px;
   object-fit: contain;
   flex-shrink: 0;
+}
+/* collaborators.svg is drawn with a black fill (it's shared with light
+   backgrounds elsewhere) - inverted to white so it reads on this dark
+   hero, instead of the generic share/upload glyph both buttons used to
+   share here, which didn't mean "collaborators" or "visibility" and
+   looked clipped at this size (client feedback, 2026-10-05). */
+.pp-hero-btn-ic--invert {
+  filter: brightness(0) invert(1);
 }
 .pp-hero-btn-badge {
   background: #00d4c3;

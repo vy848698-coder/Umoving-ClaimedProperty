@@ -40,7 +40,7 @@ export interface PathwayJourney {
   passportId: string
   pathwayId: string
   currentStepId: string
-  stepAnswers: Array<{ stepId: string; answerLabel: string; evidenceFileUrls: string[]; timestamp: string }>
+  stepAnswers: Array<{ stepId: string; answerLabel: string; evidenceFileUrls: string[]; notes?: string | null; timestamp: string }>
   status: 'IN_PROGRESS' | 'RESOLVED' | 'CHECK' | 'FLAG' | 'ESCALATE'
   startedAt: string
   completedAt: string | null
@@ -108,11 +108,12 @@ export const usePathways = () => {
     stepId: string,
     answerLabel: string,
     evidenceFileUrls?: string[],
+    notes?: string,
   ) => {
     return $fetch<PathwayJourney>(`${base}/passport/${passportId}/pathways/journeys/${journeyId}/answer`, {
       method: 'POST',
       headers: getHeaders(),
-      body: { stepId, answerLabel, evidenceFileUrls },
+      body: { stepId, answerLabel, evidenceFileUrls, notes },
     })
   }
 

@@ -77,6 +77,8 @@ const iconMap: Record<string, string> = {
   pin: '/op-icons/passportview/pin.svg',
   caretDown: '/op-icons/passportview/caretDown.svg',
   addCollaborator: '/op-icons/passportview/addCollaborator.svg',
+  collaboratorsGroup: '/op-icons/profile/collaborators.svg',
+  visibilityLock: '/op-icons/passportview/pointsLock.svg',
   list: '/op-icons/passportview/list.svg',
   map: '/op-icons/passportview/map.svg',
   listView: '/passport-seller-and-buyer-icon/list.png',

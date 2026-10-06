@@ -6,6 +6,13 @@ import { hiddenQuestionIds } from '~/utils/questionBranching'
 const steps = ref([])
 const loading = ref(false)
 
+// Whether the currently-loaded passport (per loadAccess below) is owned by
+// the signed-in user, vs. a collaborator with view access to it. Owner-only
+// actions (add/remove collaborator, publish) are gated on this so a
+// collaborator never sees a control that's guaranteed to reject them.
+const isOwner = ref(true)
+const isCollaborator = ref(false)
+
 const currentStep = ref(null)
 const currentTask = ref(null)
 
@@ -54,6 +61,19 @@ const loadPassport = async (passportId) => {
     })
   } finally {
     loading.value = false
+  }
+}
+
+const loadAccess = async (passportId) => {
+  try {
+    const res = await getApi().getAccess(passportId)
+    isOwner.value = res.isOwner
+    isCollaborator.value = res.isCollaborator
+  } catch {
+    // Non-critical - default to isOwner:true (today's prior behaviour)
+    // rather than hiding owner-only actions on a transient failure.
+    isOwner.value = true
+    isCollaborator.value = false
   }
 }
 
@@ -274,6 +294,8 @@ export const usePassportRuntime = () => {
   return {
     steps,
     loading,
+    isOwner,
+    isCollaborator,
 
     currentStep,
     currentTask,
@@ -284,6 +306,7 @@ export const usePassportRuntime = () => {
     questionTaskMap,
 
     loadPassport,
+    loadAccess,
     setCurrentStep,
     setCurrentTask,
     loadQuestions,

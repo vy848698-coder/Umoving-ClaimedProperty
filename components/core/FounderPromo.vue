@@ -10,7 +10,7 @@
        one image. Text stays real HTML (not baked into the art) for
        accessibility, so a translation or copy tweak never needs a
        re-crop. -->
-  <div v-if="variant === 'compact'" class="fp-compact">
+  <div v-if="variant === 'compact'" class="fp-compact" :class="{ 'fp-compact--lg': large }">
     <div class="fp-compact-art">
       <img
         src="/founder/founder-certificate.png"
@@ -22,7 +22,8 @@
     <div class="fp-compact-body">
       <p class="fp-compact-kicker">Own a home?</p>
       <p class="fp-compact-title">{{ title }}</p>
-      <NuxtLink :to="ctaTo" class="fp-compact-link">
+      <p v-if="body" class="fp-compact-text">{{ body }}</p>
+      <NuxtLink v-if="showLink" :to="ctaTo" class="fp-compact-link">
         {{ ctaText }}
         <svg
           viewBox="0 0 24 24"
@@ -71,6 +72,14 @@ withDefaults(
     body?: string;
     ctaText?: string;
     ctaTo?: string;
+    // Compact variant only. The link defaults to /claim, which is behind
+    // the "auth" middleware - fine when the viewer is already signed in,
+    // but on the sign-up/sign-in pages themselves it just bounces a
+    // signed-out visitor straight to sign-in (client feedback, 2026-10-05).
+    showLink?: boolean;
+    // Compact variant only - a bigger art + copy treatment for pages where
+    // this is the page's main pitch rather than a small aside note.
+    large?: boolean;
   }>(),
   {
     variant: "compact",
@@ -78,6 +87,8 @@ withDefaults(
     body: "",
     ctaText: "Explore Founding Homeowners",
     ctaTo: "/claim",
+    showLink: true,
+    large: false,
   },
 );
 </script>
@@ -139,6 +150,13 @@ withDefaults(
   line-height: 1.35;
   color: #231d45;
 }
+.fp-compact-text {
+  margin: 2px 0 0;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: #635f7b;
+}
 .fp-compact-link {
   margin-top: 4px;
   display: inline-flex;
@@ -155,6 +173,33 @@ withDefaults(
 .fp-compact-link svg {
   width: 14px;
   height: 14px;
+}
+
+/* ── Compact, large (client feedback, 2026-10-05: the sign-up panel's
+   version of this needed to carry more visual weight). ── */
+.fp-compact--lg {
+  gap: 22px;
+}
+.fp-compact--lg .fp-compact-art {
+  width: 196px;
+  height: 154px;
+}
+.fp-compact--lg .fp-compact-cert {
+  width: 198px;
+}
+.fp-compact--lg .fp-compact-seal {
+  width: 86px;
+  height: 86px;
+}
+.fp-compact--lg .fp-compact-kicker {
+  font-size: 12.5px;
+}
+.fp-compact--lg .fp-compact-title {
+  font-size: 19px;
+  line-height: 1.3;
+}
+.fp-compact--lg .fp-compact-text {
+  font-size: 14px;
 }
 
 /* ── Hero (claim page) ─────────────────────────────────────────────

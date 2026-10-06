@@ -6,7 +6,8 @@
 //   "What is the type of the ownership?"
 //     Leasehold         -> questions 10 and 11
 //     Shared Ownership  -> question 9
-//     anything else     -> none of 9, 10, 11
+//     Commonhold        -> question 12
+//     anything else     -> none of 9, 10, 11, 12
 //
 // Hidden questions are left out of the section entirely: navigation,
 // "Question N of M", the progress bar, "remaining" and the completion check
@@ -22,6 +23,7 @@ const norm = (s: unknown) =>
 
 const LEASEHOLD = 'leasehold'
 const SHARED_OWNERSHIP = 'sharedownership'
+const COMMONHOLD = 'commonhold'
 
 // 1-based question numbers within the section, and the ownership type each
 // one belongs to.
@@ -29,15 +31,19 @@ const DEPENDENT_QUESTIONS: { number: number; showFor: string }[] = [
   { number: 9, showFor: SHARED_OWNERSHIP },
   { number: 10, showFor: LEASEHOLD },
   { number: 11, showFor: LEASEHOLD },
+  // "Provide a copy of the commonhold statement" - this had no entry here
+  // at all, so it was never hidden for any other tenure (client bug
+  // report, 2026-10-06: picking Freehold still landed on it).
+  { number: 12, showFor: COMMONHOLD },
 ]
 
 // The ownership-type question is recognised by its options rather than an
-// id, which differs per passport: it offers both Leasehold and Shared
-// Ownership.
+// id, which differs per passport: it offers Leasehold, Shared Ownership
+// and Commonhold.
 function isOwnershipTypeQuestion(q: Question) {
   if (!Array.isArray(q?.options)) return false
   const labels = new Set(q.options.map((o) => norm(o?.label ?? o?.value)))
-  return labels.has(LEASEHOLD) && labels.has(SHARED_OWNERSHIP)
+  return labels.has(LEASEHOLD) && labels.has(SHARED_OWNERSHIP) && labels.has(COMMONHOLD)
 }
 
 // The picked option(s), as normalised labels and values. Answers arrive as a

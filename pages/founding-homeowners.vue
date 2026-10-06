@@ -157,7 +157,7 @@ const FOUNDER_BENEFITS = [
   },
   {
     image: "/op-icons/rewards/stampTool.png",
-    title: "A permanent Founder Number",
+    title: "A permanent Founder Homeowner Number",
     text: "Your certificate recognises your place among the first million homeowners helping create a better property network.",
   },
 ];

@@ -45,8 +45,10 @@
         </ul>
 
         <FounderPromo
-          title="Join the million and change the face of home buying and selling."
-          cta-text="Explore Founding Homeowners"
+          title="Become a Founding Homeowner."
+          body="Claim your property and secure your place among the first million homeowners building a better property network."
+          :show-link="false"
+          large
           class="signup-founder-promo"
         />
       </div>
@@ -345,6 +347,9 @@ const handleSubmit = async () => {
 <style scoped>
 /* ── Split-screen layout ── */
 .signup-split {
+  /* One page, one scrollbar (client feedback, 2026-10-05: independent
+     per-column scrollbars were confusing - reverted to a plain page where
+     both columns just scroll together with the rest of the document). */
   min-height: 100dvh;
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -365,7 +370,9 @@ const handleSubmit = async () => {
     radial-gradient(620px 460px at 22% 34%, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0) 66%),
     radial-gradient(circle at 90% 95%, rgba(0, 161, 154, 0.08) 0%, rgba(0, 161, 154, 0) 42%),
     linear-gradient(170deg, #f7f7f4 0%, #fbfbf9 42%, #f8faf9 100%);
-  overflow: hidden;
+  /* Clips the background wash horizontally only - the panel itself scrolls
+     with the rest of the page (single shared scrollbar), not on its own. */
+  overflow-x: hidden;
   min-width: 0;
 }
 /* Hairline between the two panels - without it the cream and the form grey
@@ -521,9 +528,11 @@ const handleSubmit = async () => {
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding: 48px 40px;
+  /* Side padding matched to the aside's own 48px (client feedback,
+     2026-10-05: the two panels' outer margins didn't match, 40px here vs
+     48px there). */
+  padding: 48px 48px;
   background: #f3f2ef;
-  overflow-y: auto;
   /* Grid items default to min-width:auto, so a wide child would stretch this
      track past the viewport; the app shell clips overflow-x, so that shows up
      as cut-off content rather than a scrollbar. */

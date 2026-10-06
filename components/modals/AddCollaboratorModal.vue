@@ -1,8 +1,17 @@
 <template>
-  <BaseDrawer v-model="isOpen" title="Add Collaborator">
+  <BaseDrawer v-model="isOpen" :title="props.isOwner ? 'Add Collaborator' : 'Collaborators'">
     <div class="add-collaborator-modal">
+      <!-- Only the owner can add/remove collaborators (backend-enforced); a
+           collaborator with view access to this passport sees the same
+           page and used to get a confusing rejection if they tried. Client
+           bug report, 2026-10-06. -->
+      <p v-if="!props.isOwner" class="owner-only-note">
+        Only the passport owner can add or remove collaborators. You can see
+        who already has access below.
+      </p>
+
       <!-- Step 1: email lookup -->
-      <template v-if="step === 'search'">
+      <template v-if="props.isOwner && step === 'search'">
         <div class="modal-info">
           <p class="info-text">
             Enter the email address of the person you'd like to give access to
@@ -38,7 +47,7 @@
       </template>
 
       <!-- Step 2a: found an existing account - collect role/access, then add -->
-      <template v-else-if="step === 'add'">
+      <template v-else-if="props.isOwner && step === 'add'">
         <div class="modal-info">
           <p class="info-text">
             <strong>{{ foundFirstName || 'This person' }}</strong> already has an
@@ -74,7 +83,7 @@
       </template>
 
       <!-- Step 2b: no account yet - offer to invite -->
-      <template v-else-if="step === 'invite'">
+      <template v-else-if="props.isOwner && step === 'invite'">
         <div class="modal-info modal-info--invite">
           <p class="info-text">
             We couldn't find an Umovingu account for <strong>{{ email }}</strong>.
@@ -129,21 +138,21 @@
                 <input
                   type="checkbox"
                   :checked="collaborator.historyAccess"
-                  :disabled="isLoading"
+                  :disabled="isLoading || !props.isOwner"
                   @change="handleToggleHistoryAccess(collaborator)"
                 />
                 Passport history
               </label>
             </div>
           </div>
-          <button class="remove-btn" :disabled="isLoading" @click="handleRemove(collaborator.id)">
+          <button v-if="props.isOwner" class="remove-btn" :disabled="isLoading" @click="handleRemove(collaborator.id)">
             Remove
           </button>
         </div>
       </div>
 
       <!-- Action Buttons -->
-      <div class="modal-actions">
+      <div v-if="props.isOwner" class="modal-actions">
         <button
           v-if="step !== 'search'"
           class="btn btn-secondary"
@@ -171,6 +180,9 @@
           {{ isLoading ? 'Sending...' : 'Invite to Umovingu' }}
         </button>
       </div>
+      <div v-else class="modal-actions">
+        <button class="btn btn-secondary" @click="handleClose">Close</button>
+      </div>
     </div>
   </BaseDrawer>
 </template>
@@ -183,6 +195,9 @@ import { usePassportCollaborators } from '~/composables/usePassportCollaborators
 const props = defineProps({
   show: { type: Boolean, default: false },
   passportId: { type: String, required: true },
+  // Defaults to true (today's prior behaviour) for any caller that hasn't
+  // been updated to pass the real value yet.
+  isOwner: { type: Boolean, default: true },
 })
 
 const emit = defineEmits(['update:show', 'added', 'removed', 'invited'])
@@ -385,6 +400,17 @@ const getInitials = (firstName, lastName) => {
 
 .modal-info {
   margin-bottom: 24px;
+}
+
+.owner-only-note {
+  padding: 14px 16px;
+  background: #f8f7fc;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  color: #666;
+  font-size: 14px;
+  line-height: 1.5;
+  margin-bottom: 20px;
 }
 
 .modal-info--invite {

@@ -14,6 +14,21 @@
 
     <div v-if="step.warning" class="pw-warning">{{ step.warning }}</div>
 
+    <!-- Notes, shown alongside evidence upload (client bug report,
+         2026-10-06: several of these steps' own body text says "write
+         down what each person says..." but there was nowhere to actually
+         write it - only a file upload). -->
+    <div v-if="stepNeedsUpload" class="pw-notes">
+      <label class="pw-notes-label" for="pw-notes-field">Notes</label>
+      <textarea
+        id="pw-notes-field"
+        v-model="notes"
+        class="pw-notes-input"
+        rows="4"
+        placeholder="Write down what each person says, when it began, and anything already discussed…"
+      />
+    </div>
+
     <!-- Evidence upload, shown whenever any option on this step requires it -->
     <div v-if="stepNeedsUpload" class="pw-upload">
       <label class="pw-upload-btn">
@@ -60,10 +75,11 @@ const props = defineProps<{
   totalSteps: number
   selectedLabel?: string | null
   answeredEvidenceFileUrls?: string[]
+  answeredNotes?: string | null
 }>()
 
 const emit = defineEmits<{
-  (e: 'answer', payload: { stepId: string; answerLabel: string; evidenceFileUrls: string[] }): void
+  (e: 'answer', payload: { stepId: string; answerLabel: string; evidenceFileUrls: string[]; notes: string }): void
   (e: 'defer'): void
 }>()
 
@@ -77,6 +93,7 @@ const step = computed<PathwayStep>(() => {
 const stepNeedsUpload = computed(() => step.value.options.some((o) => o.requiresUpload))
 
 const evidenceFiles = ref<string[]>(props.answeredEvidenceFileUrls ?? [])
+const notes = ref(props.answeredNotes ?? '')
 const uploading = ref(false)
 const uploadError = ref('')
 const busy = ref(false)
@@ -92,6 +109,7 @@ watch(
   () => {
     busy.value = false
     evidenceFiles.value = props.answeredEvidenceFileUrls ?? []
+    notes.value = props.answeredNotes ?? ''
     uploadError.value = ''
   },
 )
@@ -118,7 +136,12 @@ function choose(option: PathwayStepOption) {
   if (option.label === props.selectedLabel) return // no-op, nothing changed
   if (option.requiresUpload && evidenceFiles.value.length === 0) return
   busy.value = true
-  emit('answer', { stepId: step.value.id, answerLabel: option.label, evidenceFileUrls: evidenceFiles.value })
+  emit('answer', {
+    stepId: step.value.id,
+    answerLabel: option.label,
+    evidenceFileUrls: evidenceFiles.value,
+    notes: notes.value,
+  })
 }
 </script>
 
@@ -180,6 +203,38 @@ function choose(option: PathwayStepOption) {
   font-size: 13px;
   line-height: 1.5;
   margin-bottom: 14px;
+}
+.pw-notes {
+  margin-bottom: 14px;
+}
+.pw-notes-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 800;
+  color: #231d45;
+  margin-bottom: 6px;
+}
+.pw-notes-input {
+  width: 100%;
+  resize: vertical;
+  box-sizing: border-box;
+  background: #fcfcfb;
+  border: 1.5px solid #e3e1ea;
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-family: inherit;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: #231d45;
+}
+.pw-notes-input:focus {
+  outline: none;
+  background: #fff;
+  border-color: #00a19a;
+  box-shadow: 0 0 0 4px rgba(0, 161, 154, 0.12);
+}
+.pw-notes-input::placeholder {
+  color: #a39fb2;
 }
 .pw-upload {
   margin-bottom: 14px;
