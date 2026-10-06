@@ -128,19 +128,20 @@
                 <template v-else-if="part.type === 'date'">
                   <div v-for="opt in part.options" :key="opt.value" class="currency-field">
                     <span class="currency-label">{{ opt.label }}</span>
-                    <div class="currency-badge">
-                      <span v-if="getCurrencyVal(part.partKey)" class="currency-value">
-                        £ {{ getCurrencyVal(part.partKey) }}
-                      </span>
-                      <span v-else class="currency-placeholder">{{ opt.datePlaceholder }}</span>
+                    <!-- A real, visible input (it used to sit invisibly over
+                         the badge, so there was no caret while typing). -->
+                    <label class="currency-badge">
+                      <span v-if="getCurrencyVal(part.partKey)" class="currency-value">£</span>
                       <input
                         type="text"
                         inputmode="decimal"
-                        class="currency-overlay"
+                        class="currency-input"
+                        :placeholder="opt.datePlaceholder"
+                        :aria-label="opt.label"
                         :value="getCurrencyVal(part.partKey)"
-                        @input="(e) => setCurrencyField(part.partKey, opt.value, e.target.value)"
+                        @input="(e) => setCurrencyField(part.partKey, opt.value, cleanAmount(e))"
                       />
-                    </div>
+                    </label>
                   </div>
                 </template>
 
@@ -190,7 +191,12 @@ watch(
 
 const sortedParts = computed(() => {
   if (!props.question?.parts) return []
-  return [...props.question.parts].sort((a, b) => (a.order || 0) - (b.order || 0))
+  // Part types arrive upper-case from the API (TEXT, RADIO, DATE); the
+  // template compares lower-case, and matched nothing - the Add Item popup
+  // opened with no fields to fill in.
+  return [...props.question.parts]
+    .map((part) => ({ ...part, type: String(part.type || '').toLowerCase() }))
+    .sort((a, b) => (a.order || 0) - (b.order || 0))
 })
 
 const formSections = computed(() => {
@@ -239,6 +245,13 @@ const getCurrencyVal = (partKey) => {
   const val = currentItem.value[partKey]
   if (!val || typeof val !== 'object') return ''
   return val.date || ''
+}
+
+// Digits and a decimal point only; the input shows what is kept.
+const cleanAmount = (event) => {
+  const clean = event.target.value.replace(/[^\d.]/g, '')
+  if (clean !== event.target.value) event.target.value = clean
+  return clean
 }
 
 const setCurrencyField = (partKey, optionValue, rawValue) => {
@@ -520,22 +533,31 @@ const itemSubtext = (item) => {
   padding: 6px 14px;
   background: #e6f9f7;
   border-radius: 8px;
-  position: relative;
-  overflow: hidden;
   min-width: 80px;
-  text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  cursor: text;
 }
-.currency-value { font-size: 15px; font-weight: 600; color: #00a19a; position: relative; z-index: 1; pointer-events: none; }
-.currency-placeholder { font-size: 13px; color: #999; position: relative; z-index: 1; pointer-events: none; }
-.currency-overlay {
-  position: absolute;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  opacity: 0;
-  cursor: pointer;
-  z-index: 2;
+.currency-badge:focus-within { box-shadow: 0 0 0 2px rgba(0, 161, 154, 0.35); }
+.currency-value { font-size: 15px; font-weight: 600; color: #00a19a; }
+.currency-input {
+  border: 0;
+  outline: none;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  font-family: inherit;
   font-size: 15px;
+  font-weight: 600;
+  color: #00a19a;
+  text-align: center;
+  field-sizing: content;
+  min-width: 1ch;
+  max-width: 140px;
 }
+.currency-input::placeholder { font-size: 13px; font-weight: 400; color: #999; }
 
 /* Footer */
 .modal-sheet__footer { margin-top: 24px; }

@@ -846,6 +846,23 @@ const formatValue = (rawValue, option) => {
   vertical-align: -2px;
   margin-right: 5px;
 }
+
+/* Narrowest phones: a long label ("Select expiry date") squeezed into three
+   lines beside its badge. Here the badge drops below the label, right
+   aligned, whenever the two can't share a line. */
+@media (max-width: 360px) {
+  .date-option:not(.multi-input-row) {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+  .date-option:not(.multi-input-row) .option-label {
+    flex: 1 1 120px;
+  }
+  .date-option:not(.multi-input-row) .date-badge {
+    margin-left: auto;
+    max-width: 100%;
+  }
+}
 </style>
 
 

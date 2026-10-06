@@ -164,4 +164,26 @@ const goBack = useGoBack(FLOW_HOME)
     gap: 8px;
   }
 }
+
+/* Narrowest screens (~260-340px, or a narrowed desktop window with its
+   scrollbar): brand + Back + Passport + Profile ran past the right edge
+   and cut Profile off. Tighter margins and gaps, smaller square buttons. */
+@media (max-width: 340px) {
+  .fh-inner {
+    width: calc(100% - 24px);
+    gap: 8px;
+  }
+  .fh-actions {
+    gap: 6px;
+  }
+  .fh-brand {
+    min-width: 36px;
+    min-height: 38px;
+    margin-left: -4px;
+  }
+  .fh-back {
+    width: 38px;
+    height: 38px;
+  }
+}
 </style>

@@ -671,4 +671,13 @@ select.form-input {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* Phones: 24px side padding left "Check email" too little room and it broke
+   onto two lines beside Close. */
+@media (max-width: 400px) {
+  .btn {
+    padding: 12px 10px;
+    white-space: nowrap;
+  }
+}
 </style>

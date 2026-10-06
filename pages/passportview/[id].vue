@@ -1472,7 +1472,9 @@ const PATHWAY_STATUS_LABEL = {
 }
 async function fetchPathwayFlags() {
   try {
-    pathwayFlags.value = await listFlags(route.params.id)
+    const flags = await listFlags(route.params.id)
+    // A non-list response would break every computed built on it (History, actions).
+    pathwayFlags.value = Array.isArray(flags) ? flags : []
   } catch (e) {
     console.error('Failed to load pathway flags', e)
   }
@@ -3130,8 +3132,8 @@ const groupedHistory = computed(() => {
 }
 .pp-hero-addr-row {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  align-items: flex-start;
+  gap: 10px;
 }
 .pp-hero-addr-text {
   flex: 0 1 auto;
@@ -3756,27 +3758,37 @@ const groupedHistory = computed(() => {
   margin-top: 5px;
 }
 .pp-hero-switch {
+  /* Sits on the address line (27px × 1.1 line-height ≈ 30px), not centred
+     on the two-line block, so it reads as part of the heading. */
+  position: relative;
   display: grid;
   place-items: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  color: #d7d3ee;
+  width: 24px;
+  height: 24px;
+  margin-top: 3px;
+  padding: 0;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #b6b1d6;
   cursor: pointer;
   flex-shrink: 0;
-  transition: background 0.16s, border-color 0.16s, color 0.16s, transform 0.16s;
+  transition: background 0.16s, border-color 0.16s, color 0.16s;
+}
+/* Keeps a comfortable tap target without the button looking big. */
+.pp-hero-switch::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
 }
 .pp-hero-switch svg {
-  width: 16px;
-  height: 16px;
+  width: 13px;
+  height: 13px;
 }
 .pp-hero-switch:hover {
-  background: rgba(47, 208, 198, 0.16);
-  border-color: rgba(47, 208, 198, 0.5);
+  background: rgba(47, 208, 198, 0.14);
+  border-color: rgba(47, 208, 198, 0.45);
   color: #2fd0c6;
-  transform: translateY(-1px);
 }
 .pp-hero-stats {
   margin-top: 20px;
@@ -3857,6 +3869,19 @@ const groupedHistory = computed(() => {
   font-weight: 900;
   padding: 1px 7px;
   border-radius: 999px;
+}
+/* Phones: the two buttons share a row when they fit and wrap to their own
+   rows when they don't (they overflowed the card below ~390px), filling the
+   width either way; their labels never break onto two lines. */
+@media (max-width: 640px) {
+  .pp-hero-actions {
+    flex-wrap: wrap;
+  }
+  .pp-hero-btn {
+    flex: 1 1 auto;
+    justify-content: center;
+    white-space: nowrap;
+  }
 }
 
 .pp-empty-ic {
@@ -4230,11 +4255,6 @@ const groupedHistory = computed(() => {
     padding: 6px 12px;
     font-size: 12px;
   }
-  /* Was 34px — the only control in the hero's corner. */
-  .pp-hero-switch {
-    width: 40px;
-    height: 40px;
-  }
 }
 
 /* ── Navbar on small screens ──────────────────────────────────────────
@@ -4291,5 +4311,55 @@ const groupedHistory = computed(() => {
 
 @media (max-width: 400px) {
   .hsw-tour { width: 40px; height: 40px; font-size: 15px; }
+}
+
+/* Narrowest phones (~280-340px): the row of logo + "?" + Passport + Profile
+   ran a few px off the right edge. Tighter gaps and a smaller "?". */
+@media (max-width: 340px) {
+  .hsw-nav-inner { gap: 8px; }
+  .hsw-actions { gap: 6px; }
+  .hsw-tour { width: 38px; height: 38px; }
+}
+
+/* Narrowest phones (~280px): "Manage visibility · Private" was 6px wider
+   than the card. A touch less padding and type keeps it inside. */
+@media (max-width: 360px) {
+  .pp-hero-btn {
+    padding: 11px 12px;
+    gap: 6px;
+    font-size: 13.5px;
+  }
+  .pp-hero-btn-ic {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+/* Vault rows on phones: icon + name + a long access badge ("Shared with
+   selected") + chevron on one line crushed the name and date to a few px.
+   The badge moves to a second line, under the text. */
+@media (max-width: 420px) {
+  .vault-doc-row {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+  .vault-doc-info {
+    flex: 1 1 calc(100% - 90px);
+  }
+  .vault-doc-chevron {
+    order: 2;
+  }
+  .vault-doc-badge {
+    order: 3;
+    margin-left: 50px;
+  }
+}
+
+/* Narrowest phones: two stat tiles a row left "Avg. estimated value" three
+   lines in a ~78px column. One tile a row there. */
+@media (max-width: 340px) {
+  .pp-stats-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

@@ -226,6 +226,32 @@ watch(
   }
 }
 
+/* Narrowest phones - see PassportNavButton. */
+@media (max-width: 340px) {
+  .pm-trigger,
+  .pm-trigger:has(.pm-chev) {
+    height: 38px;
+    font-size: 13px;
+    padding: 0 7px 0 9px;
+    gap: 4px;
+  }
+}
+
+/* Smallest screens - see PassportNavButton. */
+@media (max-width: 300px) {
+  .pm-trigger,
+  .pm-trigger:has(.pm-chev) {
+    height: 36px;
+    font-size: 12.5px;
+    padding: 0 6px 0 8px;
+    gap: 3px;
+  }
+  .pm-chev {
+    width: 12px;
+    height: 12px;
+  }
+}
+
 .pm-menu {
   position: absolute;
   top: calc(100% + 8px);

@@ -1092,6 +1092,24 @@ const getVisibleParts = () => {
   vertical-align: -2px;
   margin-right: 5px;
 }
+
+/* Narrowest phones: a label beside the counter / amount box ran the + button
+   off the screen. The control drops under its label, right aligned, when
+   the two can't share a line. */
+@media (max-width: 360px) {
+  .number-input-row {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+  .number-input-label {
+    flex: 1 1 110px;
+    min-width: 0;
+  }
+  .counter-controls,
+  .number-input {
+    margin-left: auto;
+  }
+}
 </style>
 
 

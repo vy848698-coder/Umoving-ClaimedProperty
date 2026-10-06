@@ -1437,6 +1437,43 @@ const goToNextSection = () => {
   }
 }
 
+/* Narrow phones: beside the ring the "Last updated" pill got ~70px and
+   broke into four lines. Stack them, as on desktop: ring, then the pill on
+   one line below it. */
+@media (max-width: 420px) {
+  .hero-ring-wrap {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+  .hero-updated {
+    white-space: nowrap;
+    border-radius: 999px;
+  }
+}
+
+/* Narrow phones: even shrunk, the art and arrow left the text ~120px, so
+   the icon and arrow share a top row and the text takes the full width
+   below them. */
+@media (max-width: 420px) {
+  .task-card {
+    flex-wrap: wrap;
+    align-items: flex-start;
+    row-gap: 10px;
+  }
+  .task-icon {
+    order: 1;
+  }
+  .task-arrow {
+    order: 2;
+    margin-left: auto;
+  }
+  .task-info {
+    order: 3;
+    flex: 1 1 100%;
+  }
+}
+
 /* The badge keeps just "Section 1 of 17" where the full line won't fit. */
 @media (max-width: 400px) {
   .hero-badge-lead {
@@ -1498,5 +1535,13 @@ const goToNextSection = () => {
 
 @media (max-width: 400px) {
   .hsw-tour { width: 40px; height: 40px; font-size: 15px; }
+}
+
+/* Narrowest phones (~280-340px): the row of logo + Back + Passport + Profile
+   ran a few px off the right edge. Tighter gaps and a smaller Back. */
+@media (max-width: 340px) {
+  .hsw-nav-inner { gap: 8px; }
+  .hsw-actions { gap: 6px; }
+  .hsw-back { width: 38px; height: 38px; }
 }
 </style>

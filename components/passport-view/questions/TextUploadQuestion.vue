@@ -859,6 +859,14 @@ onMounted(() => {
   font-weight: 600;
   color: #b4231a;
 }
+
+/* Narrow phones: with 16px side padding "Scan Using Camera" had ~70px and
+   broke into three lines. */
+@media (max-width: 360px) {
+  .upload-btn {
+    padding: 22px 8px;
+  }
+}
 </style>
 
 

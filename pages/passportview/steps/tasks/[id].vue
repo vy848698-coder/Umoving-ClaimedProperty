@@ -1024,12 +1024,20 @@ const showOuterTip = computed(() => {
   return tipBody.value.trim() !== desc
 })
 
-// Plain radio questions also save the moment an option is picked (see
-// updateAnswer's auto-save branch) - the Save button still shows for them
-// too now (client bug report, 2026-10-06: with no button at all, a user
-// had nothing to confirm the pick was received, especially if the auto-
-// advance that follows it took a moment). Clicking it while already
-// auto-saved is a harmless idempotent re-save.
+// Plain radio questions save the moment an option is picked (see
+// updateAnswer's auto-save branch below). One with an additional-info box
+// (write details / upload) waits for Save instead - saving on the pick
+// would move on before that box, which only appears once an option is
+// picked, could be filled in. The Save button itself is no longer hidden
+// for the auto-save case either way (client bug report, 2026-10-06: with
+// no button at all, a user had nothing to confirm the pick was received,
+// especially if the auto-advance that follows it took a moment) -
+// clicking it while already auto-saved is a harmless idempotent re-save.
+const isAutoSaveType = computed(
+  () =>
+    currentQuestion.value?.type?.toLowerCase() === 'radio' &&
+    !currentQuestion.value?.additionalInfoType,
+)
 
 // Why Save is still disabled. A Notes question isn't answered by picking
 // anything - it completes when its notes are opened and closed.
@@ -1079,7 +1087,17 @@ const isAnswerValid = computed(() => {
   const isCheckboxType = type === 'checkbox' || type === 'multiple_choice'
 
   if (type === 'text') {
-    return answer && answer.trim().length > 0
+    // TextUploadQuestion answers with a string (text), a file list (upload)
+    // or { text, files } (both) - any typed text or uploaded file counts.
+    if (typeof answer === 'string') return answer.trim().length > 0
+    if (Array.isArray(answer)) return answer.length > 0
+    if (answer && typeof answer === 'object') {
+      return (
+        String(answer.text || '').trim().length > 0 ||
+        (Array.isArray(answer.files) && answer.files.length > 0)
+      )
+    }
+    return false
   }
 
   if (isRadioType) {
@@ -1152,17 +1170,24 @@ const isAnswerValid = computed(() => {
       return (
         answer.length > 0 &&
         answer.every((form) => {
-          return Object.values(form).some((val) => val && val.trim().length > 0)
+          return Object.values(form || {}).some(
+            (val) => val && ('' + val).trim().length > 0,
+          )
         })
       )
     }
-    // For non-repeatable: answer is single object
+    // For non-repeatable: answer is single object. (typeof null is also
+    // 'object' - an unanswered form threw here, and the throw during render
+    // left the form with no fields to type into.)
     if (
       !currentQuestion.value.repeatable &&
+      answer &&
       typeof answer === 'object' &&
       !Array.isArray(answer)
     ) {
-      return Object.values(answer).some((val) => val && val.trim().length > 0)
+      return Object.values(answer).some(
+        (val) => val && ('' + val).trim().length > 0,
+      )
     }
     return false
   }
@@ -1245,6 +1270,7 @@ const isAnswerValid = computed(() => {
         // For non-repeatable: partAnswer is single object
         if (
           !part.repeatable &&
+          partAnswer &&
           typeof partAnswer === 'object' &&
           !Array.isArray(partAnswer)
         ) {
@@ -1367,7 +1393,7 @@ const updateAnswer = async (answer) => {
   }
 
   // Auto-save plain RADIO questions immediately on selection
-  if (currentQuestion.value.type?.toLowerCase() === 'radio') {
+  if (isAutoSaveType.value) {
     isSaving.value = true
     try {
       const { pointsAwarded } = await apiSaveAnswer(
@@ -2304,5 +2330,13 @@ const handleContinue = () => {
 
 @media (max-width: 400px) {
   .hsw-tour { width: 40px; height: 40px; font-size: 15px; }
+}
+
+/* Narrowest phones (~280-340px): the row of logo + Back + Passport + Profile
+   ran a few px off the right edge. Tighter gaps and a smaller Back. */
+@media (max-width: 340px) {
+  .hsw-nav-inner { gap: 8px; }
+  .hsw-actions { gap: 6px; }
+  .hsw-back { width: 38px; height: 38px; }
 }
 </style>
