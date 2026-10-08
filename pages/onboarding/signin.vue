@@ -32,7 +32,7 @@
 
         <FounderPromo
           title="Join the million and help change home moving."
-          cta-text="Explore the Founding Homeowners movement"
+          :show-link="false"
           class="signin-founder-promo"
         />
       </div>

@@ -204,7 +204,7 @@
                   </svg>
                 </div>
                 <div>
-                  <div class="cl-eyebrow" style="margin-bottom: 4px">
+                  <div class="cl-section-heading" style="margin-bottom: 4px">
                     What the {{ claimPriceDisplay }} covers
                   </div>
                   <!-- eslint-disable-next-line vue/no-v-html -->
@@ -220,18 +220,18 @@
             <div class="cl-card cl-mb-sm">
               <div class="cl-lrf-rows">
                 <div class="cl-lrf-row cl-lrf-row-last">
-                  <span class="cl-lrf-l">Verification fee</span>
+                  <span class="cl-lrf-l cl-lrf-l--bold">One-off verification fee</span>
                   <span class="cl-lrf-v">{{ claimPriceDisplay }}</span>
                 </div>
               </div>
               <p class="cl-fee-reassurance">
-                One-off. There are no ongoing UMU fees for your Property
-                Passport.
+                No ongoing UMU fees for your Property Passport. We only pass
+                on third-party costs where they apply.
               </p>
             </div>
 
             <div class="cl-card cl-mb-sm">
-              <div class="cl-eyebrow cl-mb-sm">Card details</div>
+              <div class="cl-section-heading cl-mb-sm">Card details</div>
               <div id="claim-stripe-card-element" class="cl-stripe-box" />
             </div>
 
@@ -1166,25 +1166,30 @@ const claimPriceDisplay = computed(() =>
     : "",
 );
 // The backend picks the tier — infer which one just from the amount (the
-// three tiers are all distinct: £8.99 KYC-only, £12.99 HMLR-only, £19.99
+// three tiers are all distinct: £7.00 HMLR-only, £12.99 KYC-only, £19.99
 // both) so the copy explains what's being charged without duplicating the
 // pricing logic.
 const claimPriceTier = computed<"kyc" | "hmlr" | "both" | "">(() => {
   const amount = claimAmountPence.value;
   if (amount == null) return "";
-  if (amount <= 899) return "kyc";
-  if (amount <= 1299) return "hmlr";
+  if (amount <= 700) return "hmlr";
+  if (amount <= 1299) return "kyc";
   return "both";
 });
 
+// The explanatory sentence under "Before we verify your ownership" (client
+// reference design, 2026-10-06) - spelled out in full rather than the
+// previous short label ("Identity verification (KYC)"), matching the
+// reference copy's "We need to confirm your identity and check ownership
+// against HM Land Registry before we can issue your Property Passport."
 const claimPriceReason = computed(() => {
   switch (claimPriceTier.value) {
     case "kyc":
-      return "Identity verification (KYC)";
+      return "We need to confirm your identity before we can issue your Property Passport.";
     case "hmlr":
-      return "HM Land Registry ownership check";
+      return "We need to check ownership against HM Land Registry before we can issue your Property Passport.";
     case "both":
-      return "Identity verification (KYC) and HM Land Registry ownership check";
+      return "We need to confirm your identity and check ownership against HM Land Registry before we can issue your Property Passport.";
     default:
       return "";
   }
@@ -1198,15 +1203,17 @@ const HMLR_TERM = '<span class="cl-fee-term">HM Land Registry</span>';
 // The polite, spelled-out explanation shown under "What this fee covers" -
 // different from claimPriceReason (the short subheading) because a
 // partial-fee claim needs to say *why* it's cheaper: which check the user
-// already has on file, not just which one is left.
+// already has on file, not just which one is left. Rephrased to match the
+// client's reference copy pattern ("This one-off fee covers...") for all
+// three tiers, 2026-10-06.
 const claimPriceExplainer = computed(() => {
   switch (claimPriceTier.value) {
     case "kyc":
-      return `Your ${HMLR_TERM} ownership check for this property is already on file from an earlier attempt, so this fee only covers your identity verification (${KYC_TERM}).`;
+      return `Your ${HMLR_TERM} ownership check for this property is already on file from an earlier attempt. This one-off fee covers your remaining check: identity verification (${KYC_TERM}). Once paid, we'll run it next.`;
     case "hmlr":
-      return `Your identity has already been verified, so this fee only covers the ${HMLR_TERM} ownership check for this property.`;
+      return `Your identity has already been verified. This one-off fee covers your remaining check: an ${HMLR_TERM} ownership check for this property. Once paid, we'll run it next.`;
     case "both":
-      return `Identity checks and ${HMLR_TERM} ownership lookups cost us real money per property, so we ask for this one-off fee upfront: identity verification (${KYC_TERM}) and the ${HMLR_TERM} ownership check. Once it's paid, we'll run those checks next.`;
+      return `This one-off fee covers two third-party checks: identity verification (${KYC_TERM}) and an ${HMLR_TERM} ownership check for this property. Once paid, we'll run both checks next.`;
     default:
       return "";
   }
@@ -2581,6 +2588,16 @@ async function issuePassport() {
   margin-bottom: 10px;
 }
 
+/* Bold, normal-case card heading ("What the £X covers" / "Card details") -
+   client reference design, 2026-10-06. Distinct from .cl-eyebrow, whose
+   small uppercase grey label reads as a caption, not a heading. */
+.cl-section-heading {
+  font-size: 15px;
+  font-weight: 800;
+  color: #231d45;
+  letter-spacing: -0.1px;
+}
+
 /* ── Fee-covers info row (icon + heading/body) ───────── */
 .cl-fee-info-row {
   display: flex;
@@ -3003,6 +3020,10 @@ async function issuePassport() {
 }
 .cl-lrf-l {
   color: #94a3b8;
+}
+.cl-lrf-l--bold {
+  font-weight: 800;
+  color: #231d45;
 }
 .cl-lrf-v {
   font-weight: 700;

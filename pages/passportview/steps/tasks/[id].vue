@@ -164,7 +164,7 @@
 
           <div v-if="totalQuestions > 0" class="q-segments" aria-hidden="true">
             <span
-              v-for="(q, i) in allSectionQuestions"
+              v-for="(q, i) in numberedSectionQuestions"
               :key="q.id"
               class="q-seg"
               :class="{
@@ -924,14 +924,22 @@ async function finishAfterSave(questionId) {
 
 const totalQuestions = computed(() => currentQuestions.value.length || 0)
 
+// The section's own Notes task isn't a real question for the seller to
+// answer - it's instructional text shown once before the actual questions
+// start - so it shouldn't occupy "Question 1" and push every real question
+// one number later (client feedback, 2026-10-06).
+const numberedSectionQuestions = computed(() =>
+  allSectionQuestions.value.filter((q) => q.type?.toLowerCase() !== 'note'),
+)
+
 // Questions keep their number within the whole section even when some are
 // skipped for this passport (utils/questionBranching): a leaseholder goes
 // from Question 8 to Question 10, never seeing a renumbered "Question 9".
 const sectionQuestionCount = computed(
-  () => allSectionQuestions.value.length || totalQuestions.value,
+  () => numberedSectionQuestions.value.length || totalQuestions.value,
 )
 const questionNumber = computed(() => {
-  const i = allSectionQuestions.value.indexOf(currentQuestion.value)
+  const i = numberedSectionQuestions.value.indexOf(currentQuestion.value)
   return i >= 0 ? i + 1 : currentQuestionIndex.value + 1
 })
 
