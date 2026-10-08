@@ -57,10 +57,6 @@
                 <button class="ov-btn ov-btn--help" @click="showHelp = true">
                   <OPIcon name="helpIcon" class="w-[15px] h-[15px]" />Help
                 </button>
-                <button class="ov-btn ov-btn--video" @click="showVideo = true">
-                  <span class="ov-btn-play"><OPIcon name="playIcon" class="w-[13px] h-[13px]" /></span>
-                  Video
-                </button>
               </div>
             </div>
 
@@ -356,16 +352,12 @@
 
     <!-- Help drawer -->
     <HelpDrawer :show="showHelp" :content="section?.helpContent as any" mode="buyer" @close="showHelp = false" />
-
-    <!-- Video modal -->
-    <VideoModal :show="showVideo" :videoUrl="section?.helpVideoUrl" @close="showVideo = false" />
   </div>
 </template>
 
 <script setup lang="ts">
 import OPIcon from '~/components/ui/OPIcon.vue'
 import HelpDrawer from '@/components/passport-view/HelpDrawer.vue'
-import VideoModal from '@/components/passport-view/VideoModal.vue'
 import ProfileMenu from '~/components/core/ProfileMenu.vue'
 import PassportNavButton from '~/components/core/PassportNavButton.vue'
 
@@ -382,7 +374,6 @@ const allData = ref<any>(null)
 const loading = ref(true)
 const showFilesSheet = ref(false)
 const showHelp = ref(false)
-const showVideo = ref(false)
 
 const lightboxFile = ref<{ url: string; name: string } | null>(null)
 
