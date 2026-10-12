@@ -9,15 +9,15 @@ import { FLOW_HOME, LANDING_PATH, isFlowRoute } from '~/utils/appFlow'
 // Signed-in visitors go to the claim start; everyone else (including "/"
 // itself, which has no page of its own in the flow) lands on the Founding
 // Homeowners page (client request, 2026-09-28) rather than straight to
-// sign-in. On the server only the umu_has_session routing-hint cookie is
-// visible; if it turns out to be stale, auth.ts on /claim clears it and
-// sends the browser to sign-in, so there is no redirect loop.
+// sign-in. On the server only the umu_has_session_integration routing-hint
+// cookie is visible; if it turns out to be stale, auth.ts on /claim clears
+// it and sends the browser to sign-in, so there is no redirect loop.
 export default defineNuxtRouteMiddleware((to) => {
   if (isFlowRoute(to.path)) return
 
   let signedIn = false
   if (import.meta.server) {
-    signedIn = !!useCookie('umu_has_session').value
+    signedIn = !!useCookie('umu_has_session_integration').value
   } else {
     try {
       signedIn = !!localStorage.getItem('token')

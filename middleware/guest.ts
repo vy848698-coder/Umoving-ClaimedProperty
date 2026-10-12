@@ -5,7 +5,7 @@ import { FLOW_HOME } from '~/utils/appFlow'
 //
 // TWO checks, in order:
 //
-// 1. `umu_has_session` — a small, non-secret flag cookie (see
+// 1. `umu_has_session_integration` — a small, non-secret flag cookie (see
 //    composables/useSessionFlag.ts), set alongside the real JWT at every
 //    login/signup and cleared at logout. Unlike localStorage, a cookie rides
 //    along with the initial request, so useCookie() can read it during SSR —
@@ -22,7 +22,7 @@ import { FLOW_HOME } from '~/utils/appFlow'
 //    an in-app hop can swap in the destination component before its scoped
 //    CSS chunk has loaded, giving an unstyled first paint.
 export default defineNuxtRouteMiddleware(() => {
-  const sessionFlag = useCookie('umu_has_session')
+  const sessionFlag = useCookie('umu_has_session_integration')
   if (sessionFlag.value) {
     return navigateTo(FLOW_HOME, { replace: true })
   }

@@ -7,7 +7,7 @@ import { MEMBER_HOME } from '~/utils/appFlow'
 // account hub (MEMBER_HOME) instead of straight into the claim flow, so they
 // can choose what to do next rather than being dropped into a form.
 export default defineNuxtRouteMiddleware(() => {
-  const sessionFlag = useCookie('umu_has_session')
+  const sessionFlag = useCookie('umu_has_session_integration')
   if (sessionFlag.value) {
     return navigateTo(MEMBER_HOME, { replace: true })
   }
