@@ -503,36 +503,22 @@ const isLoggingOut = ref(false)
 const showDeleteModal = ref(false)
 const isDeletingAccount = ref(false)
 
+const { logout: authLogout } = useAuth()
+
 const logout = async () => {
   isLoggingOut.value = true
   try {
-    const token =
-      typeof window !== 'undefined' ? localStorage.getItem('token') : null
-    const refreshToken =
-      typeof window !== 'undefined' ? localStorage.getItem('refreshToken') : null
-    if (token) {
-      // Passing refreshToken lets the backend actually revoke it — without
-      // this, a captured refresh token would still work after "signing
-      // out" (security review follow-up, 2026-09-25).
-      await $fetch(`${config.public.apiBase}/auth/logout`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: { refreshToken },
-      }).catch(() => {}) // ignore network errors — still log out locally
-    }
-  } finally {
+    // useAuth().logout() revokes the httpOnly refresh-token cookie
+    // server-side and clears the local access token.
+    await authLogout()
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('token')
-      localStorage.removeItem('refreshToken')
-      // Clear the routing-hint cookie too, or middleware/guest.ts keeps
-      // bouncing this browser to /dashboard after sign-out.
-      clearSessionFlag()
       localStorage.removeItem('redirectAfterLogin')
       // Account-scoped cache — left behind, the next person to sign in on
       // this browser inherits the previous user's buying/selling role until
       // /profile/preferences happens to load and overwrite it.
       localStorage.removeItem('umu_role')
     }
+  } finally {
     showLogoutModal.value = false
     isLoggingOut.value = false
     await navigateTo('/onboarding/signin?reason=logout', { replace: true })

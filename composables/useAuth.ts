@@ -1,17 +1,25 @@
-// Access tokens are now short-lived (1h — see backend auth.module.ts) and
-// paired with a long-lived, server-revocable refresh token. Any response
-// shape that includes { token, refreshToken } should be persisted via
-// storeTokens() so refreshAccessToken()/logout() below can find them
-// (security review follow-up, 2026-09-25).
-export const storeTokens = (res: { token?: string; refreshToken?: string }) => {
+// Access tokens are short-lived (1h — see backend auth.module.ts). The
+// refresh token used to travel alongside it in this same response and get
+// written to localStorage too - it's now set directly by the backend as an
+// httpOnly cookie (auth hardening, 12 Oct 2026, see backend
+// src/auth/refresh-cookie.ts) and never appears in a JSON response or in
+// JS-readable storage at all, so storeTokens only ever has `token` to save.
+export const storeTokens = (res: { token?: string }) => {
   if (res.token) localStorage.setItem('token', res.token)
-  if (res.refreshToken) localStorage.setItem('refreshToken', res.refreshToken)
 }
 
 export const clearTokens = () => {
   localStorage.removeItem('token')
+  // Stale key from before the refresh token moved to an httpOnly cookie -
+  // harmless to remove defensively, nothing should still be writing it.
   localStorage.removeItem('refreshToken')
 }
+
+// Identifies this app to the backend so the refresh-token cookie it sets
+// is scoped to THIS app's own /auth/refresh/integration path, keeping this
+// app's session independent of umu-mobile-webapp/umu-website-new even
+// though all three currently share one backend.
+const APP_SLUG = 'integration'
 
 export const useAuth = () => {
   const config = useRuntimeConfig()
@@ -23,32 +31,31 @@ export const useAuth = () => {
     return token ? { Authorization: `Bearer ${token}` } : {}
   }
 
-  // Exchanges the stored refresh token for a new access+refresh pair and
-  // persists both. Throws if there's no refresh token or the backend
-  // rejects it (expired/revoked/reused) — callers should treat that as
-  // "fully signed out" and clear local state / redirect to sign-in.
+  // Exchanges the httpOnly refresh-token cookie (set at login/verify-otp/
+  // register below) for a fresh access token - the cookie rides along
+  // automatically via credentials: 'include', never touched by this JS.
+  // Throws if there's no valid cookie or the backend rejects it (expired/
+  // revoked/reused) — callers should treat that as "fully signed out" and
+  // clear local state / redirect to sign-in.
   const refreshAccessToken = async () => {
-    const refreshToken = localStorage.getItem('refreshToken')
-    if (!refreshToken) throw new Error('No refresh token available')
-    const res: any = await $fetch(`${base}/auth/refresh`, {
+    const res: any = await $fetch(`${base}/auth/refresh/${APP_SLUG}`, {
       method: 'POST',
-      body: { refreshToken },
+      credentials: 'include',
     })
     storeTokens(res)
     return res.token as string
   }
 
-  // Best-effort server-side revocation of the refresh token, then clears
-  // local storage regardless of whether the network call succeeds — a user
-  // clicking "sign out" should always end up signed out locally even if
-  // they're offline or the backend call fails.
+  // Best-effort server-side revocation (reads the refresh-token cookie, no
+  // body needed), then clears local storage regardless of whether the
+  // network call succeeds — a user clicking "sign out" should always end
+  // up signed out locally even if they're offline or the backend call fails.
   const logout = async () => {
-    const refreshToken = localStorage.getItem('refreshToken')
     try {
-      await $fetch(`${base}/auth/logout`, {
+      await $fetch(`${base}/auth/logout/${APP_SLUG}`, {
         method: 'POST',
+        credentials: 'include',
         headers: getHeaders(),
-        body: { refreshToken },
       })
     } catch {
       // Ignore — we still clear local tokens below.
@@ -67,6 +74,8 @@ export const useAuth = () => {
   const verifyOtp = (email: string, code: string) => {
     return $fetch(`${base}/auth/verify-otp`, {
       method: 'POST',
+      credentials: 'include',
+      headers: { 'X-Umu-App': APP_SLUG },
       body: { email, code },
     })
   }
@@ -83,6 +92,8 @@ export const useAuth = () => {
   }) => {
     return $fetch(`${base}/auth/register`, {
       method: 'POST',
+      credentials: 'include',
+      headers: { 'X-Umu-App': APP_SLUG },
       body: data,
     })
   }
@@ -90,6 +101,8 @@ export const useAuth = () => {
   const login = (email: string, password: string) => {
     return $fetch(`${base}/auth/login`, {
       method: 'POST',
+      credentials: 'include',
+      headers: { 'X-Umu-App': APP_SLUG },
       body: { email, password },
     })
   }
