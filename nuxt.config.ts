@@ -58,8 +58,35 @@ export default defineNuxtConfig({
   // behind, which is why the green confirm circles had no tick in them. It is
   // registered directly here so it no longer depends on a UI library we don't
   // otherwise use.
-  modules: ['@pinia/nuxt', '@vite-pwa/nuxt', '@nuxt/icon'],
+  modules: ['@pinia/nuxt', '@vite-pwa/nuxt', '@nuxt/icon', 'nuxt-security'],
   css: ['~/assets/css/main.css'],
+
+  // Baseline security headers (security review, 13 Oct 2026 - this app
+  // previously set none at all, so e.g. the £49 claim/payment flow could
+  // be iframed by any third-party site for clickjacking). CSP is
+  // deliberately left at the module's default (effectively off) rather
+  // than authored here - this app loads Stripe.js, Mapbox, Google
+  // Sign-In and others, and a wrong script-src would silently break
+  // payment/search/auth with no obvious error. Tightening CSP is a
+  // separate, carefully-tested follow-up, not bundled into this pass.
+  security: {
+    headers: {
+      contentSecurityPolicy: false,
+      crossOriginEmbedderPolicy: false,
+      xFrameOptions: 'DENY',
+      referrerPolicy: 'strict-origin-when-cross-origin',
+      permissionsPolicy: {
+        // geolocation/camera stay same-origin-only (SearchDrawer.vue's
+        // postcode "use my location", CameraScanModal.vue's document
+        // scan both call these directly, same-origin, today) - this
+        // blocks a cross-origin iframe from requesting them, not the
+        // app's own existing usage.
+        geolocation: ['self'],
+        camera: ['self'],
+        microphone: [],
+      },
+    },
+  },
 
   icon: {
     // Both collections are installed (@iconify-json/heroicons, -lucide), so

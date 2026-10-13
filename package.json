@@ -26,6 +26,7 @@
     "@vite-pwa/nuxt": "^1.1.1",
     "mapbox-gl": "^3.20.0",
     "nuxt": "^3.21.11",
+    "nuxt-security": "^2.5.1",
     "pinia": "^2.2.4",
     "qrcode": "^1.5.4",
     "vue": "latest"

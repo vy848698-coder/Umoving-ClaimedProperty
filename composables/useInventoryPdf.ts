@@ -64,7 +64,7 @@ export function useInventoryPdf() {
     }
     return `<div class="sign-box">
       <div class="sign-box-label">${esc(label)}</div>
-      ${entry.signatureDataUrl ? `<img src="${entry.signatureDataUrl}" alt="signature" />` : ''}
+      ${entry.signatureDataUrl ? `<img src="${esc(entry.signatureDataUrl)}" alt="signature" />` : ''}
       <div class="name">${esc(entry.name)}</div>
       <div class="date">${entry.signedAt ? esc(new Date(entry.signedAt).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })) : ''}</div>
     </div>`
