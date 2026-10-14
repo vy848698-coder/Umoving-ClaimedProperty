@@ -70,24 +70,30 @@ export default defineNuxtConfig({
   // previously set none at all, so e.g. the £49 claim/payment flow could
   // be iframed by any third-party site for clickjacking).
   //
-  // BACKEND_ORIGIN: production's NUXT_PUBLIC_API_BASE wasn't confirmed in
-  // the Vercel project at the time this was written - using the code's
-  // own documented fallback (AWS App Runner, see proxyTarget above). If
-  // NUXT_PUBLIC_API_BASE is ever set to something else in Vercel, this
-  // must be updated to match or every API call will be silently blocked
-  // by connect-src.
+  // BACKEND_ORIGIN resolves to NUXT_PUBLIC_API_BASE at build time, same as
+  // runtimeConfig.public.apiBase below - confirmed with the team (14 Oct
+  // 2026) that Vercel's production value is actually
+  // https://demo-umu-backend-production.up.railway.app, NOT the AWS App
+  // Runner URL the surrounding proxyTarget comments describe as "this
+  // launch's production backend" - that comment predates this check and
+  // is stale (or the two disagree on which backend is actually live;
+  // worth reconciling with whoever owns deploys). No hardcoded fallback
+  // added here deliberately - if NUXT_PUBLIC_API_BASE is ever unset on
+  // Vercel, apiBase itself already breaks the same way connect-src would,
+  // so there's no good silent default to pick instead.
   //
   // CSP was audited resource-by-resource against this app's actual runtime
   // behaviour (not guessed) - see the directive-by-directive notes below.
   // script-src deliberately stays 'self' + 'unsafe-inline' rather than
   // nuxt-security's nonce+strict-dynamic default: this app has one known
   // inline script (the desk-zoom IIFE below) that isn't rendered through
-  // Nuxt's own head management, so it's unverified whether the module's
-  // auto-nonce would actually reach it - 'unsafe-inline' is the
-  // conservative choice that can't silently break it. Tightening
-  // script-src to nonce-based is a good follow-up, but needs real browser
-  // testing (console errors) to do safely, which wasn't available when
-  // this was authored.
+  // Nuxt's own head management. Checked the rendered dev-server HTML and
+  // confirmed nuxt-security's auto-nonce DOES reach it (every <script> tag
+  // got a matching nonce attribute) - so nonce-based script-src is likely
+  // safe, but switching to it still needs a real browser click-through
+  // (Leaflet/Stripe's dynamically-inserted <script> tags under
+  // 'strict-dynamic' is the one interaction this couldn't verify without
+  // one), so 'unsafe-inline' stays for now as the conservative choice.
   security: {
     headers: {
       contentSecurityPolicy: {
