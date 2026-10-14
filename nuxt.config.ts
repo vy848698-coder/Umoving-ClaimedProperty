@@ -12,6 +12,11 @@ const isDev = process.env.NODE_ENV !== 'production'
 const proxyTarget =
   process.env.NUXT_PROXY_TARGET ||
   'https://ijfai9mgwj.eu-west-2.awsapprunner.com'
+// What the CSP's connect-src/frame-src actually allow-list for API/file
+// calls - mirrors the same NUXT_PUBLIC_API_BASE-first, AWS-fallback logic
+// runtimeConfig.public.apiBase uses below, so the policy always matches
+// whatever host the app is actually calling.
+const BACKEND_ORIGIN = process.env.NUXT_PUBLIC_API_BASE || proxyTarget
 
 export default defineNuxtConfig({
   devtools: { enabled: false },
@@ -61,17 +66,89 @@ export default defineNuxtConfig({
   modules: ['@pinia/nuxt', '@vite-pwa/nuxt', '@nuxt/icon', 'nuxt-security'],
   css: ['~/assets/css/main.css'],
 
-  // Baseline security headers (security review, 13 Oct 2026 - this app
+  // Baseline security headers (security review, 13/14 Oct 2026 - this app
   // previously set none at all, so e.g. the £49 claim/payment flow could
-  // be iframed by any third-party site for clickjacking). CSP is
-  // deliberately left at the module's default (effectively off) rather
-  // than authored here - this app loads Stripe.js, Mapbox, Google
-  // Sign-In and others, and a wrong script-src would silently break
-  // payment/search/auth with no obvious error. Tightening CSP is a
-  // separate, carefully-tested follow-up, not bundled into this pass.
+  // be iframed by any third-party site for clickjacking).
+  //
+  // BACKEND_ORIGIN: production's NUXT_PUBLIC_API_BASE wasn't confirmed in
+  // the Vercel project at the time this was written - using the code's
+  // own documented fallback (AWS App Runner, see proxyTarget above). If
+  // NUXT_PUBLIC_API_BASE is ever set to something else in Vercel, this
+  // must be updated to match or every API call will be silently blocked
+  // by connect-src.
+  //
+  // CSP was audited resource-by-resource against this app's actual runtime
+  // behaviour (not guessed) - see the directive-by-directive notes below.
+  // script-src deliberately stays 'self' + 'unsafe-inline' rather than
+  // nuxt-security's nonce+strict-dynamic default: this app has one known
+  // inline script (the desk-zoom IIFE below) that isn't rendered through
+  // Nuxt's own head management, so it's unverified whether the module's
+  // auto-nonce would actually reach it - 'unsafe-inline' is the
+  // conservative choice that can't silently break it. Tightening
+  // script-src to nonce-based is a good follow-up, but needs real browser
+  // testing (console errors) to do safely, which wasn't available when
+  // this was authored.
   security: {
     headers: {
-      contentSecurityPolicy: false,
+      contentSecurityPolicy: {
+        'default-src': ["'self'"],
+        // unpkg: Leaflet is loaded at runtime (document.createElement),
+        // not bundled - see SearchDrawer.vue / property/[id].vue /
+        // property-full/[id].vue. js.stripe.com: @stripe/stripe-js's
+        // loadStripe() injects this for the claim/buyer-unlock/tier-
+        // upgrade payment flows.
+        'script-src': ["'self'", "'unsafe-inline'", 'https://unpkg.com', 'https://js.stripe.com'],
+        // Vue scoped <style> blocks compile to real stylesheets at build
+        // time (style-src, not this), but dynamic :style="..." bindings
+        // (66 files) render as inline style="..." attributes, which need
+        // style-src-attr specifically - kept narrower than a blanket
+        // style-src 'unsafe-inline'.
+        'style-src': ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com', 'https://api.mapbox.com', 'https://unpkg.com'],
+        'style-src-attr': ["'unsafe-inline'"],
+        'font-src': ["'self'", 'https://fonts.gstatic.com', 'data:'],
+        // data:: QR codes, inline SVG avatars/payment badges, signature-
+        // pad export. blob:: buyer-profile/pdf.vue's URL.createObjectURL.
+        // Street View images now go through this app's own backend
+        // (proxiedStreetViewUrl, umu-backend) - no maps.googleapis.com
+        // needed here any more.
+        'img-src': [
+          "'self'",
+          'data:',
+          'blob:',
+          'https://api.mapbox.com',
+          'https://api.os.uk',
+          'https://*.tile.openstreetmap.org',
+        ],
+        // Mapbox GL JS and Leaflet both fetch tiles/styles via XHR/fetch,
+        // not just <img> - same hosts as img-src, plus Mapbox's telemetry
+        // endpoint and the backend API itself.
+        'connect-src': [
+          "'self'",
+          BACKEND_ORIGIN,
+          'https://api.stripe.com',
+          'https://api.mapbox.com',
+          'https://events.mapbox.com',
+          'https://api.os.uk',
+          'https://*.tile.openstreetmap.org',
+        ],
+        // Stripe Elements mounts its card-input iframe from js.stripe.com.
+        // openstreetmap.org: the embedded map iframe on property/[id].vue.
+        // BACKEND_ORIGIN: buyer-passport vault's PDF lightbox iframe loads
+        // a backend-signed file URL.
+        'frame-src': ["'self'", 'https://js.stripe.com', 'https://www.openstreetmap.org', BACKEND_ORIGIN],
+        // mapbox-gl-js spins up its tile-processing workers from blob:
+        // URLs internally.
+        'worker-src': ["'self'", 'blob:'],
+        'object-src': ["'none'"],
+        'base-uri': ["'self'"],
+        'form-action': ["'self'"],
+        // Modern browsers that understand CSP's frame-ancestors ignore
+        // X-Frame-Options entirely for that resource - nuxt-security's
+        // own default here is 'self', which would have quietly loosened
+        // the DENY below back to "same-origin framing allowed". Set
+        // explicitly to keep the two headers in agreement.
+        'frame-ancestors': ["'none'"],
+      },
       crossOriginEmbedderPolicy: false,
       xFrameOptions: 'DENY',
       referrerPolicy: 'strict-origin-when-cross-origin',
