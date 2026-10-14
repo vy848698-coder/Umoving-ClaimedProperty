@@ -29,12 +29,20 @@ const SESSION_FLAG_COOKIE = 'umu_has_session_integration'
 // shadowing.
 const SESSION_FLAG_MAX_AGE = 60 * 60 * 24 * 7
 
+// Gated on the actual protocol rather than always appending `; secure` -
+// a Secure cookie is silently REFUSED by the browser over plain HTTP, so
+// hardcoding it would break this entirely in local dev (security review,
+// 14 Oct 2026 - this cookie had no Secure attribute at all before).
+function secureSuffix(): string {
+  return typeof location !== 'undefined' && location.protocol === 'https:' ? '; secure' : ''
+}
+
 export function setSessionFlag() {
   if (typeof document === 'undefined') return
-  document.cookie = `${SESSION_FLAG_COOKIE}=1; path=/; max-age=${SESSION_FLAG_MAX_AGE}; samesite=lax`
+  document.cookie = `${SESSION_FLAG_COOKIE}=1; path=/; max-age=${SESSION_FLAG_MAX_AGE}; samesite=lax${secureSuffix()}`
 }
 
 export function clearSessionFlag() {
   if (typeof document === 'undefined') return
-  document.cookie = `${SESSION_FLAG_COOKIE}=; path=/; max-age=0; samesite=lax`
+  document.cookie = `${SESSION_FLAG_COOKIE}=; path=/; max-age=0; samesite=lax${secureSuffix()}`
 }
