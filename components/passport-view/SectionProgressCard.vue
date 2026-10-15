@@ -1,8 +1,11 @@
 <template>
   <div>
+    <!-- Image paths point at committed files: /op-icons/profile/passportPoints.png
+         and /op-icons/misc/trophy.png were never committed, and the missing
+         imports stopped the section page from loading. -->
     <div class="spc">
       <div class="spc-row">
-        <img src="/op-icons/profile/passportPoints.png" alt="" class="spc-icon" />
+        <img src="/profile%20new%20icon/passportPoints.png" alt="" class="spc-icon" />
         <div class="spc-balance">{{ balance }} <em>pts</em></div>
       </div>
       <h3 class="spc-h3">{{ sectionTitle }}</h3>
@@ -12,7 +15,7 @@
         <div class="spc-divider" />
         <button class="spc-bonus-row" @click="$emit('finish-section')">
           <span class="spc-bonus-icon">
-            <img src="/op-icons/misc/trophy.png" alt="" class="spc-bonus-icon-img" />
+            <img src="/homescore-icon/trophy.png" alt="" class="spc-bonus-icon-img" />
           </span>
           <span class="spc-bonus-text">
             <strong>Finish this section</strong>

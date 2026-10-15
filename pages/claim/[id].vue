@@ -3551,4 +3551,38 @@ async function issuePassport() {
     height: 38px;
   }
 }
+
+/* "Found on Land Registry" card on narrow phones: the 86px house art kept
+   100px of the card, leaving the address ~70px - three lines for "14,
+   Caithness Close". Smaller art, and the text gets that room back. */
+@media (max-width: 400px) {
+  .cl-navy-img {
+    width: 56px;
+    height: 56px;
+    right: 10px;
+  }
+  .cl-navy-eyebrow,
+  .cl-navy-addr1,
+  .cl-navy-addr2 {
+    padding-right: 62px;
+  }
+}
+
+/* Narrowest phones (the card is ~214px inside its panel): only the eyebrow
+   shares a line with the art; the address starts below the art and takes
+   the card's full width. */
+@media (max-width: 340px) {
+  .cl-navy-img {
+    width: 44px;
+    height: 44px;
+  }
+  .cl-navy-eyebrow {
+    padding-right: 50px;
+    min-height: 44px;
+  }
+  .cl-navy-addr1,
+  .cl-navy-addr2 {
+    padding-right: 0;
+  }
+}
 </style>

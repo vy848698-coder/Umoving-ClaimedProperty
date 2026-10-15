@@ -1,7 +1,10 @@
 // Branching inside a Passport section: some questions only apply to one
 // type of ownership. The section's questions come from the backend in a
-// fixed order and are numbered by position ("Question 9" = the 9th), so the
-// rule below names the dependent questions by that number:
+// fixed order, and the rule below names the dependent questions by their
+// position in that FULL list, Notes screen included. Since 2026-10-08 the
+// on-screen "Question N" label skips the Notes screen, so a section that
+// opens with Notes shows each of these one lower (position 9 is labelled
+// "Question 8"); the positions here deliberately stay as they were.
 //
 //   "What is the type of the ownership?"
 //     Leasehold         -> questions 10 and 11

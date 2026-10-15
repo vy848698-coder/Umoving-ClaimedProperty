@@ -666,6 +666,13 @@ onMounted(() => {
   .ciw-col-upload {
     width: 100%;
     flex-direction: row;
+    /* Side by side when both fit; below ~380px they ran off the screen, so
+       they wrap and each fills the row. */
+    flex-wrap: wrap;
+  }
+  .ciw-upload-btn {
+    flex: 1 1 150px;
+    min-width: 0;
   }
   .ciw-or {
     width: 100%;
