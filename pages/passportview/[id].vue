@@ -1175,14 +1175,12 @@ const openCollaboratorModal = () => {
   showCollaboratorModal.value = true
 }
 
-const handleCollaboratorAdded = (collaborator) => {
-  console.log('Collaborator added:', collaborator)
+const handleCollaboratorAdded = () => {
   // Collaborators list will be reloaded by the modal
   loadCollaborators()
 }
 
-const handleCollaboratorRemoved = (collaboratorId) => {
-  console.log('Collaborator removed:', collaboratorId)
+const handleCollaboratorRemoved = () => {
   // Collaborators list will be reloaded by the modal
   loadCollaborators()
 }
