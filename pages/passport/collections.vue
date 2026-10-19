@@ -2388,4 +2388,13 @@ const executeDelete = async () => {
     height: 36px;
   }
 }
+
+/* Narrowest phones: two half-width chips left "Keep your important
+   documents safe" three lines in ~115px. One chip a row here. */
+@media (max-width: 340px) {
+  .ppw-chip,
+  .ppw-chip--compliance {
+    flex-basis: 100%;
+  }
+}
 </style>

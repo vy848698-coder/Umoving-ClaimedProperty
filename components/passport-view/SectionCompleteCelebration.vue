@@ -13,7 +13,10 @@
           <span v-for="(c, i) in confetti" :key="i" class="scc-confetti-piece" :class="c.shape" :style="c.style" />
         </div>
 
-        <img src="/op-icons/misc/trophy.png" alt="" class="scc-icon" />
+        <!-- The gold trophy the Founding Member popup uses. (/op-icons/misc/
+             trophy.png was never committed; the missing import stopped the
+             whole question page from loading.) -->
+        <img src="/homescore-icon/trophy.png" alt="" class="scc-icon" />
 
         <h1 class="scc-title">Congratulations!</h1>
         <p class="scc-sub">You've completed this <span class="scc-sub-accent">section</span>.</p>
