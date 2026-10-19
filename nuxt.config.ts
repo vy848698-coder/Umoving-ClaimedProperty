@@ -117,6 +117,10 @@ export default defineNuxtConfig({
         // Street View images now go through this app's own backend
         // (proxiedStreetViewUrl, umu-backend) - no maps.googleapis.com
         // needed here any more.
+        // images.pexels.com: placeholder photo in MessageSentModal.vue —
+        // this (and the connect-src gap below) was missing even from this
+        // app's own "resource-by-resource audited" CSP, found via a full
+        // grep of actual $fetch/img usage rather than assumed (2026-10-19).
         'img-src': [
           "'self'",
           'data:',
@@ -124,10 +128,14 @@ export default defineNuxtConfig({
           'https://api.mapbox.com',
           'https://api.os.uk',
           'https://*.tile.openstreetmap.org',
+          'https://images.pexels.com',
         ],
         // Mapbox GL JS and Leaflet both fetch tiles/styles via XHR/fetch,
         // not just <img> - same hosts as img-src, plus Mapbox's telemetry
-        // endpoint and the backend API itself.
+        // endpoint and the backend API itself. api.postcodes.io: the
+        // postcode/place-suggestion autocomplete used across search and
+        // onboarding (interests.vue, preferences.vue, SearchDrawer.vue,
+        // PropertySearchInput.vue, usePropertySearch.ts).
         'connect-src': [
           "'self'",
           BACKEND_ORIGIN,
@@ -136,6 +144,7 @@ export default defineNuxtConfig({
           'https://events.mapbox.com',
           'https://api.os.uk',
           'https://*.tile.openstreetmap.org',
+          'https://api.postcodes.io',
         ],
         // Stripe Elements mounts its card-input iframe from js.stripe.com.
         // openstreetmap.org: the embedded map iframe on property/[id].vue.
