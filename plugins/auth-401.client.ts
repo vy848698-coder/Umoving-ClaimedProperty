@@ -14,6 +14,8 @@
 // have access to this property" vs "please sign in again"). Skips the
 // auth endpoints themselves so a failed login/OTP attempt doesn't bounce
 // the user through a redirect loop.
+import { clearSessionFlag } from '~/composables/useSessionFlag'
+
 const SKIP_PATHS = ['/auth/login', '/auth/request-otp', '/auth/verify-otp', '/auth/register', '/auth/refresh']
 
 export default defineNuxtPlugin(() => {
@@ -21,17 +23,27 @@ export default defineNuxtPlugin(() => {
   if (!original || typeof (original as any).create !== 'function') return
 
   globalThis.$fetch = original.create({
-    onResponseError({ request, response }) {
+    onResponseError({ request, options, response }) {
       if (response?.status !== 401) return
       const url = typeof request === 'string' ? request : (request as Request)?.url ?? ''
       if (SKIP_PATHS.some((p) => url.includes(p))) return
 
+      // Only react to requests that went out signed in. This checks the
+      // request's own header rather than localStorage: on an expired session
+      // auth-refresh.client.ts clears the dead token at boot, usually before
+      // the page's first request comes back 401, so "no token left" doesn't
+      // mean "already handled".
+      if (!new Headers(options?.headers as HeadersInit).has('authorization')) return
+
       try {
-        if (!localStorage.getItem('token')) return // already signed out
         localStorage.removeItem('token')
       } catch {
-        return
+        // Storage blocked - still clear the cookie and redirect below.
       }
+      // The SSR routing-hint cookie has to go with the token, or guest.ts on
+      // sign-in still sees it and bounces us to /claim, where auth.ts finally
+      // clears it and does a full reload back to sign-in.
+      clearSessionFlag()
       const route = useRoute()
       if (route.path.startsWith('/onboarding/signin')) return
       navigateTo('/onboarding/signin?reason=session', { replace: true })
