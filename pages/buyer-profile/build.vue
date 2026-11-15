@@ -1448,7 +1448,7 @@ async function onFundsFileChosen(e: Event) {
   try {
     const config = useRuntimeConfig()
     const token =
-      typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null
+      typeof localStorage !== 'undefined' ? getToken() : null
     const kind = id === 'mortgage' ? 'mortgage' : 'funds'
     const form = new FormData()
     form.append('file', file)
@@ -1680,7 +1680,7 @@ async function onAiDraft() {
   try {
     const config = useRuntimeConfig()
     const token =
-      typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null
+      typeof localStorage !== 'undefined' ? getToken() : null
     const signals: string[] = []
     if (chainPosition.value) signals.push(`chain position: ${chainPosition.value}`)
     if (timeline.value) signals.push(`timeline: ${timeline.value}`)

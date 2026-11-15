@@ -84,32 +84,35 @@ export default defineNuxtConfig({
   //
   // CSP was audited resource-by-resource against this app's actual runtime
   // behaviour (not guessed) - see the directive-by-directive notes below.
-  // script-src deliberately stays 'self' + 'unsafe-inline' rather than
-  // nuxt-security's nonce+strict-dynamic default: this app has one known
-  // inline script (the desk-zoom IIFE below) that isn't rendered through
-  // Nuxt's own head management. Checked the rendered dev-server HTML and
-  // confirmed nuxt-security's auto-nonce DOES reach it (every <script> tag
-  // got a matching nonce attribute) - so nonce-based script-src is likely
-  // safe, but switching to it still needs a real browser click-through
-  // (Leaflet/Stripe's dynamically-inserted <script> tags under
-  // 'strict-dynamic' is the one interaction this couldn't verify without
-  // one), so 'unsafe-inline' stays for now as the conservative choice.
+  // script-src DROPPED 'unsafe-inline' (security review finding #7,
+  // 2026-11-15): nuxt-security's auto-nonce was already confirmed (13/14
+  // Oct 2026) to reach the one known inline script (the desk-zoom IIFE
+  // below) - every <script> tag gets a matching nonce. CSP3 browsers
+  // ignore 'unsafe-inline' entirely once a nonce-source is present in the
+  // same directive, so it was doing nothing for them anyway; dropping it
+  // only removes a bypass for pre-CSP3 browsers, which this app doesn't
+  // need to support. Leaflet/js.stripe.com don't need strict-dynamic or a
+  // nonce at all - they're matched by the explicit host-source entries
+  // below regardless of how the <script> tag was inserted into the DOM,
+  // which is a separate, independent CSP matching path from nonces.
   security: {
     headers: {
       contentSecurityPolicy: {
         'default-src': ["'self'"],
-        // unpkg: Leaflet is loaded at runtime (document.createElement),
-        // not bundled - see SearchDrawer.vue / property/[id].vue /
-        // property-full/[id].vue. js.stripe.com: @stripe/stripe-js's
-        // loadStripe() injects this for the claim/buyer-unlock/tier-
-        // upgrade payment flows.
-        'script-src': ["'self'", "'unsafe-inline'", 'https://unpkg.com', 'https://js.stripe.com'],
+        // unpkg DROPPED (security/launch review finding #12, 2026-11-14):
+        // Leaflet is self-hosted via npm/Vite now - see SearchDrawer.vue /
+        // property/[id].vue / property-full/[id].vue's loadLeaflet.
+        // js.stripe.com: @stripe/stripe-js's loadStripe() injects this for
+        // the claim/buyer-unlock/tier-upgrade payment flows - a host-source
+        // match, independent of the nonce nuxt-security adds for this
+        // app's own inline script.
+        'script-src': ["'self'", 'https://js.stripe.com'],
         // Vue scoped <style> blocks compile to real stylesheets at build
         // time (style-src, not this), but dynamic :style="..." bindings
         // (66 files) render as inline style="..." attributes, which need
         // style-src-attr specifically - kept narrower than a blanket
         // style-src 'unsafe-inline'.
-        'style-src': ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com', 'https://api.mapbox.com', 'https://unpkg.com'],
+        'style-src': ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com', 'https://api.mapbox.com'],
         'style-src-attr': ["'unsafe-inline'"],
         'font-src': ["'self'", 'https://fonts.gstatic.com', 'data:'],
         // data:: QR codes, inline SVG avatars/payment badges, signature-
@@ -131,17 +134,25 @@ export default defineNuxtConfig({
           'https://images.pexels.com',
         ],
         // Mapbox GL JS and Leaflet both fetch tiles/styles via XHR/fetch,
-        // not just <img> - same hosts as img-src, plus Mapbox's telemetry
-        // endpoint and the backend API itself. api.postcodes.io: the
-        // postcode/place-suggestion autocomplete used across search and
-        // onboarding (interests.vue, preferences.vue, SearchDrawer.vue,
-        // PropertySearchInput.vue, usePropertySearch.ts).
+        // not just <img> - same hosts as img-src, plus the backend API
+        // itself. api.postcodes.io: the postcode/place-suggestion
+        // autocomplete used across search and onboarding (interests.vue,
+        // preferences.vue, SearchDrawer.vue, PropertySearchInput.vue,
+        // usePropertySearch.ts).
+        //
+        // events.mapbox.com DELIBERATELY left off (security/launch review
+        // finding #10, 2026-11-14): that's Mapbox's own anonymous-usage
+        // telemetry endpoint, not needed for rendering tiles/styles (those
+        // only ever hit api.mapbox.com), and mapbox-gl-js has no supported
+        // per-instance opt-out for it in this version. Blocking it here
+        // makes those background POSTs fail closed (fire-and-forget by
+        // design - the map still renders fine) without needing a
+        // consent-gated map experience.
         'connect-src': [
           "'self'",
           BACKEND_ORIGIN,
           'https://api.stripe.com',
           'https://api.mapbox.com',
-          'https://events.mapbox.com',
           'https://api.os.uk',
           'https://*.tile.openstreetmap.org',
           'https://api.postcodes.io',

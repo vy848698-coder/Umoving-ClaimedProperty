@@ -56,6 +56,12 @@ const PUBLIC_ROUTES: RegExp[] = [
   /^\/legal\/(terms|privacy|cookies)$/,
   // PWA navigateFallback target.
   /^\/offline$/,
+  // Share-link recipients (Seller Passport "Share" feature) - these are
+  // opened by buyers, agents and conveyancers who have no account at all,
+  // so they must stay reachable with no sign-in. Missing from this list
+  // meant every recipient got bounced to the landing page instead
+  // (security/launch review finding #1, 2026-11-14).
+  /^\/shared(-buyer|-tenant)?\/[^/]+$/,
 ]
 
 // Which onboarding journey a signed-out visitor is on, captured from

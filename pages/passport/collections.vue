@@ -699,7 +699,7 @@ const load = async () => {
   loading.value = true
   loadError.value = ''
   try {
-    const token = localStorage.getItem('token')
+    const token = getToken()
     const headers = { Authorization: `Bearer ${token}` }
     const [data, watching] = await Promise.all([
       $fetch(`${config.public.apiBase}/collection/my`, { headers }),
@@ -781,7 +781,7 @@ const executeDelete = async () => {
   if (!passportToDelete.value) return
   deleting.value = true
   try {
-    const token = localStorage.getItem('token')
+    const token = getToken()
     await $fetch(
       `${config.public.apiBase}/passport/${passportToDelete.value.id}`,
       {

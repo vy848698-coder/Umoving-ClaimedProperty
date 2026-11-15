@@ -154,7 +154,7 @@ onMounted(async () => {
       `${config.public.apiBase}/passport/${passportId.value}/sections`,
       {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token') ?? ''}`,
+          Authorization: `Bearer ${getToken() ?? ''}`,
         },
       },
     )

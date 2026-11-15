@@ -109,7 +109,7 @@ onMounted(async () => {
 
   let token: string | null = null
   try {
-    token = localStorage.getItem('token')
+    token = getToken()
   } catch {
     token = null
   }

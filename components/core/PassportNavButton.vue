@@ -29,7 +29,7 @@ function open() {
 
 onMounted(() => {
   try {
-    signedIn.value = !!localStorage.getItem('token')
+    signedIn.value = !!getToken()
   } catch {
     signedIn.value = false
   }

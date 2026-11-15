@@ -738,7 +738,7 @@ const savingNote = ref(false)
 onMounted(async () => {
   try {
     const tok =
-      typeof window !== 'undefined' ? localStorage.getItem('token') : null
+      typeof window !== 'undefined' ? getToken() : null
     data.value = await $fetch(
       `${config.public.apiBase}/passport/${passportId}/buyer-view`,
       { headers: { Authorization: `Bearer ${tok}` } },
@@ -1030,7 +1030,7 @@ function goToSection(sectionId: string) {
 async function loadComparables() {
   try {
     const tok =
-      typeof window !== 'undefined' ? localStorage.getItem('token') : null
+      typeof window !== 'undefined' ? getToken() : null
     const res = await $fetch<any[]>(
       `${config.public.apiBase}/passport/${passportId}/comparables`,
       { headers: { Authorization: `Bearer ${tok}` } },
@@ -1045,7 +1045,7 @@ async function loadComparables() {
 async function loadNotes() {
   try {
     const tok =
-      typeof window !== 'undefined' ? localStorage.getItem('token') : null
+      typeof window !== 'undefined' ? getToken() : null
     const res = await $fetch<any[]>(
       `${config.public.apiBase}/passport/${passportId}/notes`,
       { headers: { Authorization: `Bearer ${tok}` } },
@@ -1061,7 +1061,7 @@ async function saveNote() {
   savingNote.value = true
   try {
     const tok =
-      typeof window !== 'undefined' ? localStorage.getItem('token') : null
+      typeof window !== 'undefined' ? getToken() : null
     const note = await $fetch<any>(
       `${config.public.apiBase}/passport/${passportId}/notes`,
       {
@@ -1083,7 +1083,7 @@ async function saveNote() {
 async function deleteNote(noteId: string) {
   try {
     const tok =
-      typeof window !== 'undefined' ? localStorage.getItem('token') : null
+      typeof window !== 'undefined' ? getToken() : null
     await $fetch(`${config.public.apiBase}/passport/notes/${noteId}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${tok}` },

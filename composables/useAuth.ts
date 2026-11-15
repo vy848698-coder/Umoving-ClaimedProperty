@@ -5,11 +5,11 @@
 // src/auth/refresh-cookie.ts) and never appears in a JSON response or in
 // JS-readable storage at all, so storeTokens only ever has `token` to save.
 export const storeTokens = (res: { token?: string }) => {
-  if (res.token) localStorage.setItem('token', res.token)
+  if (res.token) setToken(res.token)
 }
 
 export const clearTokens = () => {
-  localStorage.removeItem('token')
+  clearToken()
   // Stale key from before the refresh token moved to an httpOnly cookie -
   // harmless to remove defensively, nothing should still be writing it.
   localStorage.removeItem('refreshToken')
@@ -26,7 +26,7 @@ export const useAuth = () => {
   const base = config.public.apiBase
 
   const getHeaders = () => {
-    const token = localStorage.getItem('token')
+    const token = getToken()
 
     return token ? { Authorization: `Bearer ${token}` } : {}
   }

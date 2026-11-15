@@ -597,7 +597,7 @@ const resultHeading = computed(() => {
 })
 
 function hasToken(): boolean {
-  return typeof localStorage !== 'undefined' && !!localStorage.getItem('token')
+  return typeof localStorage !== 'undefined' && !!getToken()
 }
 
 function sqftLabel(floorAreaSqm: number): string {

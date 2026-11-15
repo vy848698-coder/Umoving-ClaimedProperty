@@ -583,7 +583,7 @@ const propertyFacts = ref(null)
 async function loadPropertyFacts() {
   const id = route.query.propertyId
   const token =
-    typeof window !== 'undefined' ? localStorage.getItem('token') : null
+    typeof window !== 'undefined' ? getToken() : null
   if (!id || !token) return
   const cfg = useRuntimeConfig()
   const headers = { Authorization: `Bearer ${token}` }
@@ -615,7 +615,7 @@ async function loadPropertyFacts() {
 
 async function loadRunningBalance() {
   const token =
-    typeof window !== 'undefined' ? localStorage.getItem('token') : null
+    typeof window !== 'undefined' ? getToken() : null
   if (!token) return
   try {
     const cfg = useRuntimeConfig()
@@ -775,7 +775,7 @@ async function recordLastVisited() {
   const passportId = route.query.propertyId
   if (!passportId || !taskId) return
   const token =
-    typeof window !== 'undefined' ? localStorage.getItem('token') : null
+    typeof window !== 'undefined' ? getToken() : null
   if (!token) return
   const cfg = useRuntimeConfig()
   try {

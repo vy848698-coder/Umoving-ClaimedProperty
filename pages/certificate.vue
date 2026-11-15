@@ -195,7 +195,7 @@ async function load(passportId = requestedId.value) {
   error.value = ''
   revoke()
   try {
-    const token = localStorage.getItem('token')
+    const token = getToken()
     const headers = { Authorization: `Bearer ${token}` }
     // Both requests name the same passport, so the picture can never be of one
     // property while the facts beside it describe another. Details first: that

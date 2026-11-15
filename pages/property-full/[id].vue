@@ -780,7 +780,7 @@
               :disabled="epcDownloading"
               @click="downloadEpc"
             >
-              {{ epcDownloading ? 'Downloading...' : 'Download EPC' }}
+              {{ epcDownloading ? 'Opening...' : 'View the EPC certificate' }}
             </button>
           </div>
           <div class="prop-epc-card">
@@ -2032,19 +2032,17 @@ const epcBands = [
 ]
 
 // Leaflet map — same library as SearchDrawer
+// Security/launch review finding #12 (2026-11-14): self-hosted via
+// npm/Vite instead of unpkg — see SearchDrawer.vue's loadLeaflet for why.
 const loadLeaflet = (): Promise<any> =>
   new Promise((resolve) => {
     if ((window as any).L) return resolve((window as any).L)
-    if (!document.querySelector('link[href*="leaflet"]')) {
-      const link = document.createElement('link')
-      link.rel = 'stylesheet'
-      link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
-      document.head.appendChild(link)
-    }
-    const script = document.createElement('script')
-    script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
-    script.onload = () => resolve((window as any).L)
-    document.head.appendChild(script)
+    import('leaflet/dist/leaflet.css')
+    import('leaflet').then((mod) => {
+      const L = (mod as any).default ?? mod
+      ;(window as any).L = L
+      resolve(L)
+    })
   })
 
 const initMap = async () => {
@@ -2351,7 +2349,7 @@ onMounted(async () => {
 
   // Fetch enrichment data in background (non-blocking)
   try {
-    const token = localStorage.getItem('token')
+    const token = getToken()
     const res = await fetch(`${apiBase}/property/${propertyId}/enrichment`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     })
@@ -2373,7 +2371,7 @@ onMounted(async () => {
     }
 
     // 2. If the logged-in user has their own score, prefer it (could be more recent)
-    const token = localStorage.getItem('token')
+    const token = getToken()
     if (token && !homeScore.value) {
       const hsRes = await fetch(`${apiBase}/property/${propertyId}/homescore`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -2494,27 +2492,34 @@ function handleShare() {
   console.log('Share triggered')
 }
 
-// EPC Certificate download
+// EPC Certificate — backend no longer proxies a PDF (the old
+// /epc-download endpoint was retired with the EPC API migration); it
+// resolves the LMK key via /epc-download-info and we hand off to the
+// gov.uk consumer certificate page, same as pages/property/[id].vue.
 const epcDownloading = ref(false)
 async function downloadEpc() {
   if (epcDownloading.value) return
   epcDownloading.value = true
   try {
+    const openCert = (lmk: string) => {
+      window.open(
+        `https://find-energy-certificate.service.gov.uk/energy-certificate/${lmk}`,
+        '_blank',
+        'noopener,noreferrer',
+      )
+    }
+    const stored = (property.value as any)?.epcLmkKey
+    if (stored) return openCert(stored)
     const apiBase = config.public.apiBase as string
-    const res = await fetch(`${apiBase}/property/${propertyId}/epc-download`)
-    if (!res.ok) throw new Error('Download failed')
-    const blob = await res.blob()
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `epc-certificate-${propertyId}.pdf`
-    document.body.appendChild(a)
-    a.click()
-    a.remove()
-    URL.revokeObjectURL(url)
+    const res = await fetch(
+      `${apiBase}/property/${propertyId}/epc-download-info`,
+    ).catch(() => null)
+    const info = res && res.ok ? await res.json().catch(() => null) : null
+    if (info?.lmkKey) return openCert(info.lmkKey)
+    showToast({ message: 'No EPC certificate is on file for this property.', duration: 3000 })
   } catch {
     showToast({
-      message: 'Could not download EPC certificate. Please try again.',
+      message: 'Could not open the EPC certificate. Please try again.',
       duration: 3000,
     })
   } finally {

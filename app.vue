@@ -18,6 +18,7 @@
       :variant="toastState.variant"
       @close="hideToast"
     />
+    <CookieConsentBanner />
   </div>
 </template>
 
