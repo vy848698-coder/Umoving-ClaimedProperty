@@ -216,6 +216,13 @@ export default defineNuxtConfig({
   pwa: {
     registerType: 'autoUpdate',
     strategies: 'generateSW',
+    // Default precache cap is 2 MiB; Exp.png (~2.06 MB) exceeds it. This
+    // option is read from the top-level pwa config, NOT from inside
+    // generateSW/workbox (confirmed against @unplugin-pwa/core's
+    // resolvePwaConfiguration, which destructures it off the outer
+    // object) - nesting it under generateSW silently drops it and the
+    // build fails precaching Exp.png against the un-overridden default.
+    maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
     manifest: {
       name: 'UmovingU | Property Toolkit',
       short_name: 'UmovingU',
@@ -249,12 +256,12 @@ export default defineNuxtConfig({
       ],
       screenshots: [],
     },
-    workbox: {
+    // @vite-pwa/nuxt 2.x (Nuxt 4 upgrade) deprecated the `workbox` key in
+    // favour of `generateSW` - same options, same `generateSW` strategy,
+    // just renamed.
+    generateSW: {
       navigateFallback: '/offline',
       navigateFallbackDenylist: [/^\/api\//],
-      // Default precache cap is 2 MiB; some images (e.g. Exp.png ~2.16 MB)
-      // exceed it. Raise to 3 MiB so they're still precached.
-      maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
       globPatterns: ['**/*.{js,css,html,png,svg,ico,woff2}'],
       globIgnores: ['op-icons/temp/**'],
       runtimeCaching: [
