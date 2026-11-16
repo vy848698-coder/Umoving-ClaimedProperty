@@ -64,10 +64,26 @@
           <li>Google Analytics: receives anonymised website usage data</li>
           <li>Mailchimp or equivalent: receives name and email if subscribed to updates</li>
           <li>OpenProperty Tech Ltd: receives property address and record data</li>
+          <li>Railway: hosts our live application servers, database and file storage today — this is
+            where your account and property data actually live</li>
+          <li>AWS (Amazon Web Services): a separate infrastructure environment we are setting up for a
+            future migration; it does not currently hold any live customer data</li>
+          <li>Vercel: hosts the website itself</li>
           <li>Legal or regulatory authorities: information required by law or court order</li>
         </ul>
 
-        <h2>06 · How long we keep your information</h2>
+        <h2>06 · International transfers</h2>
+        <p>
+          Railway, which hosts your account and property data today, runs in the United States. This
+          means personal data is processed outside the UK/EEA as part of providing the service. UK GDPR
+          requires an appropriate safeguard (such as the UK's International Data Transfer Addendum or
+          Standard Contractual Clauses) to be in place for this. We are in the process of confirming and
+          documenting the specific safeguard used with Railway; this section will be updated as that
+          review completes. If we complete the planned migration to AWS's UK (London) region, this
+          section will be updated to reflect that change.
+        </p>
+
+        <h2>07 · How long we keep your information</h2>
         <ul>
           <li>Contact form enquiries: 2 years</li>
           <li>Property Passport records: for the duration of an active account plus up to 2 years after closure</li>
@@ -75,7 +91,7 @@
           <li>Analytics data: anonymised data retained per Google's standard settings (default 26 months)</li>
         </ul>
 
-        <h2>07 · Your rights</h2>
+        <h2>08 · Your rights</h2>
         <p>
           Under UK GDPR, individuals may exercise rights by emailing
           <a href="mailto:hello@umovingu.io">hello@umovingu.io</a> within one month:
@@ -94,7 +110,7 @@
           <a href="https://ico.org.uk" target="_blank" rel="noopener">ico.org.uk</a> or 0303 123 1113.
         </p>
 
-        <h2>08 · Security</h2>
+        <h2>09 · Security</h2>
         <ul>
           <li>Encrypted transmission between browser and servers (HTTPS)</li>
           <li>Access controls for authorised team members only</li>
@@ -103,13 +119,13 @@
         </ul>
         <p>Data breach notification to ICO within 72 hours if likely to affect rights.</p>
 
-        <h2>09 · Links and children</h2>
+        <h2>10 · Links and children</h2>
         <p>
           External site links are not covered by this privacy policy. The service is not directed at
           children under 16. Contact the company if a child has provided information.
         </p>
 
-        <h2>10 · Contact us</h2>
+        <h2>11 · Contact us</h2>
         <p>
           Email: <a href="mailto:hello@umovingu.io">hello@umovingu.io</a><br />
           Post: umovingu Limited, 116 Yardley Road, Birmingham, B27 6LG<br />
