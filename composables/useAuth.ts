@@ -10,8 +10,12 @@ export const storeTokens = (res: { token?: string }) => {
 
 export const clearTokens = () => {
   clearToken()
-  // Stale key from before the refresh token moved to an httpOnly cookie -
-  // harmless to remove defensively, nothing should still be writing it.
+  // Stale keys from before the access token moved to in-memory storage and
+  // the refresh token moved to an httpOnly cookie (security review finding
+  // #7, 2026-11-15) - harmless to remove defensively, nothing should still
+  // be writing them, but a pre-migration value left over in a browser's
+  // localStorage would otherwise silently authenticate requests forever.
+  localStorage.removeItem('token')
   localStorage.removeItem('refreshToken')
 }
 

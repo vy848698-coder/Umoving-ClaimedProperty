@@ -920,7 +920,12 @@ const userFullName = ref<string>("");
 
 // ── Helpers ──────────────────────────────────────────────────
 function token() {
-  return typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  // Pulls from the in-memory token store (useAuthToken.ts, security review
+  // finding #7, 2026-11-15), not localStorage — this page used to read
+  // localStorage.getItem("token") directly, a leftover from before that
+  // migration, which let a stale pre-migration token silently authenticate
+  // this page with no login step and never get cleared on logout.
+  return getToken();
 }
 function authHeaders() {
   return {
