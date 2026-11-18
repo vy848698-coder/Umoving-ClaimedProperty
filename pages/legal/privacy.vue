@@ -66,9 +66,17 @@
           <li>OpenProperty Tech Ltd: receives property address and record data</li>
           <li>Railway: hosts our live application servers, database and file storage today — this is
             where your account and property data actually live</li>
-          <li>AWS (Amazon Web Services): a separate infrastructure environment we are setting up for a
+          <li>Microsoft Azure: a UK (London) region infrastructure environment we are setting up for a
             future migration; it does not currently hold any live customer data</li>
           <li>Vercel: hosts the website itself</li>
+          <li>Persona: verifies identity documents during KYC checks</li>
+          <li>Stripe: processes payments</li>
+          <li>Groq: powers the AI assistant and AI-generated summaries</li>
+          <li>Sentry: receives application error reports for monitoring and debugging</li>
+          <li>Resend: sends transactional emails (one-time codes, notifications)</li>
+          <li>HM Land Registry: receives property/title lookups to verify ownership</li>
+          <li>Mapbox: provides maps and address geocoding</li>
+          <li>Ordnance Survey: provides UK address and property data</li>
           <li>Legal or regulatory authorities: information required by law or court order</li>
         </ul>
 
@@ -79,8 +87,8 @@
           requires an appropriate safeguard (such as the UK's International Data Transfer Addendum or
           Standard Contractual Clauses) to be in place for this. We are in the process of confirming and
           documenting the specific safeguard used with Railway; this section will be updated as that
-          review completes. If we complete the planned migration to AWS's UK (London) region, this
-          section will be updated to reflect that change.
+          review completes. We plan to migrate hosting to Microsoft Azure's UK (London) region; once
+          that migration completes, this section will be updated to reflect that change.
         </p>
 
         <h2>07 · How long we keep your information</h2>
