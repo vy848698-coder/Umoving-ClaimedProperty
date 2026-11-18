@@ -85,16 +85,22 @@ export default defineNuxtConfig({
   // CSP was audited resource-by-resource against this app's actual runtime
   // behaviour (not guessed) - see the directive-by-directive notes below.
   // script-src DROPPED 'unsafe-inline' (security review finding #7,
-  // 2026-11-15): nuxt-security's auto-nonce was already confirmed (13/14
-  // Oct 2026) to reach the one known inline script (the desk-zoom IIFE
-  // below) - every <script> tag gets a matching nonce. CSP3 browsers
-  // ignore 'unsafe-inline' entirely once a nonce-source is present in the
-  // same directive, so it was doing nothing for them anyway; dropping it
-  // only removes a bypass for pre-CSP3 browsers, which this app doesn't
-  // need to support. Leaflet/js.stripe.com don't need strict-dynamic or a
-  // nonce at all - they're matched by the explicit host-source entries
-  // below regardless of how the <script> tag was inserted into the DOM,
-  // which is a separate, independent CSP matching path from nonces.
+  // 2026-11-15) on the understanding that nuxt-security's auto-nonce
+  // covers every inline <script> - true in principle, but the actual
+  // 'nonce-{{nonce}}' entry that makes the CSP header accept those
+  // nonce'd scripts was never added to the array below, so the browser
+  // had nothing to match the nonce against. That includes Nuxt's own
+  // SSR hydration payload script (window.__NUXT__ = {...}), which is
+  // inlined on every single response regardless of anything in this
+  // app's own code - with no 'unsafe-inline' and no nonce entry, the
+  // browser silently blocked it, Vue never hydrated, and no click
+  // handler anywhere in the app ever ran (found 2026-11-18 chasing a
+  // cookie-banner "Accept all does nothing" report; same root cause
+  // fixed the same way on umu-mobile-webapp first). Leaflet/js.stripe.com
+  // don't need strict-dynamic or a nonce at all - they're matched by the
+  // explicit host-source entries below regardless of how the <script>
+  // tag was inserted into the DOM, a separate CSP matching path from
+  // nonces.
   security: {
     headers: {
       contentSecurityPolicy: {
@@ -106,7 +112,7 @@ export default defineNuxtConfig({
         // the claim/buyer-unlock/tier-upgrade payment flows - a host-source
         // match, independent of the nonce nuxt-security adds for this
         // app's own inline script.
-        'script-src': ["'self'", 'https://js.stripe.com'],
+        'script-src': ["'self'", "'nonce-{{nonce}}'", 'https://js.stripe.com'],
         // Vue scoped <style> blocks compile to real stylesheets at build
         // time (style-src, not this), but dynamic :style="..." bindings
         // (66 files) render as inline style="..." attributes, which need
